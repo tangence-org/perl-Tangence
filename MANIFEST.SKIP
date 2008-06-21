@@ -1,0 +1,16 @@
+.*\.~\d~
+.*\.bak
+.*\.swp
+.*\.tar(\.gz)?
+\.bzr
+\.bzrignore
+blib
+.*\.deb
+Makefile$
+Makefile\.old
+MANIFEST\.SKIP
+Build$
+_build
+^\.shelf
+.*\.c
+.*\.o

@@ -1,0 +1,13 @@
+Makefile
+Makefile.PL
+Makefile.old
+blib
+pm_to_blib
+MANIFEST
+MANIFEST.bak
+*.deb
+*.tar.gz
+Build
+_build
+META.yml
+*.c
