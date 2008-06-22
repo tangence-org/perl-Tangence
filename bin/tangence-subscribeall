@@ -1,0 +1,186 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+# Until we have a real CPAN dist...
+use lib ".";
+
+use Tangence::Constants;
+use Tangence::Connection;
+
+use IO::Async 0.14;
+use IO::Async::Loop::IO_Ppoll;
+
+use Data::Dump;
+
+# We want to mangle the way Data::Dump prints our object proxies
+# While we're at it, lets build a generic delegated printing system
+
+{
+   my $_dump = \&Data::Dump::_dump;
+
+   my %dump_delegations;
+
+   no warnings 'redefine';
+   *Data::Dump::_dump = sub {
+      if( exists $dump_delegations{ref $_[0]} ) {
+         return $dump_delegations{ref $_[0]}->( @_ );
+      }
+      else {
+         return $_dump->( @_ );
+      }
+   };
+
+   sub register_dump_delegation
+   {
+      my ( $class, $cb ) = @_;
+      $dump_delegations{$class} = $cb;
+   }
+}
+
+register_dump_delegation( "Tangence::ObjectProxy" => sub {
+      my ( $obj ) = @_;
+      return "OBJPROXY( id=$obj->{id}, props=" . Data::Dump::dump($obj->{props}) . " )";
+} );
+
+my $loop = IO::Async::Loop::IO_Ppoll->new();
+$loop->enable_childmanager;
+
+my $URL = shift @ARGV or die "Need URL as argv[1]\n";
+
+my $conn = Tangence::Connection->new(
+   on_closed => sub {
+      print STDERR "Connection closed\n";
+      exit(0);
+   },
+);
+
+$loop->add( $conn );
+
+$conn->connect( 
+   $URL,
+
+   on_connected => sub {
+      $conn->watch( 0, "objects", \&objects_changed, 1 );
+   },
+);
+
+$loop->loop_forever;
+
+sub objects_changed
+{
+   my ( undef, undef, $how, @value ) = @_;
+
+   if( $how == CHANGE_SET ) {
+      my ( $objects ) = @value;
+      new_object( $_ ) foreach keys %$objects;
+   }
+   elsif( $how == CHANGE_ADD ) {
+      my ( $id, $obj ) = @value;
+      new_object( $id );
+   }
+}
+
+sub new_object
+{
+   my ( $objid ) = @_;
+
+   print "Subscribing to events and properties on new object $objid\n";
+
+   $conn->call(
+      objid  => $objid,
+      method => "introspect",
+      args   => [],
+   
+      on_response => sub {
+         my ( $response ) = @_;
+         my ( undef, $introspection ) = @$response;
+
+         my $events = $introspection->{events};
+
+         foreach my $event ( keys %$events ) {
+            print "Subscribing to object $objid event $event\n";
+            $conn->subscribe( $objid, $event, \&event_happened );
+         }
+
+         my $properties = $introspection->{properties};
+
+         foreach my $prop ( keys %$properties ) {
+            # We're already watching 'objects' on the registry, so ignore that
+            next if $objid == 0 and $prop eq "objects";
+            print "Watching object $objid property $prop\n";
+            # Need to choose the callback based on the property dimension
+            my $dim = $properties->{$prop}->{dim};
+            my $cb = $dim == DIM_SCALAR ? \&prop_scalar_changed :
+                     $dim == DIM_HASH   ? \&prop_hash_changed :
+                     $dim == DIM_ARRAY  ? \&prop_array_changed :
+                     $dim == DIM_QUEUE  ? \&prop_array_changed :
+                     undef;
+            $conn->watch( $objid, $prop, $cb, 1 ) if defined $cb;
+         }
+      },
+   );
+}
+
+sub event_happened
+{
+   my ( $objid, $event, @args ) = @_;
+
+   print "EVENT $objid -> $event\n";
+   print "  " . Data::Dump::dump(@args) . "\n";
+}
+
+sub prop_scalar_changed
+{
+   my ( $objid, $prop, $how, @value ) = @_;
+
+   if( $how == CHANGE_SET ) {
+      print "PROP SET $objid [$prop]\n";
+      print "  " . Data::Dump::dump($value[0]) . "\n";
+   }
+   else {
+      print "PROP UNKNOWN($how)?? $objid [$prop]\n";
+   }
+}
+
+sub prop_hash_changed
+{
+   my ( $objid, $prop, $how, @value ) = @_;
+
+   if( $how == CHANGE_SET ) {
+      print "PROP SET $objid [$prop]\n";
+      print "  " . Data::Dump::dump($value[0]) . "\n";
+   }
+   elsif( $how == CHANGE_ADD ) {
+      print "PROP ADD $objid [$prop]\n";
+      print "  $value[0] => " . Data::Dump::dump($value[1]) . "\n";
+   }
+   elsif( $how == CHANGE_DEL ) {
+      print "PROP DEL $objid [$prop]\n";
+      print "  $value[0]\n";
+   }
+   else {
+      print "PROP UNKNOWN($how)?? $objid [$prop]\n";
+   }
+}
+
+sub prop_array_changed
+{
+   my ( $objid, $prop, $how, @value ) = @_;
+
+   if( $how == CHANGE_SET ) {
+      print "PROP SET $objid [$prop]\n";
+      print "  " . Data::Dump::dump(@value) . "\n";
+   }
+   elsif( $how == CHANGE_PUSH ) {
+      print "PROP PUSH $objid [$prop]\n";
+      print "  $_: " . Data::Dump::dump($value[$_]) . "\n" for 0 .. $#value;
+   }
+   elsif( $how == CHANGE_SHIFT ) {
+      print "PROP SHIFT $objid [$prop]\n";
+      print "  shift x $value[0]\n";
+   }
+   else {
+      print "PROP UNKNOWN($how)?? $objid [$prop]\n";
+   }
+}

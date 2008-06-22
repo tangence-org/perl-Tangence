@@ -1,0 +1,117 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+# Until we have a real CPAN dist...
+use lib ".";
+
+use Tangence::Constants;
+use Tangence::Connection;
+
+use IO::Async 0.14;
+use IO::Async::Loop::IO_Ppoll;
+
+my $loop = IO::Async::Loop::IO_Ppoll->new();
+$loop->enable_childmanager;
+
+my $URL = shift @ARGV or die "Need URL as argv[1]\n";
+
+my $conn = Tangence::Connection->new(
+   on_closed => sub {
+      print STDERR "Connection closed\n";
+      exit(0);
+   },
+);
+
+$loop->add( $conn );
+
+my $on_connected;
+
+if( !@ARGV ) {
+   $on_connected = sub {
+      $conn->get_property(
+         objid    => 0,
+         property => "objects",
+
+         on_response => sub {
+            my ( $response ) = @_;
+            my ( $type, $objshash ) = @$response;
+
+            foreach my $id ( sort keys %$objshash ) {
+               my $desc = $objshash->{$id};
+
+               printf "%-6d: %s\n", $id, $desc;
+            }
+
+            $loop->loop_stop;
+         },
+      );
+   };
+}
+elsif( $ARGV[0] eq "-i" ) {
+   shift @ARGV; # eat -i
+   my $objid = shift @ARGV;
+
+   require Data::Dump;
+
+   $on_connected = sub {
+      $conn->call(
+         objid   => $objid,
+         method  => "introspect",
+         args    => [],
+
+         on_response => sub {
+            my ( $response ) = @_;
+            my ( $type, $data ) = @$response;
+
+            if( $type == MSG_RESULT ) {
+               print Data::Dump::dump( $data ) . "\n";
+            }
+            elsif( $type == MSG_ERROR ) {
+               print $data . "\n";
+            }
+
+            $loop->loop_stop;
+         },
+      );
+   };
+}
+elsif( $ARGV[0] eq "-p" ) {
+   shift @ARGV; # eat -p
+   my $objid    = shift @ARGV;
+   my $property = shift @ARGV;
+
+   require Data::Dump;
+
+   $on_connected = sub {
+      $conn->get_property(
+         objid    => $objid,
+         property => $property,
+
+         on_response => sub {
+            my ( $response ) = @_;
+            my ( $type, $data ) = @$response;
+
+            if( $type == MSG_RESULT ) {
+               print Data::Dump::dump( $data ) . "\n";
+            }
+            elsif( $type == MSG_ERROR ) {
+               print $data . "\n";
+            }
+
+            $loop->loop_stop;
+         },
+      );
+   };
+}
+else {
+   die "Unrecognised operation $ARGV[0]\n";
+}
+
+$conn->connect( 
+   $URL,
+
+   on_connected => $on_connected,
+);
+
+$loop->loop_forever;
