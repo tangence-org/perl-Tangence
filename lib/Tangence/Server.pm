@@ -153,7 +153,7 @@ sub handle_request_SUBSCRIBE
 
    my $id = $object->subscribe_event( $event,
       sub {
-         my ( undef, @args ) = @_;
+         my ( undef, $event, @args ) = @_;
          $self->request(
             request => [ MSG_EVENT, [ $objid, $event, @args ] ],
 
