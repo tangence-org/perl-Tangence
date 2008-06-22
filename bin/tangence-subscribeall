@@ -2,9 +2,6 @@
 
 use strict;
 
-# Until we have a real CPAN dist...
-use lib ".";
-
 use Tangence::Constants;
 use Tangence::Connection;
 
