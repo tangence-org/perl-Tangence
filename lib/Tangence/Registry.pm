@@ -30,13 +30,18 @@ sub new
 {
    my $class = shift;
 
-   my $self = bless {
-      objects => {},  # {$id} = $object
-      nextid  => 1,
-      freeids => [],  # free'd ids we can reuse
-   }, $class;
+   my $id = 0;
 
-   $self->{objects}->{0} = $self; # registry is object 0
+   my $self = $class->SUPER::new(
+      id => $id,
+   );
+   
+   $self->{objects} = {
+      $id => $self, # registry is object 0
+   };
+
+   $self->{nextid}  = 1;
+   $self->{freeids} = []; # free'd ids we can reuse
 
    return $self;
 }
