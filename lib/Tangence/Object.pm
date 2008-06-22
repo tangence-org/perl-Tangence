@@ -44,7 +44,7 @@ sub new
    my $class = shift;
    my %args = @_;
 
-   my $id = delete $args{id} or croak "Need a id";
+   defined( my $id = delete $args{id} ) or croak "Need a id";
 
    my $self = bless {
       id => $id,
