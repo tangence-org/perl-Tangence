@@ -44,12 +44,10 @@ sub new
    my $class = shift;
    my %args = @_;
 
-   my $registry = delete $args{registry} or croak "Need a registry";
-   my $id       = delete $args{id}       or croak "Need a id";
+   my $id = delete $args{id} or croak "Need a id";
 
    my $self = bless {
-      registry => $registry,
-      id       => $id,
+      id => $id,
 
       event_subs => {},   # {$event} => [ @cbs ]
 
