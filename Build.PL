@@ -9,8 +9,9 @@ my $build = Module::Build->new
    build_requires => {
                         'IO::Async' => 0.14,
                         'IO::Async::Test' => 0.14,
-                        'Test::More' => 0,
                         'Test::Exception' => 0,
+                        'Test::HexString' => 0,
+                        'Test::More' => 0,
                      },
    license => 'perl',
    create_makefile_pl => 'traditional',

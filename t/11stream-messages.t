@@ -3,6 +3,7 @@
 use strict;
 
 use Test::More tests => 6;
+use Test::HexString;
 use IO::Async::Test;
 use IO::Async::Loop::IO_Poll;
 
@@ -44,7 +45,7 @@ $serverstream = "";
 
 wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
 
-is( $serverstream, $expect, 'serverstream after initial MSG_CALL' );
+is_hexstr( $serverstream, $expect, 'serverstream after initial MSG_CALL' );
 
 $S2->syswrite( "\x82" . "\0\0\0\x0c" .
                "\2" . "\1" . "\1" . "\x08" . "response" );
@@ -72,7 +73,7 @@ $serverstream = "";
 
 wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
 
-is( $serverstream, $expect, '$serverstream after response' );
+is_hexstr( $serverstream, $expect, '$serverstream after response' );
 
 package Testing::Stream;
 

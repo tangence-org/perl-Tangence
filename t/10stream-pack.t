@@ -3,6 +3,7 @@
 use strict;
 
 use Test::More tests => 39;
+use Test::HexString;
 
 use Tangence::Stream;
 
@@ -34,7 +35,7 @@ sub test_data
    $d = $s->pack_data( $args{data} );
 
    if( exists $args{stream} ) {
-      is( $d, $args{stream}, "pack_data $name" );
+      is_hexstr( $d, $args{stream}, "pack_data $name" );
    }
    else {
       ok( defined $d && !ref $d && length $d, "pack_data $name gives non-empty string" );
