@@ -53,7 +53,7 @@ use constant MSG_WATCH => 0x07;
 use constant MSG_UNWATCH => 0x08;
 # cancel a MSG_WATCH: $objid, $prop, $id -> ERROR / OK
 use constant MSG_UPDATE => 0x09;
-# notification of a property value change: $prop, $how, @value -> ERROR / OK
+# notification of a property value change: $objid, $prop, $how, @value -> ERROR / OK
 
 # Responses
 
