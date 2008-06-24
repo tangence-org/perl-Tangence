@@ -37,21 +37,21 @@ our @EXPORT = qw(
 # Requests
 
 use constant MSG_CALL => 0x01;
-# call a method: $objpath, $method, @args -> ERROR / RESULT
+# call a method: $objid, $method, @args -> ERROR / RESULT
 use constant MSG_SUBSCRIBE => 0x02;
-# subscribe to an event: $objpath, $event -> ERROR / SUBSCRIBED
+# subscribe to an event: $objid, $event -> ERROR / SUBSCRIBED
 use constant MSG_UNSUBSCRIBE => 0x03;
-# cancel a MSG_SUBSCRIBE: $objpath, $event, $id -> ERROR / OK
+# cancel a MSG_SUBSCRIBE: $objid, $event, $id -> ERROR / OK
 use constant MSG_EVENT => 0x04;
-# notification of an event: $objpath, $event, @args -> ERROR / OK
+# notification of an event: $objid, $event, @args -> ERROR / OK
 use constant MSG_GETPROP => 0x05;
-# get the value of a property: $objpath, $prop -> ERROR / RESULT
+# get the value of a property: $objid, $prop -> ERROR / RESULT
 use constant MSG_SETPROP => 0x06;
-# set the value of a property: $objpath, $prop, $value -> ERROR / OK
+# set the value of a property: $objid, $prop, $value -> ERROR / OK
 use constant MSG_WATCH => 0x07;
-# watch a property for changes: $objpath, $prop, $want_initial -> ERROR / WATCHING
+# watch a property for changes: $objid, $prop, $want_initial -> ERROR / WATCHING
 use constant MSG_UNWATCH => 0x08;
-# cancel a MSG_WATCH: $objpath, $prop, $id -> ERROR / OK
+# cancel a MSG_WATCH: $objid, $prop, $id -> ERROR / OK
 use constant MSG_UPDATE => 0x09;
 # notification of a property value change: $prop, $how, @value -> ERROR / OK
 
