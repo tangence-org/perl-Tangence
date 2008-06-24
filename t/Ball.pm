@@ -49,6 +49,7 @@ sub bounce
    my $self = shift;
    my ( $howhigh ) = @_;
    $self->fire_event( "bounced", $howhigh );
+   return "bouncing";
 }
 
 sub get_prop_colour
