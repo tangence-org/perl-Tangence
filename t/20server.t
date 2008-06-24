@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 9;
+use Test::More tests => 11;
 use Test::HexString;
 use IO::Async::Test;
 use IO::Async::Loop::IO_Poll;
@@ -110,6 +110,23 @@ $serverstream = "";
 wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'received property value after MSG_GETPROP' );
+
+# MSG_SETPROP
+$S2->syswrite( "\6" . "\0\0\0\x13" .
+               "\2" . "\3" . "\1" . "\x01" . "1" .
+                             "\1" . "\x06" . "colour" .
+                             "\1" . "\x04" . "blue" );
+
+$expect = "\x80" . "\0\0\0\1" .
+          "\0";
+
+$serverstream = "";
+
+wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
+
+is_hexstr( $serverstream, $expect, 'received OK after MSG_SETPROP' );
+
+is( $ball->get_prop_colour, "blue", '$ball->colour is now blue' );
 
 # MSG_WATCH
 $S2->syswrite( "\7" . "\0\0\0\x0f" .

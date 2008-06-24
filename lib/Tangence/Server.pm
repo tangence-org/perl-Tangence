@@ -234,6 +234,44 @@ sub handle_request_GETPROP
    }
 }
 
+sub handle_request_SETPROP
+{
+   my $self = shift;
+   my ( $token, $request ) = @_;
+
+   my ( $objid, $prop, $value ) = @$request;
+
+   my $registry = $self->{registry};
+
+   my $object = $registry->get_by_id( $objid );
+   unless( defined $object ) {
+      $self->respond( $token, [ MSG_ERROR, "No such object with id $objid" ] );
+      return;
+   }
+
+   my $pdef = $object->can_property( $prop );
+
+   unless( $pdef ) {
+      $self->respond( $token, [ MSG_ERROR, "Object does not have property $prop" ] );
+      return;
+   }
+
+   my $m = "set_prop_$prop";
+   unless( $object->can( $m ) ) {
+      $self->respond( $token, [ MSG_ERROR, "Object cannot set property $prop" ] );
+      return;
+   }
+
+   eval {
+      $object->$m( $value );
+
+      $self->respond( $token, [ MSG_OK ] );
+   };
+   if( $@ ) {
+      $self->respond( $token, [ MSG_ERROR, $@ ] );
+   }
+}
+
 sub handle_request_WATCH
 {
    my $self = shift;
