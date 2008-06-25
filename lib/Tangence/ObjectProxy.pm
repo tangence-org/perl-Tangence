@@ -70,6 +70,24 @@ sub get_property
    );
 }
 
+sub set_property
+{
+   my $self = shift;
+   my %args = @_;
+
+   my $property = delete $args{property} or croak "Need a property";
+
+   # value can quite legitimately be undef
+   exists $args{value} or croak "Need a value";
+   my $value = delete $args{value};
+
+   my $conn = $self->{conn};
+   $conn->request(
+      request => [ MSG_SETPROP, [ $self->id, $property, $value ] ],
+      %args
+   );
+}
+
 sub watch
 {
    my $self = shift;
