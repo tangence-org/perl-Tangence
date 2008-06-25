@@ -151,21 +151,6 @@ sub connect_unix
    );
 }
 
-sub call
-{
-   my $self = shift;
-   my %args = @_;
-
-   my $objid  = delete $args{objid};
-   my $method = delete $args{method} or croak "Need a method";
-   my $args   = delete $args{args};
-
-   $self->request(
-      request => [ MSG_CALL, [ $objid, $method, @$args ] ],
-      %args
-   );
-}
-
 sub subscribe
 {
    my $self = shift;
@@ -215,20 +200,6 @@ sub handle_request_EVENT
    else {
       print STDERR "Got spurious EVENT $event on object $objid: " . join( ", ", @args ) . "\n";
    }
-}
-
-sub get_property
-{
-   my $self = shift;
-   my %args = @_;
-
-   my $objid    = delete $args{objid};
-   my $property = delete $args{property} or croak "Need a property";
-
-   $self->request(
-      request => [ MSG_GETPROP, [ $objid, $property ] ],
-      %args
-   );
 }
 
 sub watch

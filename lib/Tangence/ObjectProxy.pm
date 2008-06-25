@@ -1,6 +1,9 @@
 package Tangence::ObjectProxy;
 
 use strict;
+use Carp;
+
+use Tangence::Constants;
 
 sub new
 {
@@ -34,10 +37,13 @@ sub call
    my $self = shift;
    my %args = @_;
 
+   my $method = delete $args{method} or croak "Need a method";
+   my $args   = delete $args{args};
+
    my $conn = $self->{conn};
-   $conn->call(
-      objid => $self->{id},
-      %args
+   $conn->request(
+      request => [ MSG_CALL, [ $self->id, $method, @$args ] ],
+      %args,
    );
 }
 
@@ -48,6 +54,20 @@ sub subscribe
 
    my $conn = $self->{conn};
    $conn->subscribe( $self->{id}, $event, $callback );
+}
+
+sub get_property
+{
+   my $self = shift;
+   my %args = @_;
+
+   my $property = delete $args{property} or croak "Need a property";
+
+   my $conn = $self->{conn};
+   $conn->request(
+      request => [ MSG_GETPROP, [ $self->id, $property ] ],
+      %args
+   );
 }
 
 sub watch

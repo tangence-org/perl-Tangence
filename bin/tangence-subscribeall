@@ -84,8 +84,9 @@ sub new_object
 
    print "Subscribing to events and properties on new object $objid\n";
 
-   $conn->call(
-      objid  => $objid,
+   my $obj = $conn->get_by_id( $objid );
+
+   $obj->call(
       method => "introspect",
       args   => [],
    
