@@ -214,7 +214,7 @@ sub watch
    $self->{watches}->{$objid}->{$prop} = [];
 
    $self->request(
-      request => [ MSG_WATCH, [ $objid, $prop, $want_initial ? 1 : 0 ] ],
+      request => [ MSG_WATCH, [ $objid, $prop, ! !$want_initial ] ],
 
       on_response => sub {
          my ( $response ) = @_;
