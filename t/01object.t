@@ -13,6 +13,7 @@ use t::Ball;
 
 my $ball = t::Ball->new(
    id => 1,
+   registry => "NOTYET", # Some true value. We know it isn't used in this test
    colour => "red",
 );
 

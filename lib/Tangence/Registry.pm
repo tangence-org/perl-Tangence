@@ -34,7 +34,9 @@ sub new
 
    my $self = $class->SUPER::new(
       id => $id,
+      registry => "BOOTSTRAP",
    );
+   $self->{registry} = $self;
    
    $self->{objects} = {
       $id => $self, # registry is object 0

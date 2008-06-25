@@ -45,9 +45,11 @@ sub new
    my %args = @_;
 
    defined( my $id = delete $args{id} ) or croak "Need a id";
+   my $registry = delete $args{registry} or croak "Need a registry";
 
    my $self = bless {
       id => $id,
+      registry => $registry,
 
       event_subs => {},   # {$event} => [ @cbs ]
 
@@ -73,6 +75,12 @@ sub describe
 {
    my $self = shift;
    return ref $self;
+}
+
+sub registry
+{
+   my $self = shift;
+   return $self->{registry};
 }
 
 sub can_method

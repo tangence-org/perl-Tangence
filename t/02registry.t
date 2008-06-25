@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 13;
+use Test::More tests => 14;
 
 use Tangence::Registry;
 use t::Ball;
@@ -35,6 +35,8 @@ ok( defined $ball, 'defined $ball' );
 ok( $ball->isa( "t::Ball" ), '$ball isa t::Ball' );
 
 is( $ball->id, "1", '$ball->id' );
+
+is( $ball->registry, $registry, '$ball->registry' );
 
 is_deeply( $registry->get_prop_objects, 
            { 0 => 'Tangence::Registry',
