@@ -55,7 +55,9 @@ wait_for { defined $response };
 is_deeply( $response, [ MSG_RESULT, "bouncing" ], 'response to MSG_CALL' );
 
 my $howhigh;
-$ballproxy->subscribe( bounced => sub {
+$ballproxy->subscribe_event(
+   event => "bounced",
+   on_fire => sub {
       my ( $obj, $event, @args ) = @_;
       $howhigh = $args[0];
 } );
@@ -142,7 +144,9 @@ $S2->syswrite( "\x80" . "\0\0\0\1" .
                "\0" );
 
 my $colour;
-$ballproxy->watch( "colour", sub { 
+$ballproxy->watch_property(
+   property => "colour",
+   on_change => sub { 
       my ( $obj, $prop, $how, @value ) = @_;
       $colour = $value[0];
 } );

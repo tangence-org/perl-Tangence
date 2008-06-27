@@ -47,10 +47,14 @@ sub call
    );
 }
 
-sub subscribe
+sub subscribe_event
 {
    my $self = shift;
-   my ( $event, $callback ) = @_;
+   my %args = @_;
+
+   my $event = delete $args{event} or croak "Need a event";
+   ref( my $callback = delete $args{on_fire} ) eq "CODE"
+      or croak "Expected 'on_fire' as a CODE ref";
 
    my $conn = $self->{conn};
    $conn->subscribe( $self->{id}, $event, $callback );
@@ -88,13 +92,17 @@ sub set_property
    );
 }
 
-sub watch
+sub watch_property
 {
    my $self = shift;
-   my ( $prop, $callback, $want_initial ) = @_;
+   my %args = @_;
+
+   my $property = delete $args{property} or croak "Need a property";
+   ref( my $callback = delete $args{on_change} ) eq "CODE"
+      or croak "Expected 'on_change' as a CODE ref";
 
    my $conn = $self->{conn};
-   $conn->watch( $self->{id}, $prop, $callback, $want_initial );
+   $conn->watch( $self->{id}, $property, $callback, $args{want_initial} );
 }
 
 1;
