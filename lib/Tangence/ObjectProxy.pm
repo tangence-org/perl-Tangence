@@ -84,10 +84,27 @@ sub get_property
 
    my $property = delete $args{property} or croak "Need a property";
 
+   ref( my $on_value = delete $args{on_value} ) eq "CODE" 
+      or croak "Expected 'on_value' as a CODE ref";
+   ref( my $on_error = delete $args{on_error} ) eq "CODE" 
+      or croak "Expected 'on_error' as a CODE ref";
+
    my $conn = $self->{conn};
    $conn->request(
       request => [ MSG_GETPROP, [ $self->id, $property ] ],
-      %args
+
+      on_response => sub {
+         my ( $code, $data ) = @{$_[0]};
+         if( $code == MSG_RESULT ) {
+            $on_value->( $data );
+         }
+         elsif( $code == MSG_ERROR ) {
+            $on_error->( $data );
+         }
+         else {
+            $on_error->( "Unexpected response code $code" );
+         }
+      },
    );
 }
 
@@ -98,6 +115,12 @@ sub set_property
 
    my $property = delete $args{property} or croak "Need a property";
 
+   my $on_done = delete $args{on_done};
+   !defined $on_done or ref $on_done eq "CODE"
+      or croak "Expected 'on_done' to be a CODE ref";
+   ref( my $on_error = delete $args{on_error} ) eq "CODE" 
+      or croak "Expected 'on_error' as a CODE ref";
+
    # value can quite legitimately be undef
    exists $args{value} or croak "Need a value";
    my $value = delete $args{value};
@@ -105,7 +128,19 @@ sub set_property
    my $conn = $self->{conn};
    $conn->request(
       request => [ MSG_SETPROP, [ $self->id, $property, $value ] ],
-      %args
+
+      on_response => sub {
+         my ( $code, $data ) = @{$_[0]};
+         if( $code == MSG_OK ) {
+            $on_done->() if $on_done;
+         }
+         elsif( $code == MSG_ERROR ) {
+            $on_error->( $data );
+         }
+         else {
+            $on_error->( "Unexpected response code $code" );
+         }
+      },
    );
 }
 

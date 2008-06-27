@@ -2,7 +2,6 @@
 
 use strict;
 
-use Tangence::Constants;
 use Tangence::Connection;
 
 use IO::Async 0.14;
@@ -31,9 +30,8 @@ if( !@ARGV ) {
       $obj->get_property(
          property => "objects",
 
-         on_response => sub {
-            my ( $response ) = @_;
-            my ( $type, $objshash ) = @$response;
+         on_value => sub {
+            my ( $objshash ) = @_;
 
             foreach my $id ( sort keys %$objshash ) {
                my $desc = $objshash->{$id};
@@ -41,6 +39,12 @@ if( !@ARGV ) {
                printf "%-6d: %s\n", $id, $desc;
             }
 
+            $loop->loop_stop;
+         },
+
+         on_error => sub {
+            my ( $message ) = @_;
+            print STDERR "Error: $message\n";
             $loop->loop_stop;
          },
       );
@@ -86,17 +90,15 @@ elsif( $ARGV[0] eq "-p" ) {
       $obj->get_property(
          property => $property,
 
-         on_response => sub {
-            my ( $response ) = @_;
-            my ( $type, $data ) = @$response;
+         on_value => sub {
+            my ( $value ) = @_;
+            print Data::Dump::dump( $value ) . "\n";
+            $loop->loop_stop;
+         },
 
-            if( $type == MSG_RESULT ) {
-               print Data::Dump::dump( $data ) . "\n";
-            }
-            elsif( $type == MSG_ERROR ) {
-               print $data . "\n";
-            }
-
+         on_error => sub {
+            my ( $message ) = @_;
+            print STDERR "Error: $message\n";
             $loop->loop_stop;
          },
       );

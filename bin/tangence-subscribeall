@@ -2,7 +2,6 @@
 
 use strict;
 
-use Tangence::Constants;
 use Tangence::Connection;
 
 use IO::Async 0.14;

@@ -99,11 +99,12 @@ wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK' );
 
-my $response;
+my $colour;
 
 $ballproxy->get_property(
    property => "colour",
-   on_response => sub { $response = shift },
+   on_value => sub { $colour = shift },
+   on_error  => sub { die "Test died early - $_[0]" },
 );
 
 # MSG_GETPROP
@@ -120,15 +121,14 @@ is_hexstr( $clientstream, $expect, 'client stream contains MSG_GETPROP' );
 $S2->syswrite( "\x82" . "\0\0\0\5" .
                "\1" . "\x03" . "red" );
 
-undef $response;
-wait_for { defined $response };
+wait_for { defined $colour };
 
-is_deeply( $response, [ MSG_RESULT, "red" ], 'response to MSG_GETPROP' );
+is( $colour, "red", '$colour is red' );
 
 $ballproxy->set_property(
    property => "colour",
    value    => "blue",
-   on_response => sub { $response = shift },
+   on_error => sub { die "Test died early - $_[0]" },
 );
 
 # MSG_SETPROP
@@ -146,7 +146,6 @@ is_hexstr( $clientstream, $expect, 'client stream contains MSG_SETPROP' );
 $S2->syswrite( "\x80" . "\0\0\0\1" .
                "\0" );
 
-my $colour;
 $ballproxy->watch_property(
    property => "colour",
    on_change => sub { 
@@ -181,6 +180,7 @@ $S2->syswrite( "\x09" . "\0\0\0\x17" .
                              "\1" . "\x01" . "1" .
                              "\1" . "\x05" . "green" );
 
+undef $colour;
 wait_for { defined $colour };
 
 is( $colour, "green", '$colour is green after MSG_UPDATE' );
