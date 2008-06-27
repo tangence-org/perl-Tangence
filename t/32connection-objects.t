@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 5;
+use Test::More tests => 4;
 use Test::HexString;
 use IO::Async::Test;
 use IO::Async::Loop::IO_Poll;
@@ -25,12 +25,15 @@ $loop->add( $conn );
 
 my $bagproxy = $conn->get_by_id("1");
 
-my $response;
+# We'll need to wait for a result, where the result is 'undef' later... To do
+# that neatly, we'll have an array that contains one element
+my @result;
 
 $bagproxy->call_method(
    method => "pull_ball",
    args   => [ "red" ],
-   on_response => sub { $response = shift },
+   on_result => sub { push @result, shift },
+   on_error  => sub { die "Test died early - $_[0]" },
 );
 
 my $expect;
@@ -50,17 +53,17 @@ is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL' );
 $S2->syswrite( "\x82" . "\0\0\0\5" .
                "\4" . "\0\0\0\2" );
 
-wait_for { defined $response };
+wait_for { @result };
 
-is( $response->[0], MSG_RESULT, 'response[0] is MSG_RESULT' );
-ok( ref $response->[1] && $response->[1]->isa( "Tangence::ObjectProxy" ), 'response[1] contains an ObjectProxy' );
+ok( ref $result[0] && $result[0]->isa( "Tangence::ObjectProxy" ), 'result contains an ObjectProxy' );
 
-my $ballproxy = $response->[1];
+my $ballproxy = $result[0];
 
 $bagproxy->call_method(
    method => "add_ball",
    args   => [ $ballproxy ],
-   on_response => sub { $response = shift },
+   on_result => sub { push @result, shift },
+   on_error  => sub { die "Test died early - $_[0]" },
 );
 
 # MSG_CALL
@@ -77,7 +80,7 @@ is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL with an Obje
 $S2->syswrite( "\x82" . "\0\0\0\1" .
                "\0" );
 
-undef $response;
-wait_for { defined $response };
+undef @result;
+wait_for { @result };
 
-is_deeply( $response, [ MSG_RESULT, undef ], 'response is MSG_RESULT' );
+is( $result[0], undef, 'result is undef' );

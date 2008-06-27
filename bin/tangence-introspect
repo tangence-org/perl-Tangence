@@ -59,17 +59,15 @@ elsif( $ARGV[0] eq "-i" ) {
          method  => "introspect",
          args    => [],
 
-         on_response => sub {
-            my ( $response ) = @_;
-            my ( $type, $data ) = @$response;
+         on_result => sub {
+            my ( $data ) = @_;
+            print Data::Dump::dump( $data ) . "\n";
+            $loop->loop_stop;
+         },
 
-            if( $type == MSG_RESULT ) {
-               print Data::Dump::dump( $data ) . "\n";
-            }
-            elsif( $type == MSG_ERROR ) {
-               print $data . "\n";
-            }
-
+         on_error => sub {
+            my ( $message ) = @_;
+            print STDERR "Error: $message\n";
             $loop->loop_stop;
          },
       );

@@ -40,10 +40,27 @@ sub call_method
    my $method = delete $args{method} or croak "Need a method";
    my $args   = delete $args{args};
 
+   ref( my $on_result = delete $args{on_result} ) eq "CODE" 
+      or croak "Expected 'on_result' as a CODE ref";
+   ref( my $on_error = delete $args{on_error} ) eq "CODE" 
+      or croak "Expected 'on_error' as a CODE ref";
+
    my $conn = $self->{conn};
    $conn->request(
       request => [ MSG_CALL, [ $self->id, $method, @$args ] ],
-      %args,
+
+      on_response => sub {
+         my ( $code, $data ) = @{$_[0]};
+         if( $code == MSG_RESULT ) {
+            $on_result->( $data );
+         }
+         elsif( $code == MSG_ERROR ) {
+            $on_error->( $data );
+         }
+         else {
+            $on_error->( "Unexpected response code $code" );
+         }
+      },
    );
 }
 

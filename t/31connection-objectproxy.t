@@ -25,12 +25,13 @@ $loop->add( $conn );
 
 my $ballproxy = $conn->get_by_id("1");
 
-my $response;
+my $result;
 
 $ballproxy->call_method(
    method => "bounce",
    args   => [ "20 metres" ],
-   on_response => sub { $response = shift },
+   on_result => sub { $result = shift },
+   on_error  => sub { die "Test died early - $_[0]" },
 );
 
 my $expect;
@@ -50,9 +51,9 @@ is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL' );
 $S2->syswrite( "\x82" . "\0\0\0\x0a" .
                "\1" . "\x08" . "bouncing" );
 
-wait_for { defined $response };
+wait_for { defined $result };
 
-is_deeply( $response, [ MSG_RESULT, "bouncing" ], 'response to MSG_CALL' );
+is( $result, "bouncing", 'result of MSG_CALL' );
 
 my $howhigh;
 $ballproxy->subscribe_event(
@@ -97,6 +98,8 @@ $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK' );
+
+my $response;
 
 $ballproxy->get_property(
    property => "colour",
