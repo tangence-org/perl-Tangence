@@ -55,7 +55,7 @@ elsif( $ARGV[0] eq "-i" ) {
    $on_connected = sub {
       my $obj = $conn->get_by_id( $objid );
 
-      $obj->call(
+      $obj->call_method(
          method  => "introspect",
          args    => [],
 

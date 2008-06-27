@@ -32,7 +32,7 @@ sub id
    return $self->{id};
 }
 
-sub call
+sub call_method
 {
    my $self = shift;
    my %args = @_;

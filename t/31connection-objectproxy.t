@@ -27,7 +27,7 @@ my $ballproxy = $conn->get_by_id("1");
 
 my $response;
 
-$ballproxy->call(
+$ballproxy->call_method(
    method => "bounce",
    args   => [ "20 metres" ],
    on_response => sub { $response = shift },

@@ -27,7 +27,7 @@ my $bagproxy = $conn->get_by_id("1");
 
 my $response;
 
-$bagproxy->call(
+$bagproxy->call_method(
    method => "pull_ball",
    args   => [ "red" ],
    on_response => sub { $response = shift },
@@ -57,7 +57,7 @@ ok( ref $response->[1] && $response->[1]->isa( "Tangence::ObjectProxy" ), 'respo
 
 my $ballproxy = $response->[1];
 
-$bagproxy->call(
+$bagproxy->call_method(
    method => "add_ball",
    args   => [ $ballproxy ],
    on_response => sub { $response = shift },
