@@ -26,7 +26,7 @@ my $on_connected;
 
 if( !@ARGV ) {
    $on_connected = sub {
-      my $obj = $conn->get_by_id( $objid );
+      my $obj = $conn->get_by_id( 0 );
 
       $obj->get_property(
          property => "objects",
