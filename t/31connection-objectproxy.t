@@ -13,7 +13,6 @@ use Socket qw( AF_UNIX SOCK_STREAM PF_UNSPEC );
 use Tangence::Constants;
 use Tangence::Registry;
 use Tangence::Connection;
-use t::Ball;
 
 my $loop = IO::Async::Loop::IO_Poll->new();
 testing_loop( $loop );
