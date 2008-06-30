@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 10;
+use Test::More tests => 12;
 use Test::HexString;
 use IO::Async::Test;
 use IO::Async::Loop::IO_Poll;
@@ -54,6 +54,33 @@ $S2->syswrite( "\x82" . "\0\0\0\x0a" .
 wait_for { defined $result };
 
 is( $result, "bouncing", 'result of MSG_CALL' );
+
+my $error;
+$ballproxy->call_method(
+   method => "no_such_method",
+   args   => [ 123 ],
+   on_result => sub { die "Call returned a result - $_[0]" },
+   on_error  => sub { $error = shift; },
+);
+
+# MSG_CALL
+$expect = "\1" . "\0\0\0\x1a" .
+          "\2" . "\3" . "\1" . "\x01" . "1" .
+                        "\1" . "\x0e" . "no_such_method" .
+                        "\1" . "\x03" . "123";
+
+$clientstream = "";
+wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+
+is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL' );
+
+# MSG_ERROR
+$S2->syswrite( "\x81" . "\0\0\0\x21" .
+               "\1" . "\x1f" . "No such method 'no_such_method'" );
+
+wait_for { defined $error };
+
+is( $error, "No such method 'no_such_method'", '$error after MSG_ERROR response' );
 
 my $howhigh;
 $ballproxy->subscribe_event(
