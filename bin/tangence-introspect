@@ -17,6 +17,11 @@ my $conn = Tangence::Connection->new(
       print STDERR "Connection closed\n";
       exit(0);
    },
+   on_error => sub {
+      my ( $message ) = @_;
+      print STDERR "Error: $message\n";
+      $loop->loop_stop;
+   },
 );
 
 $loop->add( $conn );
@@ -42,11 +47,6 @@ if( !@ARGV ) {
             $loop->loop_stop;
          },
 
-         on_error => sub {
-            my ( $message ) = @_;
-            print STDERR "Error: $message\n";
-            $loop->loop_stop;
-         },
       );
    };
 }
@@ -68,12 +68,6 @@ elsif( $ARGV[0] eq "-i" ) {
             print Data::Dump::dump( $data ) . "\n";
             $loop->loop_stop;
          },
-
-         on_error => sub {
-            my ( $message ) = @_;
-            print STDERR "Error: $message\n";
-            $loop->loop_stop;
-         },
       );
    };
 }
@@ -93,12 +87,6 @@ elsif( $ARGV[0] eq "-p" ) {
          on_value => sub {
             my ( $value ) = @_;
             print Data::Dump::dump( $value ) . "\n";
-            $loop->loop_stop;
-         },
-
-         on_error => sub {
-            my ( $message ) = @_;
-            print STDERR "Error: $message\n";
             $loop->loop_stop;
          },
       );

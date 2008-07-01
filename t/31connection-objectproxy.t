@@ -20,7 +20,10 @@ testing_loop( $loop );
 ( my $S1, my $S2 ) = IO::Socket::UNIX->socketpair( AF_UNIX, SOCK_STREAM, PF_UNSPEC ) or
    die "Cannot create socket pair - $!";
 
-my $conn = Tangence::Connection->new( handle => $S1 );
+my $conn = Tangence::Connection->new(
+   handle => $S1,
+   on_error => sub { die "Test died early - $_[0]" },
+);
 $loop->add( $conn );
 
 my $ballproxy = $conn->get_by_id("1");
@@ -31,7 +34,6 @@ $ballproxy->call_method(
    method => "bounce",
    args   => [ "20 metres" ],
    on_result => sub { $result = shift },
-   on_error  => sub { die "Test died early - $_[0]" },
 );
 
 my $expect;
@@ -131,7 +133,6 @@ my $colour;
 $ballproxy->get_property(
    property => "colour",
    on_value => sub { $colour = shift },
-   on_error  => sub { die "Test died early - $_[0]" },
 );
 
 # MSG_GETPROP
@@ -155,7 +156,6 @@ is( $colour, "red", '$colour is red' );
 $ballproxy->set_property(
    property => "colour",
    value    => "blue",
-   on_error => sub { die "Test died early - $_[0]" },
 );
 
 # MSG_SETPROP

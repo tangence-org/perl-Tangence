@@ -20,7 +20,10 @@ testing_loop( $loop );
 ( my $S1, my $S2 ) = IO::Socket::UNIX->socketpair( AF_UNIX, SOCK_STREAM, PF_UNSPEC ) or
    die "Cannot create socket pair - $!";
 
-my $conn = Tangence::Connection->new( handle => $S1 );
+my $conn = Tangence::Connection->new(
+   handle => $S1,
+   on_error => sub { die "Test died early - $_[0]" },
+);
 $loop->add( $conn );
 
 my $bagproxy = $conn->get_by_id("1");
@@ -33,7 +36,6 @@ $bagproxy->call_method(
    method => "pull_ball",
    args   => [ "red" ],
    on_result => sub { push @result, shift },
-   on_error  => sub { die "Test died early - $_[0]" },
 );
 
 my $expect;
@@ -63,7 +65,6 @@ $bagproxy->call_method(
    method => "add_ball",
    args   => [ $ballproxy ],
    on_result => sub { push @result, shift },
-   on_error  => sub { die "Test died early - $_[0]" },
 );
 
 # MSG_CALL

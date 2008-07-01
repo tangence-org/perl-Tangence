@@ -13,6 +13,8 @@ sub new
    my $self = bless {
       conn => $args{conn},
       id   => $args{id},
+
+      on_error => $args{on_error},
    }, $class;
 
    return $self;
@@ -42,8 +44,9 @@ sub call_method
 
    ref( my $on_result = delete $args{on_result} ) eq "CODE" 
       or croak "Expected 'on_result' as a CODE ref";
-   ref( my $on_error = delete $args{on_error} ) eq "CODE" 
-      or croak "Expected 'on_error' as a CODE ref";
+
+   my $on_error = delete $args{on_error} || $self->{on_error};
+   ref $on_error eq "CODE" or croak "Expected 'on_error' as a CODE ref";
 
    my $conn = $self->{conn};
    $conn->request(
@@ -86,8 +89,9 @@ sub get_property
 
    ref( my $on_value = delete $args{on_value} ) eq "CODE" 
       or croak "Expected 'on_value' as a CODE ref";
-   ref( my $on_error = delete $args{on_error} ) eq "CODE" 
-      or croak "Expected 'on_error' as a CODE ref";
+
+   my $on_error = delete $args{on_error} || $self->{on_error};
+   ref $on_error eq "CODE" or croak "Expected 'on_error' as a CODE ref";
 
    my $conn = $self->{conn};
    $conn->request(
@@ -118,8 +122,9 @@ sub set_property
    my $on_done = delete $args{on_done};
    !defined $on_done or ref $on_done eq "CODE"
       or croak "Expected 'on_done' to be a CODE ref";
-   ref( my $on_error = delete $args{on_error} ) eq "CODE" 
-      or croak "Expected 'on_error' as a CODE ref";
+
+   my $on_error = delete $args{on_error} || $self->{on_error};
+   ref $on_error eq "CODE" or croak "Expected 'on_error' as a CODE ref";
 
    # value can quite legitimately be undef
    exists $args{value} or croak "Need a value";

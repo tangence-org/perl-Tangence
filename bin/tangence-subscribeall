@@ -50,6 +50,10 @@ my $conn = Tangence::Connection->new(
       print STDERR "Connection closed\n";
       exit(0);
    },
+   on_error => sub {
+      my ( $message ) = @_;
+      print STDERR "Error: $message\n";
+   },
 );
 
 $loop->add( $conn );
@@ -115,11 +119,6 @@ sub new_object
                      undef;
             $conn->watch( $objid, $prop, $cb, 1 ) if defined $cb;
          }
-      },
-
-      on_error => sub {
-         my ( $message ) = @_;
-         print STDERR "Error: $message\n";
       },
    );
 }
