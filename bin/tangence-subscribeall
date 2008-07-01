@@ -3,6 +3,7 @@
 use strict;
 
 use Tangence::Connection;
+use Tangence::Constants;
 
 use IO::Async 0.14;
 use IO::Async::Loop::IO_Ppoll;
