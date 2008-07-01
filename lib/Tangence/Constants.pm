@@ -24,6 +24,7 @@ our @EXPORT = qw(
    DIM_HASH
    DIM_ARRAY
    DIM_QUEUE
+   DIM_OBJSET
 
    CHANGE_SET
    CHANGE_ADD
@@ -74,11 +75,12 @@ use constant DIM_SCALAR => 1;
 use constant DIM_HASH   => 2;
 use constant DIM_ARRAY  => 3;
 use constant DIM_QUEUE  => 4; # top-gravity list;
+use constant DIM_OBJSET => 5; # set of objects (implemented like id-keyed list in no particular order)
 
 # Property change types
 use constant CHANGE_SET   => 1; # ALL: New value follows
-use constant CHANGE_ADD   => 2; # HASH: New key/value pair follows
-use constant CHANGE_DEL   => 3; # HASH: Deleted key follows
+use constant CHANGE_ADD   => 2; # HASH: New key/value pair follows, OBJSET: New id follows
+use constant CHANGE_DEL   => 3; # HASH: Deleted key follows, OBJSET: Deleted id follows
 use constant CHANGE_PUSH  => 4; # ARRAY/QUEUE: New members follow in a list
 use constant CHANGE_SHIFT => 5; # QUEUE: Count of old elements to remove
 

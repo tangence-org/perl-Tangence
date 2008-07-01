@@ -116,6 +116,7 @@ sub new_object
                      $dim == DIM_HASH   ? \&prop_hash_changed :
                      $dim == DIM_ARRAY  ? \&prop_array_changed :
                      $dim == DIM_QUEUE  ? \&prop_array_changed :
+                     $dim == DIM_OBJSET ? \&prop_objset_changed :
                      undef;
             $conn->watch( $objid, $prop, $cb, 1 ) if defined $cb;
          }
@@ -180,6 +181,28 @@ sub prop_array_changed
    elsif( $how == CHANGE_SHIFT ) {
       print "PROP SHIFT $objid [$prop]\n";
       print "  shift x $value[0]\n";
+   }
+   else {
+      print "PROP UNKNOWN($how)?? $objid [$prop]\n";
+   }
+}
+
+sub prop_objset_changed
+{
+   my ( $objid, $prop, $how, @value ) = @_;
+
+   if( $how == CHANGE_SET ) {
+      print "PROP SET $objid [$prop]\n";
+      my @objs = @{ $value[0] };
+      print "  " . $_->id . " = " . Data::Dump::dump($_) . "\n" for @objs;
+   }
+   elsif( $how == CHANGE_ADD ) {
+      print "PROP ADD $objid [$prop]\n";
+      print "  " . $value[0]->id . " = " . Data::Dump::dump($value[0]) . "\n";
+   }
+   elsif( $how == CHANGE_DEL ) {
+      print "PROP DEL $objid [$prop]\n";
+      print "  $value[0]\n";
    }
    else {
       print "PROP UNKNOWN($how)?? $objid [$prop]\n";
