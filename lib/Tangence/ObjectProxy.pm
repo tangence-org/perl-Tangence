@@ -76,8 +76,18 @@ sub subscribe_event
    ref( my $callback = delete $args{on_fire} ) eq "CODE"
       or croak "Expected 'on_fire' as a CODE ref";
 
+   if( my $cbs = $self->{subscriptions}->{$event} ) {
+      push @$cbs, $callback;
+      return;
+   }
+
+   my @cbs = ( $callback );
+   $self->{subscriptions}->{$event} = \@cbs;
+
    my $conn = $self->{conn};
-   $conn->subscribe( $self->{id}, $event, $callback );
+   $conn->subscribe( $self->{id}, $event,
+                     sub { foreach my $cb ( @cbs ) { $cb->( @_ ) } }
+                   );
 }
 
 sub get_property
@@ -157,9 +167,33 @@ sub watch_property
    my $property = delete $args{property} or croak "Need a property";
    ref( my $callback = delete $args{on_change} ) eq "CODE"
       or croak "Expected 'on_change' as a CODE ref";
+   my $want_initial = delete $args{want_initial};
+
+   if( my $cbs = $self->{watches}->{$property} ) {
+      if( $want_initial ) {
+         $self->get_property(
+            property => $property,
+            on_value => sub {
+               $callback->( $_[0], $_[1], CHANGE_SET, $_[2] );
+               push @$cbs, $callback;
+            },
+         );
+      }
+      else {
+         push @$cbs, $callback;
+      }
+
+      return;
+   }
+
+   my @cbs = ( $callback );
+   $self->{watches}->{$property} = \@cbs;
 
    my $conn = $self->{conn};
-   $conn->watch( $self->{id}, $property, $callback, $args{want_initial} );
+   $conn->watch( $self->{id}, $property, 
+                 sub { foreach my $cb ( @cbs ) { $cb->( @_ ) } },
+                 $want_initial
+               );
 }
 
 1;

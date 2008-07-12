@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 12;
+use Test::More tests => 21;
 use Test::HexString;
 use IO::Async::Test;
 use IO::Async::Loop::IO_Poll;
@@ -128,6 +128,34 @@ wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK' );
 
+my $bounced = 0;
+$ballproxy->subscribe_event(
+   event => "bounced",
+   on_fire => sub { $bounced = 1 }
+);
+
+# MSG_EVENT
+$S2->syswrite( "\4" . "\0\0\0\x18" .
+               "\2" . "\3" . "\1" . "\x01" . "1" .
+                             "\1" . "\x07" . "bounced" .
+                             "\1" . "\x08" . "5 metres" );
+
+$clientstream = "";
+wait_for_stream { $bounced } $S2 => $clientstream;
+
+is( $howhigh, "5 metres", '$howhigh is orange after second MSG_EVENT' );
+is( $bounced, 1, '$bounced is true after second MSG_EVENT' );
+
+is_hexstr( $clientstream, "", '$client stream is empty after second subscribe' );
+
+# MSG_OK
+$expect = "\x80" . "\0\0\0\1" .
+          "\0";
+
+$clientstream = "";
+wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+
+is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK' );
 my $colour;
 
 $ballproxy->get_property(
@@ -195,12 +223,10 @@ is_hexstr( $clientstream, $expect, 'client stream contains MSG_WATCH' );
 $S2->syswrite( "\x84" . "\0\0\0\x0a" .
                "\1" . "\x08" . "12345678" );
 
-
-
 # We can't easily wait_for anything here... so we'll get on with the next
 # thing and check both afterwards
 
-# MSG_EVENT
+# MSG_UPDATE
 $S2->syswrite( "\x09" . "\0\0\0\x17" .
                "\2" . "\4" . "\1" . "\x01" . "1" .
                              "\1" . "\x06" . "colour" .
@@ -211,3 +237,42 @@ undef $colour;
 wait_for { defined $colour };
 
 is( $colour, "green", '$colour is green after MSG_UPDATE' );
+
+# MSG_OK
+$expect = "\x80" . "\0\0\0\1" .
+          "\0";
+
+$clientstream = "";
+wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+
+is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK' );
+
+my $colourchanged = 0;
+$ballproxy->watch_property(
+   property => "colour",
+   on_change => sub { $colourchanged = 1 },
+);
+
+# MSG_UPDATE
+$S2->syswrite( "\x09" . "\0\0\0\x18" .
+               "\2" . "\4" . "\1" . "\x01" . "1" .
+                             "\1" . "\x06" . "colour" .
+                             "\1" . "\x01" . "1" .
+                             "\1" . "\x06" . "orange" );
+
+$clientstream = "";
+wait_for_stream { $colourchanged } $S2 => $clientstream;
+
+is( $colour, "orange", '$colour is orange after second MSG_UPDATE' );
+is( $colourchanged, 1, '$colourchanged is true after second MSG_UPDATE' );
+
+is_hexstr( $clientstream, "", '$client stream is empty after second watch' );
+
+# MSG_OK
+$expect = "\x80" . "\0\0\0\1" .
+          "\0";
+
+$clientstream = "";
+wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+
+is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK' );
