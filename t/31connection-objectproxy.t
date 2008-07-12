@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 21;
+use Test::More tests => 22;
 use Test::HexString;
 use IO::Async::Test;
 use IO::Async::Loop::IO_Poll;
@@ -248,10 +248,33 @@ wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK' );
 
 my $colourchanged = 0;
+my $secondcolour;
 $ballproxy->watch_property(
    property => "colour",
-   on_change => sub { $colourchanged = 1 },
+   on_change => sub {
+      ( undef, undef, undef, $secondcolour ) = @_;
+      $colourchanged = 1
+   },
+   want_initial => 1,
 );
+
+# MSG_GETPROP
+$expect = "\5" . "\0\0\0\x0d" .
+          "\2" . "\2" . "\1" . "\x01" . "1" .
+                        "\1" . "\x06" . "colour";
+
+$clientstream = "";
+wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+
+is_hexstr( $clientstream, $expect, 'client stream contains MSG_GETPROP' );
+
+# MSG_RESULT
+$S2->syswrite( "\x82" . "\0\0\0\7" .
+               "\1" . "\x05" . "green" );
+
+wait_for { $colourchanged };
+
+is( $secondcolour, "green", '$secondcolour is green after second watch' );
 
 # MSG_UPDATE
 $S2->syswrite( "\x09" . "\0\0\0\x18" .
@@ -260,13 +283,11 @@ $S2->syswrite( "\x09" . "\0\0\0\x18" .
                              "\1" . "\x01" . "1" .
                              "\1" . "\x06" . "orange" );
 
-$clientstream = "";
-wait_for_stream { $colourchanged } $S2 => $clientstream;
+$colourchanged = 0;
+wait_for { $colourchanged };
 
 is( $colour, "orange", '$colour is orange after second MSG_UPDATE' );
 is( $colourchanged, 1, '$colourchanged is true after second MSG_UPDATE' );
-
-is_hexstr( $clientstream, "", '$client stream is empty after second watch' );
 
 # MSG_OK
 $expect = "\x80" . "\0\0\0\1" .

@@ -174,7 +174,7 @@ sub watch_property
          $self->get_property(
             property => $property,
             on_value => sub {
-               $callback->( $_[0], $_[1], CHANGE_SET, $_[2] );
+               $callback->( $self->{id}, $property, CHANGE_SET, $_[0] );
                push @$cbs, $callback;
             },
          );
