@@ -8,6 +8,8 @@ use Tangence::Constants;
 
 use Carp;
 
+use Encode qw( encode_utf8 decode_utf8 );
+
 # A map from request types to method names
 # Can't use => operator because it would quote the barewords on the left, but
 # we want them as constants
@@ -118,7 +120,8 @@ sub pack_data
       return pack( "c", 0 );
    }
    elsif( !ref $d ) {
-      return "\x01" . pack_num( length($d) ) . $d;
+      my $octets = encode_utf8( $d );
+      return "\x01" . pack_num( length($octets) ) . $octets;
    }
    elsif( ref $d eq "ARRAY" ) {
       return "\x02" . pack_num( scalar @$d ) . join( "", map { $self->pack_data( $_ ) } @$d );
@@ -147,7 +150,8 @@ sub unpack_data
    }
    elsif( $t == 1 ) {
       my ( $len ) = unpack_num( $_[0] );
-      return substr( $_[0], 0, $len, "" );
+      my $octets = substr( $_[0], 0, $len, "" );
+      return decode_utf8( $octets );
    }
    elsif( $t == 2 ) {
       my ( $count ) = unpack_num( $_[0] );
