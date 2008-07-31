@@ -39,11 +39,11 @@ sub new
       on_request => sub {
          my ( $self, $token, $req ) = @_;
 
-         my ( $type, $data ) = @$req;
+         my ( $type, @data ) = @$req;
 
          if( my $method = $REQ_METHOD{$type} ) {
             if( $self->can( $method ) ) {
-               $self->$method( $token, $data );
+               $self->$method( $token, @data );
             }
             else {
                $self->respond( $token, [ MSG_ERROR, sprintf( "Cannot respond to request type 0x%02x", $type ) ] );
@@ -63,9 +63,10 @@ sub marshall_request
    my $self = shift;
    my ( $req ) = @_;
 
-   my ( $type, $data ) = @$req;
+   my ( $type, @data ) = @$req;
 
-   my $record = $self->pack_data( $data );
+   my $record = "";
+   $record .= $self->pack_data( $_ ) for @data;
 
    return pack( "CNa*", $type, length($record), $record );
 }
@@ -75,9 +76,10 @@ sub marshall_response
    my $self = shift;
    my ( $resp ) = @_;
 
-   my ( $type, $data ) = @$resp;
+   my ( $type, @data ) = @$resp;
 
-   my $record = $self->pack_data( $data );
+   my $record = "";
+   $record .= $self->pack_data( $_ ) for @data;
 
    return pack( "CNa*", $type, length($record), $record );
 }
@@ -192,13 +194,16 @@ sub on_read
    substr( $$buffref, 0, 5, "" );
    my $record = substr( $$buffref, 0, $len, "" );
 
-   my $data = $self->unpack_data( $record );
+   my @data;
+   while( length $record ) {
+      push @data, $self->unpack_data( $record );
+   }
 
    if( $type < 0x80 ) {
-      $self->incoming_request( [ $type, $data ] );
+      $self->incoming_request( [ $type, @data ] );
    }
    else {
-      $self->incoming_response( [ $type, $data ] );
+      $self->incoming_response( [ $type, @data ] );
    }
 
    return 1;

@@ -39,10 +39,10 @@ $ballproxy->call_method(
 my $expect;
 
 # MSG_CALL
-$expect = "\1" . "\0\0\0\x18" .
-          "\2" . "\3" . "\1" . "\x01" . "1" .
-                        "\1" . "\x06" . "bounce" .
-                        "\1" . "\x09" . "20 metres";
+$expect = "\1" . "\0\0\0\x16" .
+          "\1" . "\x01" . "1" .
+          "\1" . "\x06" . "bounce" .
+          "\1" . "\x09" . "20 metres";
 
 my $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
@@ -66,10 +66,10 @@ $ballproxy->call_method(
 );
 
 # MSG_CALL
-$expect = "\1" . "\0\0\0\x1a" .
-          "\2" . "\3" . "\1" . "\x01" . "1" .
-                        "\1" . "\x0e" . "no_such_method" .
-                        "\1" . "\x03" . "123";
+$expect = "\1" . "\0\0\0\x18" .
+          "\1" . "\x01" . "1" .
+          "\1" . "\x0e" . "no_such_method" .
+          "\1" . "\x03" . "123";
 
 $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
@@ -93,9 +93,9 @@ $ballproxy->subscribe_event(
 } );
 
 # MSG_SUBSCRIBE
-$expect = "\2" . "\0\0\0\x0e" .
-          "\2" . "\2" . "\1" . "\x01" . "1" .
-                        "\1" . "\x07" . "bounced";
+$expect = "\2" . "\0\0\0\x0c" .
+          "\1" . "\x01" . "1" .
+          "\1" . "\x07" . "bounced";
 
 $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
@@ -103,25 +103,23 @@ wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_SUBSCRIBE' );
 
 # MSG_SUBSCRIBED
-$S2->syswrite( "\x83" . "\0\0\0\1" .
-               "\0" );
+$S2->syswrite( "\x83" . "\0\0\0\0" );
 
 # We can't easily wait_for anything here... so we'll get on with the next
 # thing and check both afterwards
 
 # MSG_EVENT
-$S2->syswrite( "\4" . "\0\0\0\x19" .
-               "\2" . "\3" . "\1" . "\x01" . "1" .
-                             "\1" . "\x07" . "bounced" .
-                             "\1" . "\x09" . "10 metres" );
+$S2->syswrite( "\4" . "\0\0\0\x17" .
+               "\1" . "\x01" . "1" .
+               "\1" . "\x07" . "bounced" .
+               "\1" . "\x09" . "10 metres" );
 
 wait_for { defined $howhigh };
 
 is( $howhigh, "10 metres", '$howhigh is 10 metres after MSG_EVENT' );
 
 # Check it said MSG_OK
-$expect = "\x80" . "\0\0\0\1" .
-          "\0";
+$expect = "\x80" . "\0\0\0\0";
 
 $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
@@ -135,10 +133,10 @@ $ballproxy->subscribe_event(
 );
 
 # MSG_EVENT
-$S2->syswrite( "\4" . "\0\0\0\x18" .
-               "\2" . "\3" . "\1" . "\x01" . "1" .
-                             "\1" . "\x07" . "bounced" .
-                             "\1" . "\x08" . "5 metres" );
+$S2->syswrite( "\4" . "\0\0\0\x16" .
+               "\1" . "\x01" . "1" .
+               "\1" . "\x07" . "bounced" .
+               "\1" . "\x08" . "5 metres" );
 
 $clientstream = "";
 wait_for_stream { $bounced } $S2 => $clientstream;
@@ -149,8 +147,7 @@ is( $bounced, 1, '$bounced is true after second MSG_EVENT' );
 is_hexstr( $clientstream, "", '$client stream is empty after second subscribe' );
 
 # MSG_OK
-$expect = "\x80" . "\0\0\0\1" .
-          "\0";
+$expect = "\x80" . "\0\0\0\0";
 
 $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
@@ -164,9 +161,9 @@ $ballproxy->get_property(
 );
 
 # MSG_GETPROP
-$expect = "\5" . "\0\0\0\x0d" .
-          "\2" . "\2" . "\1" . "\x01" . "1" .
-                        "\1" . "\x06" . "colour";
+$expect = "\5" . "\0\0\0\x0b" .
+          "\1" . "\x01" . "1" .
+          "\1" . "\x06" . "colour";
 
 $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
@@ -187,10 +184,10 @@ $ballproxy->set_property(
 );
 
 # MSG_SETPROP
-$expect = "\6" . "\0\0\0\x13" .
-          "\2" . "\3" . "\1" . "\x01" . "1" .
-                        "\1" . "\x06" . "colour" .
-                        "\1" . "\x04" . "blue";
+$expect = "\6" . "\0\0\0\x11" .
+          "\1" . "\x01" . "1" .
+          "\1" . "\x06" . "colour" .
+          "\1" . "\x04" . "blue";
 
 $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
@@ -198,8 +195,7 @@ wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_SETPROP' );
 
 # MSG_OK
-$S2->syswrite( "\x80" . "\0\0\0\1" .
-               "\0" );
+$S2->syswrite( "\x80" . "\0\0\0\0" );
 
 $ballproxy->watch_property(
    property => "colour",
@@ -209,10 +205,10 @@ $ballproxy->watch_property(
 } );
 
 # MSG_WATCH
-$expect = "\7" . "\0\0\0\x0f" .
-          "\2" . "\3" . "\1" . "\x01" . "1" .
-                        "\1" . "\x06" . "colour" .
-                        "\1" . "\x00";
+$expect = "\7" . "\0\0\0\x0d" .
+          "\1" . "\x01" . "1" .
+          "\1" . "\x06" . "colour" .
+          "\1" . "\x00";
 
 $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
@@ -220,18 +216,17 @@ wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_WATCH' );
 
 # MSG_WATCHING
-$S2->syswrite( "\x84" . "\0\0\0\1" .
-               "\0" );
+$S2->syswrite( "\x84" . "\0\0\0\0" );
 
 # We can't easily wait_for anything here... so we'll get on with the next
 # thing and check both afterwards
 
 # MSG_UPDATE
-$S2->syswrite( "\x09" . "\0\0\0\x17" .
-               "\2" . "\4" . "\1" . "\x01" . "1" .
-                             "\1" . "\x06" . "colour" .
-                             "\1" . "\x01" . "1" .
-                             "\1" . "\x05" . "green" );
+$S2->syswrite( "\x09" . "\0\0\0\x15" .
+               "\1" . "\x01" . "1" .
+               "\1" . "\x06" . "colour" .
+               "\1" . "\x01" . "1" .
+               "\1" . "\x05" . "green" );
 
 undef $colour;
 wait_for { defined $colour };
@@ -239,8 +234,7 @@ wait_for { defined $colour };
 is( $colour, "green", '$colour is green after MSG_UPDATE' );
 
 # MSG_OK
-$expect = "\x80" . "\0\0\0\1" .
-          "\0";
+$expect = "\x80" . "\0\0\0\0";
 
 $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
@@ -259,9 +253,9 @@ $ballproxy->watch_property(
 );
 
 # MSG_GETPROP
-$expect = "\5" . "\0\0\0\x0d" .
-          "\2" . "\2" . "\1" . "\x01" . "1" .
-                        "\1" . "\x06" . "colour";
+$expect = "\5" . "\0\0\0\x0b" .
+          "\1" . "\x01" . "1" .
+          "\1" . "\x06" . "colour";
 
 $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
@@ -277,11 +271,11 @@ wait_for { $colourchanged };
 is( $secondcolour, "green", '$secondcolour is green after second watch' );
 
 # MSG_UPDATE
-$S2->syswrite( "\x09" . "\0\0\0\x18" .
-               "\2" . "\4" . "\1" . "\x01" . "1" .
-                             "\1" . "\x06" . "colour" .
-                             "\1" . "\x01" . "1" .
-                             "\1" . "\x06" . "orange" );
+$S2->syswrite( "\x09" . "\0\0\0\x16" .
+               "\1" . "\x01" . "1" .
+               "\1" . "\x06" . "colour" .
+               "\1" . "\x01" . "1" .
+               "\1" . "\x06" . "orange" );
 
 $colourchanged = 0;
 wait_for { $colourchanged };
@@ -290,8 +284,7 @@ is( $colour, "orange", '$colour is orange after second MSG_UPDATE' );
 is( $colourchanged, 1, '$colourchanged is true after second MSG_UPDATE' );
 
 # MSG_OK
-$expect = "\x80" . "\0\0\0\1" .
-          "\0";
+$expect = "\x80" . "\0\0\0\0";
 
 $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;

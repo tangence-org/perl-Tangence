@@ -41,10 +41,10 @@ $ball->subscribe_event( bounced => sub {
 } );
 
 # MSG_CALL
-$S2->syswrite( "\1" . "\0\0\0\x18" .
-               "\2" . "\3" . "\1" . "\x01" . "1" .
-                             "\1" . "\x06" . "bounce" .
-                             "\1" . "\x09" . "20 metres" );
+$S2->syswrite( "\1" . "\0\0\0\x16" .
+               "\1" . "\x01" . "1" .
+               "\1" . "\x06" . "bounce" .
+               "\1" . "\x09" . "20 metres" );
 
 wait_for { defined $howhigh };
 
@@ -63,12 +63,11 @@ wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
 is_hexstr( $serverstream, $expect, 'serverstream after response to CALL' );
 
 # MSG_SUBSCRIBE
-$S2->syswrite( "\2" . "\0\0\0\x0e" .
-               "\2" . "\2" . "\1" . "\x01" . "1" .
-                             "\1" . "\x07" . "bounced" );
+$S2->syswrite( "\2" . "\0\0\0\x0c" .
+               "\1" . "\x01" . "1" .
+               "\1" . "\x07" . "bounced" );
 
-$expect = "\x83" . "\0\0\0\1" .
-          "\0";
+$expect = "\x83" . "\0\0\0\0";
 
 $serverstream = "";
 
@@ -78,10 +77,10 @@ is_hexstr( $serverstream, $expect, 'received MSG_SUBSCRIBED response' );
 
 $ball->bounce( "10 metres" );
 
-$expect = "\4" . "\0\0\0\x19" .
-                 "\2" . "\3" . "\1" . "\x01" . "1" .
-                 "\1" . "\x07" . "bounced" .
-                 "\1" . "\x09" . "10 metres";
+$expect = "\4" . "\0\0\0\x17" .
+          "\1" . "\x01" . "1" .
+          "\1" . "\x07" . "bounced" .
+          "\1" . "\x09" . "10 metres";
 
 $serverstream = "";
 
@@ -90,12 +89,12 @@ wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
 is_hexstr( $serverstream, $expect, 'received MSG_EVENT' );
 
 # MSG_GETPROP
-$S2->syswrite( "\5" . "\0\0\0\x0d" .
-               "\2" . "\2" . "\1" . "\x01" . "1" .
-                             "\1" . "\x06" . "colour" );
+$S2->syswrite( "\5" . "\0\0\0\x0b" .
+               "\1" . "\x01" . "1" .
+               "\1" . "\x06" . "colour" );
 
 $expect = "\x82" . "\0\0\0\5" .
-                   "\1" . "\x03" . "red";
+          "\1" . "\x03" . "red";
 
 $serverstream = "";
 
@@ -104,13 +103,12 @@ wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
 is_hexstr( $serverstream, $expect, 'received property value after MSG_GETPROP' );
 
 # MSG_SETPROP
-$S2->syswrite( "\6" . "\0\0\0\x13" .
-               "\2" . "\3" . "\1" . "\x01" . "1" .
-                             "\1" . "\x06" . "colour" .
-                             "\1" . "\x04" . "blue" );
+$S2->syswrite( "\6" . "\0\0\0\x11" .
+               "\1" . "\x01" . "1" .
+               "\1" . "\x06" . "colour" .
+               "\1" . "\x04" . "blue" );
 
-$expect = "\x80" . "\0\0\0\1" .
-          "\0";
+$expect = "\x80" . "\0\0\0\0";
 
 $serverstream = "";
 
@@ -121,13 +119,12 @@ is_hexstr( $serverstream, $expect, 'received OK after MSG_SETPROP' );
 is( $ball->get_prop_colour, "blue", '$ball->colour is now blue' );
 
 # MSG_WATCH
-$S2->syswrite( "\7" . "\0\0\0\x0f" .
-               "\2" . "\3" . "\1" . "\x01" . "1" .
-                             "\1" . "\x06" . "colour" .
-                             "\1" . "\x00" );
+$S2->syswrite( "\7" . "\0\0\0\x0d" .
+               "\1" . "\x01" . "1" .
+               "\1" . "\x06" . "colour" .
+               "\1" . "\x00" );
 
-$expect = "\x84" . "\0\0\0\1" .
-          "\0";
+$expect = "\x84" . "\0\0\0\0";
 
 $serverstream = "";
 
@@ -137,11 +134,11 @@ is_hexstr( $serverstream, $expect, 'received MSG_WATCHING response' );
 
 $ball->set_prop_colour( "green" );
 
-$expect = "\x09" . "\0\0\0\x17" .
-          "\2" . "\4" . "\1" . "\x01" . "1" .
-                        "\1" . "\x06" . "colour" .
-                        "\1" . "\x01" . "1" .
-                        "\1" . "\x05" . "green";
+$expect = "\x09" . "\0\0\0\x15" .
+          "\1" . "\x01" . "1" .
+          "\1" . "\x06" . "colour" .
+          "\1" . "\x01" . "1" .
+          "\1" . "\x05" . "green";
 
 $serverstream = "";
 

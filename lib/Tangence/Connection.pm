@@ -183,7 +183,7 @@ sub subscribe
    $self->{subscriptions}->{$objid}->{$event} = undef;
 
    $self->request(
-      request => [ MSG_SUBSCRIBE, [ $objid, $event ] ],
+      request => [ MSG_SUBSCRIBE, $objid, $event ],
 
       on_response => sub {
          my ( $response ) = @_;
@@ -205,11 +205,9 @@ sub subscribe
 sub handle_request_EVENT
 {
    my $self = shift;
-   my ( $token, $req ) = @_;
+   my ( $token, $objid, $event, @args ) = @_;
 
    $self->respond( $token, [ MSG_OK ] );
-
-   my ( $objid, $event, @args ) = @$req;
 
    my $callback = $self->{subscriptions}->{$objid}->{$event};
 
@@ -233,7 +231,7 @@ sub watch
    $self->{watches}->{$objid}->{$prop} = undef;
 
    $self->request(
-      request => [ MSG_WATCH, [ $objid, $prop, ! !$want_initial ] ],
+      request => [ MSG_WATCH, $objid, $prop, ! !$want_initial ],
 
       on_response => sub {
          my ( $response ) = @_;
@@ -255,11 +253,9 @@ sub watch
 sub handle_request_UPDATE
 {
    my $self = shift;
-   my ( $token, $req ) = @_;
+   my ( $token, $objid, $prop, $how, @value ) = @_;
 
    $self->respond( $token, [ MSG_OK ] );
-
-   my ( $objid, $prop, $how, @value ) = @$req;
 
    my $callback = $self->{watches}->{$objid}->{$prop};
 

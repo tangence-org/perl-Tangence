@@ -50,15 +50,15 @@ sub call_method
 
    my $conn = $self->{conn};
    $conn->request(
-      request => [ MSG_CALL, [ $self->id, $method, @$args ] ],
+      request => [ MSG_CALL, $self->id, $method, @$args ],
 
       on_response => sub {
-         my ( $code, $data ) = @{$_[0]};
+         my ( $code, @data ) = @{$_[0]};
          if( $code == MSG_RESULT ) {
-            $on_result->( $data );
+            $on_result->( @data );
          }
          elsif( $code == MSG_ERROR ) {
-            $on_error->( $data );
+            $on_error->( @data );
          }
          else {
             $on_error->( "Unexpected response code $code" );
@@ -105,15 +105,15 @@ sub get_property
 
    my $conn = $self->{conn};
    $conn->request(
-      request => [ MSG_GETPROP, [ $self->id, $property ] ],
+      request => [ MSG_GETPROP, $self->id, $property ],
 
       on_response => sub {
-         my ( $code, $data ) = @{$_[0]};
+         my ( $code, @data ) = @{$_[0]};
          if( $code == MSG_RESULT ) {
-            $on_value->( $data );
+            $on_value->( @data );
          }
          elsif( $code == MSG_ERROR ) {
-            $on_error->( $data );
+            $on_error->( @data );
          }
          else {
             $on_error->( "Unexpected response code $code" );
@@ -142,15 +142,15 @@ sub set_property
 
    my $conn = $self->{conn};
    $conn->request(
-      request => [ MSG_SETPROP, [ $self->id, $property, $value ] ],
+      request => [ MSG_SETPROP, $self->id, $property, $value ],
 
       on_response => sub {
-         my ( $code, $data ) = @{$_[0]};
+         my ( $code, @data ) = @{$_[0]};
          if( $code == MSG_OK ) {
             $on_done->() if $on_done;
          }
          elsif( $code == MSG_ERROR ) {
-            $on_error->( $data );
+            $on_error->( @data );
          }
          else {
             $on_error->( "Unexpected response code $code" );

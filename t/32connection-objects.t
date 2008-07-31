@@ -41,10 +41,10 @@ $bagproxy->call_method(
 my $expect;
 
 # MSG_CALL
-$expect = "\1" . "\0\0\0\x15" . 
-          "\2" . "\3" . "\1" . "\x01" . "1" .
-                        "\1" . "\x09" . "pull_ball" .
-                        "\1" . "\x03" . "red";
+$expect = "\1" . "\0\0\0\x13" . 
+          "\1" . "\x01" . "1" .
+          "\1" . "\x09" . "pull_ball" .
+          "\1" . "\x03" . "red";
 
 my $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
@@ -68,10 +68,10 @@ $bagproxy->call_method(
 );
 
 # MSG_CALL
-$expect = "\1" . "\0\0\0\x14" . 
-          "\2" . "\3" . "\1" . "\x01" . "1" .
-                        "\1" . "\x08" . "add_ball" .
-                        "\4" . "\0\0\0\2";
+$expect = "\1" . "\0\0\0\x12" . 
+          "\1" . "\x01" . "1" .
+          "\1" . "\x08" . "add_ball" .
+          "\4" . "\0\0\0\2";
 
 $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;

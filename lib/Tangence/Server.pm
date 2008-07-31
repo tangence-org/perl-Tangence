@@ -98,9 +98,7 @@ sub get_by_id
 sub handle_request_CALL
 {
    my $self = shift;
-   my ( $token, $request ) = @_;
-
-   my ( $objid, $method, @args ) = @$request;
+   my ( $token, $objid, $method, @args ) = @_;
 
    my $registry = $self->{registry};
 
@@ -132,9 +130,7 @@ sub handle_request_CALL
 sub handle_request_SUBSCRIBE
 {
    my $self = shift;
-   my ( $token, $request ) = @_;
-
-   my ( $objid, $event ) = @$request;
+   my ( $token, $objid, $event ) = @_;
 
    my $registry = $self->{registry};
 
@@ -155,7 +151,7 @@ sub handle_request_SUBSCRIBE
       sub {
          my ( undef, $event, @args ) = @_;
          $self->request(
-            request => [ MSG_EVENT, [ $objid, $event, @args ] ],
+            request => [ MSG_EVENT, $objid, $event, @args ],
 
             on_response => sub { "IGNORE" },
          );
@@ -170,9 +166,7 @@ sub handle_request_SUBSCRIBE
 sub handle_request_UNSUBSCRIBE
 {
    my $self = shift;
-   my ( $token, $request ) = @_;
-
-   my ( $objid, $event, $id ) = @$request;
+   my ( $token, $objid, $event, $id ) = @_;
 
    my $registry = $self->{registry};
 
@@ -199,9 +193,7 @@ sub handle_request_UNSUBSCRIBE
 sub handle_request_GETPROP
 {
    my $self = shift;
-   my ( $token, $request ) = @_;
-
-   my ( $objid, $prop ) = @$request;
+   my ( $token, $objid, $prop ) = @_;
 
    my $registry = $self->{registry};
 
@@ -237,9 +229,7 @@ sub handle_request_GETPROP
 sub handle_request_SETPROP
 {
    my $self = shift;
-   my ( $token, $request ) = @_;
-
-   my ( $objid, $prop, $value ) = @$request;
+   my ( $token, $objid, $prop, $value ) = @_;
 
    my $registry = $self->{registry};
 
@@ -275,9 +265,7 @@ sub handle_request_SETPROP
 sub handle_request_WATCH
 {
    my $self = shift;
-   my ( $token, $request ) = @_;
-
-   my ( $objid, $prop, $want_initial ) = @$request;
+   my ( $token, $objid, $prop, $want_initial ) = @_;
 
    my $registry = $self->{registry};
 
@@ -298,7 +286,7 @@ sub handle_request_WATCH
       sub {
          my ( undef, $prop, $how, @value ) = @_;
          $self->request(
-            request => [ MSG_UPDATE, [ $objid, $prop, $how, @value ] ],
+            request => [ MSG_UPDATE, $objid, $prop, $how, @value ],
 
             on_response => sub { "IGNORE" },
          );
@@ -318,7 +306,7 @@ sub handle_request_WATCH
       my $result = $object->$m();
 
       $self->request(
-         request => [ MSG_UPDATE, [ $objid, $prop, CHANGE_SET, $result ] ],
+         request => [ MSG_UPDATE, $objid, $prop, CHANGE_SET, $result ],
 
          on_response => sub { "IGNORE" },
       );
@@ -329,9 +317,7 @@ sub handle_request_WATCH
 sub handle_request_UNWATCH
 {
    my $self = shift;
-   my ( $token, $request ) = @_;
-
-   my ( $objid, $prop, $id ) = @$request;
+   my ( $token, $objid, $prop, $id ) = @_;
 
    my $registry = $self->{registry};
 

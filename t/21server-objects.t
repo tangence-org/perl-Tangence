@@ -41,10 +41,10 @@ is_deeply( $bag->get_prop_colours,
            '$bag colours before pull' );
 
 # MSG_CALL
-$S2->syswrite( "\1" . "\0\0\0\x15" . 
-               "\2" . "\3" . "\1" . "\x01" . "1" .
-                             "\1" . "\x09" . "pull_ball" .
-                             "\1" . "\x03" . "red" );
+$S2->syswrite( "\1" . "\0\0\0\x13" . 
+               "\1" . "\x01" . "1" .
+               "\1" . "\x09" . "pull_ball" .
+               "\1" . "\x03" . "red" );
 
 my $expect;
 $expect = "\x82" . "\0\0\0\5" .
@@ -66,10 +66,10 @@ is_deeply( $bag->get_prop_colours,
 $registry->get_by_id(2)->set_prop_colour("orange");
 
 # MSG_CALL
-$S2->syswrite( "\1" . "\0\0\0\x14" . 
-               "\2" . "\3" . "\1" . "\x01" . "1" .
-                             "\1" . "\x08" . "add_ball" .
-                             "\4" . "\0\0\0\2" );
+$S2->syswrite( "\1" . "\0\0\0\x12" . 
+               "\1" . "\x01" . "1" .
+               "\1" . "\x08" . "add_ball" .
+               "\4" . "\0\0\0\2" );
 
 $expect = "\x82" . "\0\0\0\1" .
           "\0";
@@ -85,10 +85,10 @@ is_deeply( $bag->get_prop_colours,
            '$bag colours after add' );
 
 # MSG_CALL
-$S2->syswrite( "\1" . "\0\0\0\x17" .
-               "\2" . "\3" . "\1" . "\x01" . "1" .
-                             "\1" . "\x08" . "get_ball" .
-                             "\1" . "\x06" . "orange" );
+$S2->syswrite( "\1" . "\0\0\0\x15" .
+               "\1" . "\x01" . "1" .
+               "\1" . "\x08" . "get_ball" .
+               "\1" . "\x06" . "orange" );
 
 $expect = "\x82" . "\0\0\0\5" .
           "\4" . "\0\0\0\2";

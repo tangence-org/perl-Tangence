@@ -30,14 +30,14 @@ $loop->add( $stream );
 
 my $response;
 $stream->request(
-   request => [ MSG_CALL, [ 1, "method" ] ],
+   request => [ MSG_CALL, 1, "method" ],
    on_response => sub { $response = $_[0] },
 );
 
 my $expect;
-$expect = "\1" . "\0\0\0\x0d" .
-          "\2" . "\2" . "\1" . "\x01" . "1" .
-                        "\1" . "\x06" . "method";
+$expect = "\1" . "\0\0\0\x0b" .
+          "\1" . "\x01" . "1" .
+          "\1" . "\x06" . "method";
 
 my $serverstream;
 
@@ -47,16 +47,16 @@ wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'serverstream after initial MSG_CALL' );
 
-$S2->syswrite( "\x82" . "\0\0\0\x0c" .
-               "\2" . "\1" . "\1" . "\x08" . "response" );
+$S2->syswrite( "\x82" . "\0\0\0\x0a" .
+               "\1" . "\x08" . "response" );
 
 wait_for { defined $response };
 
-is_deeply( $response, [ MSG_RESULT, [ "response" ] ], '$response to initial call' );
+is_deeply( $response, [ MSG_RESULT, "response" ], '$response to initial call' );
 
-$S2->syswrite( "\x04" . "\0\0\0\x0c" .
-               "\2" . "\2" . "\1" . "\x01" . "1" .
-                             "\1" . "\x05" . "event" );
+$S2->syswrite( "\x04" . "\0\0\0\x0a" .
+               "\1" . "\x01" . "1" .
+               "\1" . "\x05" . "event" );
 
 wait_for { @calls };
 
@@ -66,8 +66,7 @@ is_deeply( $c->[2], [ "1", "event" ], '$call data after MSG_EVENT' );
 
 $c->[0]->respond( $c->[1], [ MSG_OK ] );
 
-$expect = "\x80" . "\0\0\0\1" .
-          "\0";
+$expect = "\x80" . "\0\0\0\0";
 
 $serverstream = "";
 
@@ -83,9 +82,9 @@ use base qw( Tangence::Stream );
 sub handle_request_EVENT
 {
    my $self = shift;
-   my ( $token, $data ) = @_;
+   my ( $token, @data ) = @_;
 
-   push @calls, [ $self, $token, $data ];
+   push @calls, [ $self, $token, \@data ];
    return 1;
 }
 
