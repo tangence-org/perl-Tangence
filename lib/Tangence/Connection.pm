@@ -174,7 +174,15 @@ sub connect_unix
 sub subscribe
 {
    my $self = shift;
-   my ( $objid, $event, $callback ) = @_;
+   my %args =  @_;
+
+   my $objid = delete $args{objid}; # might be 0
+   defined $objid or croak "Need an objid";
+
+   my $event = delete $args{event} or croak "Need a event";
+
+   my $callback = delete $args{callback};
+   ref $callback eq "CODE" or croak "Need a callback as CODE ref";
 
    if( exists $self->{subscriptions}->{$objid}->{$event} ) {
       croak "Cannot subscribe to event $event on object $objid - already subscribed";
@@ -222,7 +230,15 @@ sub handle_request_EVENT
 sub watch
 {
    my $self = shift;
-   my ( $objid, $prop, $callback, $want_initial ) = @_;
+   my %args = @_;
+
+   my $objid = delete $args{objid}; # might be 0
+   defined $objid or croak "Need an objid";
+
+   my $prop = delete $args{property} or croak "Need a property";
+
+   my $callback = delete $args{callback};
+   ref $callback eq "CODE" or croak "Need a callback as CODE ref";
 
    if( exists $self->{watches}->{$objid}->{$prop} ) {
       croak "Cannot watch property $prop on object $objid - already watching";
@@ -231,7 +247,7 @@ sub watch
    $self->{watches}->{$objid}->{$prop} = undef;
 
    $self->request(
-      request => [ MSG_WATCH, $objid, $prop, ! !$want_initial ],
+      request => [ MSG_WATCH, $objid, $prop, !!$args{want_initial} ],
 
       on_response => sub {
          my ( $response ) = @_;

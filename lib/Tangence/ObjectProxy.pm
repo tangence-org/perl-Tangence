@@ -85,9 +85,11 @@ sub subscribe_event
    $self->{subscriptions}->{$event} = \@cbs;
 
    my $conn = $self->{conn};
-   $conn->subscribe( $self->{id}, $event,
-                     sub { foreach my $cb ( @cbs ) { $cb->( @_ ) } }
-                   );
+   $conn->subscribe( 
+      objid    => $self->{id},
+      event    => $event,
+      callback => sub { foreach my $cb ( @cbs ) { $cb->( @_ ) } },
+   );
 }
 
 sub get_property
@@ -190,10 +192,13 @@ sub watch_property
    $self->{watches}->{$property} = \@cbs;
 
    my $conn = $self->{conn};
-   $conn->watch( $self->{id}, $property, 
-                 sub { foreach my $cb ( @cbs ) { $cb->( @_ ) } },
-                 $want_initial
-               );
+   $conn->watch(
+      objid    => $self->{id},
+      property => $property, 
+      callback => sub { foreach my $cb ( @cbs ) { $cb->( @_ ) } },
+
+      want_initial => $want_initial,
+   );
 }
 
 1;

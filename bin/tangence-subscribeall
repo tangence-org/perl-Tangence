@@ -62,7 +62,12 @@ $conn->connect(
    $URL,
 
    on_connected => sub {
-      $conn->watch( 0, "objects", \&objects_changed, 1 );
+      $conn->watch( 
+         objid    => 0,
+         property => "objects",
+         callback => \&objects_changed,
+         want_initial => 1,
+      );
    },
 );
 
@@ -118,7 +123,13 @@ sub new_object
                      $dim == DIM_QUEUE  ? \&prop_array_changed :
                      $dim == DIM_OBJSET ? \&prop_objset_changed :
                      undef;
-            $conn->watch( $objid, $prop, $cb, 1 ) if defined $cb;
+
+            $conn->watch(
+               objid    => $objid,
+               property => $prop,
+               callback => $cb,
+               want_initial => 1,
+            ) if defined $cb;
          }
       },
    );
