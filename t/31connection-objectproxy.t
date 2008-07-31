@@ -103,8 +103,8 @@ wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_SUBSCRIBE' );
 
 # MSG_SUBSCRIBED
-$S2->syswrite( "\x83" . "\0\0\0\x0a" .
-               "\1" . "\x08" . "12345678" );
+$S2->syswrite( "\x83" . "\0\0\0\1" .
+               "\0" );
 
 # We can't easily wait_for anything here... so we'll get on with the next
 # thing and check both afterwards
@@ -220,8 +220,8 @@ wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_WATCH' );
 
 # MSG_WATCHING
-$S2->syswrite( "\x84" . "\0\0\0\x0a" .
-               "\1" . "\x08" . "12345678" );
+$S2->syswrite( "\x84" . "\0\0\0\1" .
+               "\0" );
 
 # We can't easily wait_for anything here... so we'll get on with the next
 # thing and check both afterwards

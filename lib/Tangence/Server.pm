@@ -164,7 +164,7 @@ sub handle_request_SUBSCRIBE
 
    push @{ $self->{subscriptions} }, [ $object, $event, $id ];
 
-   $self->respond( $token, [ MSG_SUBSCRIBED, $id ] );
+   $self->respond( $token, [ MSG_SUBSCRIBED ] );
 }
 
 sub handle_request_UNSUBSCRIBE
@@ -307,7 +307,7 @@ sub handle_request_WATCH
 
    push @{ $self->{watches} }, [ $object, $prop, $id ];
 
-   $self->respond( $token, [ MSG_WATCHING, $id ] );
+   $self->respond( $token, [ MSG_WATCHING ] );
 
    return unless $want_initial;
 

@@ -176,11 +176,11 @@ sub subscribe
    my $self = shift;
    my ( $objid, $event, $callback ) = @_;
 
-   if( $self->{subscriptions}->{$objid}->{$event} ) {
+   if( exists $self->{subscriptions}->{$objid}->{$event} ) {
       croak "Cannot subscribe to event $event on object $objid - already subscribed";
    }
 
-   $self->{subscriptions}->{$objid}->{$event} = [];
+   $self->{subscriptions}->{$objid}->{$event} = undef;
 
    $self->request(
       request => [ MSG_SUBSCRIBE, [ $objid, $event ] ],
@@ -190,8 +190,7 @@ sub subscribe
          my $code = $response->[0];
 
          if( $code == MSG_SUBSCRIBED ) {
-            my ( undef, $id ) = @$response;
-            $self->{subscriptions}->{$objid}->{$event} = [ $id, $callback ];
+            $self->{subscriptions}->{$objid}->{$event} = $callback;
          }
          elsif( $code == MSG_ERROR ) {
             print STDERR "Cannot subscribe to event '$event' on object $objid - error $response->[1]\n";
@@ -212,10 +211,10 @@ sub handle_request_EVENT
 
    my ( $objid, $event, @args ) = @$req;
 
-   my $subscr = $self->{subscriptions}->{$objid}->{$event};
+   my $callback = $self->{subscriptions}->{$objid}->{$event};
 
-   if( $subscr ) {
-      $subscr->[1]->( $objid, $event, @args );
+   if( $callback ) {
+      $callback->( $objid, $event, @args );
    }
    else {
       print STDERR "Got spurious EVENT $event on object $objid: " . join( ", ", @args ) . "\n";
@@ -227,11 +226,11 @@ sub watch
    my $self = shift;
    my ( $objid, $prop, $callback, $want_initial ) = @_;
 
-   if( $self->{watches}->{$objid}->{$prop} ) {
+   if( exists $self->{watches}->{$objid}->{$prop} ) {
       croak "Cannot watch property $prop on object $objid - already watching";
    }
 
-   $self->{watches}->{$objid}->{$prop} = [];
+   $self->{watches}->{$objid}->{$prop} = undef;
 
    $self->request(
       request => [ MSG_WATCH, [ $objid, $prop, ! !$want_initial ] ],
@@ -241,8 +240,7 @@ sub watch
          my $code = $response->[0];
 
          if( $code == MSG_WATCHING ) {
-            my ( undef, $id ) = @$response;
-            $self->{watches}->{$objid}->{$prop} = [ $id, $callback ];
+            $self->{watches}->{$objid}->{$prop} = $callback;
          }
          elsif( $code == MSG_ERROR ) {
             print STDERR "Cannot watch property '$prop' on object $objid - error $response->[1]\n";
@@ -263,10 +261,10 @@ sub handle_request_UPDATE
 
    my ( $objid, $prop, $how, @value ) = @$req;
 
-   my $watch = $self->{watches}->{$objid}->{$prop};
+   my $callback = $self->{watches}->{$objid}->{$prop};
 
-   if( $watch ) {
-      $watch->[1]->( $objid, $prop, $how, @value );
+   if( $callback ) {
+      $callback->( $objid, $prop, $how, @value );
    }
    else {
       print STDERR "Got spurious UPDATE $how $prop on object $objid: " . join( ", ", @value ) . "\n";
