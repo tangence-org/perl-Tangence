@@ -155,6 +155,7 @@ $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK' );
+
 my $colour;
 
 $ballproxy->get_property(
@@ -180,9 +181,11 @@ wait_for { defined $colour };
 
 is( $colour, "red", '$colour is red' );
 
+my $didset = 0;
 $ballproxy->set_property(
    property => "colour",
    value    => "blue",
+   on_done  => sub { $didset = 1 },
 );
 
 # MSG_SETPROP
@@ -198,6 +201,8 @@ is_hexstr( $clientstream, $expect, 'client stream contains MSG_SETPROP' );
 
 # MSG_OK
 $S2->syswrite( "\x80" . "\0\0\0\0" );
+
+wait_for { $didset };
 
 my $watched;
 $ballproxy->watch_property(
