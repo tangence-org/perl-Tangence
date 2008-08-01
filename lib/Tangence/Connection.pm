@@ -184,6 +184,8 @@ sub subscribe
    my $callback = delete $args{callback};
    ref $callback eq "CODE" or croak "Need a callback as CODE ref";
 
+   my $on_subscribed = delete $args{on_subscribed};
+
    if( exists $self->{subscriptions}->{$objid}->{$event} ) {
       croak "Cannot subscribe to event $event on object $objid - already subscribed";
    }
@@ -199,6 +201,7 @@ sub subscribe
 
          if( $code == MSG_SUBSCRIBED ) {
             $self->{subscriptions}->{$objid}->{$event} = $callback;
+            $on_subscribed->() if $on_subscribed;
          }
          elsif( $code == MSG_ERROR ) {
             print STDERR "Cannot subscribe to event '$event' on object $objid - error $response->[1]\n";
@@ -240,6 +243,8 @@ sub watch
    my $callback = delete $args{callback};
    ref $callback eq "CODE" or croak "Need a callback as CODE ref";
 
+   my $on_watched = delete $args{on_watched}; # optional
+
    if( exists $self->{watches}->{$objid}->{$prop} ) {
       croak "Cannot watch property $prop on object $objid - already watching";
    }
@@ -255,6 +260,7 @@ sub watch
 
          if( $code == MSG_WATCHING ) {
             $self->{watches}->{$objid}->{$prop} = $callback;
+            $on_watched->() if $on_watched;
          }
          elsif( $code == MSG_ERROR ) {
             print STDERR "Cannot watch property '$prop' on object $objid - error $response->[1]\n";

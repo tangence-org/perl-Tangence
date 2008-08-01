@@ -89,6 +89,7 @@ sub subscribe_event
       objid    => $self->{id},
       event    => $event,
       callback => sub { foreach my $cb ( @cbs ) { $cb->( @_ ) } },
+      on_subscribed => $args{on_subscribed},
    );
 }
 
@@ -196,6 +197,7 @@ sub watch_property
       objid    => $self->{id},
       property => $property, 
       callback => sub { foreach my $cb ( @cbs ) { $cb->( @_ ) } },
+      on_watched => $args{on_watched},
 
       want_initial => $want_initial,
    );

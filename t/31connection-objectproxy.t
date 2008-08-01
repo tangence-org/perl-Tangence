@@ -85,12 +85,15 @@ wait_for { defined $error };
 is( $error, "No such method 'no_such_method'", '$error after MSG_ERROR response' );
 
 my $howhigh;
+my $subbed;
 $ballproxy->subscribe_event(
    event => "bounced",
    on_fire => sub {
       my ( $obj, $event, @args ) = @_;
       $howhigh = $args[0];
-} );
+   },
+   on_subscribed => sub { $subbed = 1 },
+);
 
 # MSG_SUBSCRIBE
 $expect = "\2" . "\0\0\0\x0c" .
@@ -105,8 +108,7 @@ is_hexstr( $clientstream, $expect, 'client stream contains MSG_SUBSCRIBE' );
 # MSG_SUBSCRIBED
 $S2->syswrite( "\x83" . "\0\0\0\0" );
 
-# We can't easily wait_for anything here... so we'll get on with the next
-# thing and check both afterwards
+wait_for { $subbed };
 
 # MSG_EVENT
 $S2->syswrite( "\4" . "\0\0\0\x17" .
@@ -197,12 +199,15 @@ is_hexstr( $clientstream, $expect, 'client stream contains MSG_SETPROP' );
 # MSG_OK
 $S2->syswrite( "\x80" . "\0\0\0\0" );
 
+my $watched;
 $ballproxy->watch_property(
    property => "colour",
    on_change => sub { 
       my ( $obj, $prop, $how, @value ) = @_;
       $colour = $value[0];
-} );
+   },
+   on_watched => sub { $watched = 1 },
+);
 
 # MSG_WATCH
 $expect = "\7" . "\0\0\0\x0d" .
@@ -218,8 +223,7 @@ is_hexstr( $clientstream, $expect, 'client stream contains MSG_WATCH' );
 # MSG_WATCHING
 $S2->syswrite( "\x84" . "\0\0\0\0" );
 
-# We can't easily wait_for anything here... so we'll get on with the next
-# thing and check both afterwards
+wait_for { $watched };
 
 # MSG_UPDATE
 $S2->syswrite( "\x09" . "\0\0\0\x15" .
