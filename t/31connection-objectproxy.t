@@ -226,7 +226,8 @@ wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_WATCH' );
 
 # MSG_WATCHING
-$S2->syswrite( "\x84" . "\0\0\0\0" );
+$S2->syswrite( "\x84" . "\0\0\0\3" .
+               "\1" . "\1" . "1" );
 
 wait_for { $watched };
 
