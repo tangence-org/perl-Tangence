@@ -3,7 +3,6 @@
 use strict;
 
 use Test::More tests => 9;
-use Test::HexString;
 use IO::Async::Test;
 use IO::Async::Loop::IO_Poll;
 
