@@ -119,23 +119,23 @@ sub pack_data
    my ( $d ) = @_;
 
    if( !defined $d ) {
-      return pack( "c", 0 );
+      return chr(DATA_UNDEF);
    }
    elsif( !ref $d ) {
       my $octets = encode_utf8( $d );
-      return "\x01" . pack_num( length($octets) ) . $octets;
+      return chr(DATA_STRING) . pack_num( length($octets) ) . $octets;
    }
    elsif( ref $d eq "ARRAY" ) {
-      return "\x02" . pack_num( scalar @$d ) . join( "", map { $self->pack_data( $_ ) } @$d );
+      return chr(DATA_LIST) . pack_num( scalar @$d ) . join( "", map { $self->pack_data( $_ ) } @$d );
    }
    elsif( ref $d eq "HASH" ) {
-      return "\x03" . pack_num( scalar keys %$d ) . join( "", map { pack( "Z*", $_ ) . $self->pack_data( $d->{$_} ) } keys %$d );
+      return chr(DATA_DICT) . pack_num( scalar keys %$d ) . join( "", map { pack( "Z*", $_ ) . $self->pack_data( $d->{$_} ) } keys %$d );
    }
    elsif( eval { $d->isa( "Tangence::Object" ) } ) {
-      return "\x04" . pack( "N", $d->id );
+      return chr(DATA_OBJECT) . pack( "N", $d->id );
    }
    elsif( eval { $d->isa( "Tangence::ObjectProxy" ) } ) {
-      return "\x04" . pack( "N", $d->id );
+      return chr(DATA_OBJECT) . pack( "N", $d->id );
    }
    else {
       croak "Do not know how to pack a " . ref($d);
@@ -147,15 +147,15 @@ sub unpack_data
    my $self = shift;
    my $t = unpack( "c", $_[0] ); substr( $_[0], 0, 1, "" );
 
-   if( $t == 0 ) {
+   if( $t == DATA_UNDEF ) {
       return undef;
    }
-   elsif( $t == 1 ) {
+   elsif( $t == DATA_STRING ) {
       my ( $len ) = unpack_num( $_[0] );
       my $octets = substr( $_[0], 0, $len, "" );
       return decode_utf8( $octets );
    }
-   elsif( $t == 2 ) {
+   elsif( $t == DATA_LIST ) {
       my ( $count ) = unpack_num( $_[0] );
       my @a;
       foreach ( 1 .. $count ) {
@@ -163,7 +163,7 @@ sub unpack_data
       }
       return \@a;
    }
-   elsif( $t == 3 ) {
+   elsif( $t == DATA_DICT ) {
       my ( $count ) = unpack_num( $_[0] );
       my %h;
       foreach ( 1 .. $count ) {
@@ -172,7 +172,7 @@ sub unpack_data
       }
       return \%h;
    }
-   elsif( $t == 4 ) {
+   elsif( $t == DATA_OBJECT ) {
       my ( $id ) = unpack( "N", $_[0] ); substr( $_[0], 0, 4, "" );
       return $self->get_by_id( $id );
    }

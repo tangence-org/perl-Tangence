@@ -31,6 +31,12 @@ our @EXPORT = qw(
    CHANGE_PUSH
    CHANGE_SHIFT
    CHANGE_SPLICE
+
+   DATA_UNDEF
+   DATA_STRING
+   DATA_LIST
+   DATA_DICT
+   DATA_OBJECT
 );
 
 # Message types
@@ -83,5 +89,12 @@ use constant CHANGE_DEL    => 3; # HASH: Deleted key follows, OBJSET: Deleted id
 use constant CHANGE_PUSH   => 4; # ARRAY: New members follow in a list
 use constant CHANGE_SHIFT  => 5; # ARRAY: Count of old elements to remove
 use constant CHANGE_SPLICE => 6; # ARRAY: Start index, count, [ new elements ]
+
+# Stream data types
+use constant DATA_UNDEF  => 0; # Undefinedness
+use constant DATA_STRING => 1; # String: num(length) . octets
+use constant DATA_LIST   => 2; # List: num(elements) . value0 . value1...
+use constant DATA_DICT   => 3; # Dictionary: num(pairs) . key0 . value0 . key1 . value1...
+use constant DATA_OBJECT => 4; # Object: objid
 
 1;
