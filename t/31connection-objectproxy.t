@@ -26,7 +26,7 @@ my $conn = Tangence::Connection->new(
 );
 $loop->add( $conn );
 
-my $ballproxy = $conn->get_by_id("1");
+my $ballproxy = $conn->get_root;
 
 my $result;
 

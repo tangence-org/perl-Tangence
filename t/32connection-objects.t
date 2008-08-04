@@ -26,7 +26,7 @@ my $conn = Tangence::Connection->new(
 );
 $loop->add( $conn );
 
-my $bagproxy = $conn->get_by_id("1");
+my $bagproxy = $conn->get_root;
 
 # We'll need to wait for a result, where the result is 'undef' later... To do
 # that neatly, we'll have an array that contains one element

@@ -37,7 +37,7 @@ $server->new_be( handle => $S1 );
 my $conn = Tangence::Connection->new( handle => $S2 );
 $loop->add( $conn );
 
-my $ballproxy = $conn->get_by_id("1");
+my $ballproxy = $conn->get_root;
 
 my $result;
 

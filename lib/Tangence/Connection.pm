@@ -289,6 +289,13 @@ sub handle_request_UPDATE
    }
 }
 
+sub get_root
+{
+   my $self = shift;
+
+   return $self->make_proxy( 1 );
+}
+
 sub get_by_id
 {
    my $self = shift;
