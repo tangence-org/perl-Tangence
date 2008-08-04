@@ -297,7 +297,7 @@ sub watch_property
 
       on_watched => sub {
          $self->{props}->{$property}->{dim} = $_[0];
-         $args{on_watched}->();
+         $args{on_watched}->() if $args{on_watched};
       },
 
       want_initial => $want_initial,
