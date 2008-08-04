@@ -30,6 +30,7 @@ our @EXPORT = qw(
    CHANGE_DEL
    CHANGE_PUSH
    CHANGE_SHIFT
+   CHANGE_SPLICE
 );
 
 # Message types
@@ -76,10 +77,11 @@ use constant DIM_ARRAY  => 3;
 use constant DIM_OBJSET => 4; # set of objects (implemented like id-keyed list in no particular order)
 
 # Property change types
-use constant CHANGE_SET   => 1; # ALL: New value follows
-use constant CHANGE_ADD   => 2; # HASH: New key/value pair follows, OBJSET: New id follows
-use constant CHANGE_DEL   => 3; # HASH: Deleted key follows, OBJSET: Deleted id follows
-use constant CHANGE_PUSH  => 4; # ARRAY: New members follow in a list
-use constant CHANGE_SHIFT => 5; # ARRAY: Count of old elements to remove
+use constant CHANGE_SET    => 1; # ALL: New value follows
+use constant CHANGE_ADD    => 2; # HASH: New key/value pair follows, OBJSET: New id follows
+use constant CHANGE_DEL    => 3; # HASH: Deleted key follows, OBJSET: Deleted id follows
+use constant CHANGE_PUSH   => 4; # ARRAY: New members follow in a list
+use constant CHANGE_SHIFT  => 5; # ARRAY: Count of old elements to remove
+use constant CHANGE_SPLICE => 6; # ARRAY: Start index, count, [ new elements ]
 
 1;
