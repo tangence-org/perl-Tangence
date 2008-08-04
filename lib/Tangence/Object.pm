@@ -151,7 +151,7 @@ sub introspect
    my $self = shift;
    my ( $class ) = @_;
 
-   $class ||= ref $self;
+   $class ||= ( ref $self || $self );
 
    my %methods = do { no strict 'refs'; %{$class."::METHODS"} };
    my %events  = do { no strict 'refs'; %{$class."::EVENTS"} };
