@@ -206,6 +206,29 @@ sub _update_property_array
    }
 }
 
+sub _update_property_objset
+{
+   my $self = shift;
+   my ( $cache, $how, @value ) = @_;
+
+   if( $how == CHANGE_SET ) {
+      # Comes across in a LIST. We need to map id => obj
+      $_[0] = { map { $_->id => $_ } @{ $value[0] } };
+   }
+   elsif( $how == CHANGE_ADD ) {
+      # Comes as object only
+      my $obj = $value[0];
+      $cache->{$obj->id} = $obj;
+   }
+   elsif( $how == CHANGE_DEL ) {
+      # Comes as ID number only
+      delete $cache->{$value[0]};
+   }
+   else {
+      croak "Change type $how is not valid for an objset property";
+   }
+}
+
 sub get_property_cached
 {
    my $self = shift;

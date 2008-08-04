@@ -83,8 +83,8 @@ use constant DIM_ARRAY  => 3;
 use constant DIM_OBJSET => 4; # set of objects (implemented like id-keyed list in no particular order)
 
 # Property change types
-use constant CHANGE_SET    => 1; # ALL: New value follows
-use constant CHANGE_ADD    => 2; # HASH: New key/value pair follows, OBJSET: New id follows
+use constant CHANGE_SET    => 1; # SCALAR/HASH/ARRAY: New value follows. OBJSET: LIST of objects follows
+use constant CHANGE_ADD    => 2; # HASH: New key/value pair follows, OBJSET: New object follows
 use constant CHANGE_DEL    => 3; # HASH: Deleted key follows, OBJSET: Deleted id follows
 use constant CHANGE_PUSH   => 4; # ARRAY: New members follow in a list
 use constant CHANGE_SHIFT  => 5; # ARRAY: Count of old elements to remove
