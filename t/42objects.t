@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 1;
+use Test::More tests => 2;
 use IO::Async::Test;
 use IO::Async::Loop::IO_Poll;
 
