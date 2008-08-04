@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 4;
+use Test::More tests => 6;
 use Test::HexString;
 use IO::Async::Test;
 use IO::Async::Loop::IO_Poll;
@@ -52,7 +52,30 @@ wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL' );
 
 # MSG_RESULT
-$S2->syswrite( "\x82" . "\0\0\0\5" .
+
+# This long string is massive and annoying. Sorry.
+
+$S2->syswrite( "\x82" . "\0\0\1\x39" .
+               "\x82" . "t::Ball\0" .
+                        "\3" . "\4" . "events\0" . "\3" . "\2" . "bounced\0" . "\3" . "\1" . "args\0" . "\1" . "\1" . "s" .
+                                                                 "destroy\0" . "\3" . "\1" . "args\0" . "\1" . "\0" .
+                                      "isa\0" . "\2" . "\2" . "\1" . "\7" . "t::Ball" .
+                                                              "\1" . "\x10" . "Tangence::Object" .
+                                      "methods\0" . "\3" . "\6" . "bounce\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
+                                                                                             "ret\0" . "\1" . "\0" .
+                                                                  "can_event\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
+                                                                                                "ret\0" . "\1" . "\1" . "h" .
+                                                                  "can_method\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
+                                                                                                 "ret\0" . "\1" . "\1" . "h" .
+                                                                  "can_property\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
+                                                                                                   "ret\0" . "\1" . "\1" . "h" .
+                                                                  "describe\0" . "\3" . "\2" . "args\0" . "\1" . "\0" .
+                                                                                               "ret\0" . "\1" . "\1" . "s" .
+                                                                  "introspect\0" . "\3" . "\2" . "args\0" . "\1" . "\0" .
+                                                                                                 "ret\0" . "\1" . "\1" . "h" .
+                                      "properties\0" . "\3" . "\1" . "colour\0" . "\3" . "\2" . "dim\0" . "\1" . "\1" . "1" .
+                                                                                                "type\0" . "\1" . "\1" . "i" .
+               "\x81" . "\0\0\0\2" . "t::Ball\0" .
                "\4" . "\0\0\0\2" );
 
 wait_for { @result };
@@ -60,6 +83,12 @@ wait_for { @result };
 ok( ref $result[0] && $result[0]->isa( "Tangence::ObjectProxy" ), 'result contains an ObjectProxy' );
 
 my $ballproxy = $result[0];
+
+ok( $ballproxy->proxy_isa( "t::Ball" ), 'proxy for isa t::Ball' );
+
+is_deeply( $ballproxy->can_method( "bounce" ),
+           { args => "s", ret => "" },
+           'proxy can_method bounce' );
 
 $bagproxy->call_method(
    method => "add_ball",

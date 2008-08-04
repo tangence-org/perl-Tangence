@@ -14,6 +14,9 @@ sub new
       conn => $args{conn},
       id   => $args{id},
 
+      class  => $args{class},
+      schema => $args{schema},
+
       on_error => $args{on_error},
    }, $class;
 
@@ -32,6 +35,58 @@ sub id
 {
    my $self = shift;
    return $self->{id};
+}
+
+sub class
+{
+   my $self = shift;
+   return $self->{class};
+}
+
+sub introspect
+{
+   my $self = shift;
+   if( !@_ ) {
+      return $self->{schema};
+   }
+   else {
+      my $section = shift;
+      return $self->{schema}->{$section};
+   }
+}
+
+sub can_method
+{
+   my $self = shift;
+   my ( $method ) = @_;
+   return $self->{schema}->{methods}->{$method};
+}
+
+sub can_event
+{
+   my $self = shift;
+   my ( $event ) = @_;
+   return $self->{schema}->{events}->{$event};
+}
+
+sub can_property
+{
+   my $self = shift;
+   my ( $property ) = @_;
+   return $self->{schema}->{properties}->{$property};
+}
+
+# Don't want to call it "isa"
+sub proxy_isa 
+{
+   my $self = shift;
+   if( @_ ) {
+      my ( $class ) = @_;
+      return !! grep { $_ eq $class } @{ $self->{schema}->{isa} };
+   }
+   else {
+      return @{ $self->{schema}->{isa} };
+   }
 }
 
 sub call_method

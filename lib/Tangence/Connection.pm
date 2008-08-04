@@ -19,6 +19,7 @@ sub new
    my $self = $class->SUPER::new( %args );
 
    $self->{objectproxies} = {};
+   $self->{schemata}      = {};
 
    # Default
    $args{on_error} = "croak" if !$args{on_error};
@@ -301,21 +302,40 @@ sub get_by_id
    my $self = shift;
    my ( $id ) = @_;
 
-   return $self->make_proxy( $id );
+   return $self->{objectproxies}->{$id} if exists $self->{objectproxies}->{$id};
+
+   croak "Have no proxy of object id $id";
 }
 
 sub make_proxy
 {
    my $self = shift;
-   my ( $objid ) = @_;
+   my ( $id, $class ) = @_;
 
-   return $self->{objectproxies}->{$objid} ||=
+   my $schema;
+   if( defined $class ) {
+      $schema = $self->{schemata}->{$class};
+      defined $schema or croak "Cannot construct a proxy for class $class as no schema exists";
+   }
+
+   return $self->{objectproxies}->{$id} ||=
       Tangence::ObjectProxy->new(
          conn => $self,
-         id   => $objid,
+         id   => $id,
+
+         class  => $class,
+         schema => $schema,
 
          on_error => $self->{on_error},
       );
+}
+
+sub make_schema
+{
+   my $self = shift;
+   my ( $class, $schema ) = @_;
+
+   $self->{schemata}->{$class} = $schema;
 }
 
 1;

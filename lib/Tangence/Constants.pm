@@ -37,6 +37,9 @@ our @EXPORT = qw(
    DATA_LIST
    DATA_DICT
    DATA_OBJECT
+
+   DATATYPE_CONSTRUCT
+   DATATYPE_CLASS
 );
 
 # Message types
@@ -96,5 +99,8 @@ use constant DATA_STRING => 1; # String: num(length) . octets
 use constant DATA_LIST   => 2; # List: num(elements) . value0 . value1...
 use constant DATA_DICT   => 3; # Dictionary: num(pairs) . key0 . value0 . key1 . value1...
 use constant DATA_OBJECT => 4; # Object: objid
+
+use constant DATATYPE_CONSTRUCT => 0x81; # Construct: num(id), typenameZ
+use constant DATATYPE_CLASS     => 0x82; # Class: typenameZ, schema
 
 1;

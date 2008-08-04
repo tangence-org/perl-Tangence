@@ -60,6 +60,9 @@ sub new
       },
    );
 
+   $self->{peer_hasobj} = {}; # {$id} = 1
+   $self->{peer_hasclass} = {}; # {$classname} = 1;
+
    return $self;
 }
 
@@ -139,7 +142,23 @@ sub pack_data
       return chr(DATA_DICT) . pack_num( scalar @keys ) . join( "", map { pack( "Z*", $_ ) . $self->pack_data( $d->{$_} ) } @keys );
    }
    elsif( eval { $d->isa( "Tangence::Object" ) } ) {
-      return chr(DATA_OBJECT) . pack( "N", $d->id );
+      my $id = $d->id;
+      my $preamble = "";
+
+      if( !$self->{peer_hasobj}->{$id} ) {
+         my $class = ref $d;
+
+         if( !$self->{peer_hasclass}->{$class} ) {
+            my $schema = $class->introspect;
+            $preamble .= chr(DATATYPE_CLASS) . pack( "Z*", $class ) . $self->pack_data( $schema );
+            $self->{peer_hasclass}->{$class} = 1;
+         }
+
+         $preamble .= chr(DATATYPE_CONSTRUCT) . pack( "NZ*", $id, $class );
+         $self->{peer_hasobj}->{$id} = 1;
+      }
+
+      return $preamble . chr(DATA_OBJECT) . pack( "N", $d->id );
    }
    elsif( eval { $d->isa( "Tangence::ObjectProxy" ) } ) {
       return chr(DATA_OBJECT) . pack( "N", $d->id );
@@ -152,7 +171,25 @@ sub pack_data
 sub unpack_data
 {
    my $self = shift;
-   my $t = unpack( "c", $_[0] ); substr( $_[0], 0, 1, "" );
+   my $t;
+   
+   while(1) {
+      $t = unpack( "C", $_[0] ); substr( $_[0], 0, 1, "" );
+      last unless $t & 0x80;
+
+      if( $t == DATATYPE_CONSTRUCT ) {
+         my ( $id, $class ) = unpack( "NZ*", $_[0] ); substr( $_[0], 0, 5 + length $class, "" );
+         $self->make_proxy( $id, $class );
+      }
+      elsif( $t == DATATYPE_CLASS ) {
+         my ( $class ) = unpack( "Z*", $_[0] ); substr( $_[0], 0, 1 + length $class, "" );
+         my $schema = $self->unpack_data( $_[0] );
+         $self->make_schema( $class, $schema );
+      }
+      else {
+         die sprintf("TODO: Data stream meta-operation 0x%02x", $t);
+      }
+   }
 
    if( $t == DATA_UNDEF ) {
       return undef;
