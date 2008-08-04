@@ -120,7 +120,6 @@ sub new_object
             my $cb = $dim == DIM_SCALAR ? \&prop_scalar_changed :
                      $dim == DIM_HASH   ? \&prop_hash_changed :
                      $dim == DIM_ARRAY  ? \&prop_array_changed :
-                     $dim == DIM_QUEUE  ? \&prop_array_changed :
                      $dim == DIM_OBJSET ? \&prop_objset_changed :
                      undef;
 
