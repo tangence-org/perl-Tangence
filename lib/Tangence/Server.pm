@@ -341,4 +341,24 @@ sub handle_request_UNWATCH
    $self->respond( $token, [ MSG_OK ] );
 }
 
+sub handle_request_GETROOT
+{
+   my $self = shift;
+   my ( $token, $identity ) = @_;
+
+   my $registry = $self->{registry};
+
+   $self->respond( $token, [ MSG_RESULT, $registry->get_by_id( 1 ) ] );
+}
+
+sub handle_request_GETREGISTRY
+{
+   my $self = shift;
+   my ( $token, $identity ) = @_;
+
+   my $registry = $self->{registry};
+
+   $self->respond( $token, [ MSG_RESULT, $registry ] );
+}
+
 1;

@@ -23,6 +23,9 @@ my %REQ_METHOD = (
    MSG_WATCH,       'handle_request_WATCH',
    MSG_UNWATCH,     'handle_request_UNWATCH',
    MSG_UPDATE,      'handle_request_UPDATE',
+
+   MSG_GETROOT,     'handle_request_GETROOT',
+   MSG_GETREGISTRY, 'handle_request_GETREGISTRY',
 );
 
 # Normally we don't care about hash key order. But, when writing test scripts

@@ -21,6 +21,8 @@ sub new
    $self->{objectproxies} = {};
    $self->{schemata}      = {};
 
+   $self->{identity} = $args{identity};
+
    # Default
    $args{on_error} = "croak" if !$args{on_error};
 
@@ -39,6 +41,9 @@ sub new
    }
 
    $self->{on_error} = $on_error;
+
+   # It's possible a handle was passed in the constructor.
+   $self->_do_initial if defined $self->read_handle;
 
    return $self;
 }
@@ -109,6 +114,7 @@ sub connect_exec
    );
 
    $args{on_connected}->( $self ) if $args{on_connected};
+   $self->_do_initial;
 }
 
 sub connect_ssh
@@ -141,6 +147,7 @@ sub connect_tcp
          $self->set_handle( $sock );
 
          $args{on_connected}->( $self ) if $args{on_connected};
+         $self->_do_initial;
       },
 
       on_connect_error => sub { print STDERR "Cannot connect\n"; },
@@ -166,9 +173,34 @@ sub connect_unix
          $self->set_handle( $sock );
 
          $args{on_connected}->( $self ) if $args{on_connected};
+         $self->_do_initial;
       },
 
       on_connect_error => sub { print STDERR "Cannot connect\n"; },
+   );
+}
+
+sub _do_initial
+{
+   my $self = shift;
+
+   $self->request(
+      request => [ MSG_GETROOT, $self->{identity} ],
+
+      on_response => sub {
+         my ( $response ) = @_;
+         my $code = $response->[0];
+
+         if( $code == MSG_RESULT ) {
+            $self->{rootobj} = $response->[1];
+         }
+         elsif( $code == MSG_ERROR ) {
+            print STDERR "Cannot get root object - error $response->[1]";
+         }
+         else {
+            print STDERR "Cannot get root object - code $code\n";
+         }
+      }
    );
 }
 
@@ -293,8 +325,7 @@ sub handle_request_UPDATE
 sub get_root
 {
    my $self = shift;
-
-   return $self->make_proxy( 1 );
+   return $self->{rootobj};
 }
 
 sub get_by_id

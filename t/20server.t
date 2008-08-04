@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 15;
+use Test::More tests => 16;
 use Test::HexString;
 use IO::Async::Test;
 use IO::Async::Loop::IO_Poll;
@@ -41,13 +41,52 @@ is_deeply( $bag->get_prop_colours,
            { red => 1, blue => 1, green => 1, yellow => 1 },
            '$bag colours before pull' );
 
+# MSG_GETROOT
+$S2->syswrite( "\x40" . "\0\0\0\x0c" .
+               "\1" . "\x0a" . "testscript" );
+
+my $expect;
+
+# This long string is massive and annoying. Sorry.
+
+$expect = "\x82" . "\0\0\1\x5c" .
+          "\x82" . "t::Bag\0" .
+                   "\3" . "\4" . "events\0" . "\3" . "\1" . "destroy\0" . "\3" . "\1" . "args\0" . "\1" . "\0" .
+                                 "isa\0" . "\2" . "\2" . "\1" . "\6" . "t::Bag" .
+                                                         "\1" . "\x10" . "Tangence::Object" .
+                                 "methods\0" . "\3" . "\x08" . "add_ball\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "o" .
+                                                                                            "ret\0" . "\1" . "\0" .
+                                                               "can_event\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
+                                                                                             "ret\0" . "\1" . "\1" . "h" .
+                                                               "can_method\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
+                                                                                              "ret\0" . "\1" . "\1" . "h" .
+                                                               "can_property\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
+                                                                                                "ret\0" . "\1" . "\1" . "h" .
+                                                               "describe\0" . "\3" . "\2" . "args\0" . "\1" . "\0" .
+                                                                                            "ret\0" . "\1" . "\1" . "s" .
+                                                               "get_ball\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
+                                                                                            "ret\0" . "\1" . "\1" . "o" .
+                                                               "introspect\0" . "\3" . "\2" . "args\0" . "\1" . "\0" .
+                                                                                              "ret\0" . "\1" . "\1" . "h" .
+                                                               "pull_ball\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
+                                                                                             "ret\0" . "\1" . "\1" . "o" .
+                                 "properties\0" . "\3" . "\1" . "colours\0" . "\3" . "\2" . "dim\0" . "\1" . "\1" . "2" .
+                                                                                            "type\0" . "\1" . "\1" . "i" .
+          "\x81" . "\0\0\0\1" . "t::Bag\0" .
+          "\4" . "\0\0\0\1";
+
+my $serverstream;
+
+$serverstream = "";
+wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
+
+is_hexstr( $serverstream, $expect, 'serverstream initially contains root object' );
+
 # MSG_CALL
 $S2->syswrite( "\1" . "\0\0\0\x13" . 
                "\1" . "\x01" . "1" .
                "\1" . "\x09" . "pull_ball" .
                "\1" . "\x03" . "red" );
-
-my $expect;
 
 # This long string is massive and annoying. Sorry.
 
@@ -74,10 +113,7 @@ $expect = "\x82" . "\0\0\1\x39" .
           "\x81" . "\0\0\0\2" . "t::Ball\0" .
           "\4" . "\0\0\0\2";
 
-my $serverstream;
-
 $serverstream = "";
-
 wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'serverstream after response to CALL' );

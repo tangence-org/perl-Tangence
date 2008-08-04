@@ -13,6 +13,7 @@ use Socket qw( AF_UNIX SOCK_STREAM PF_UNSPEC );
 use Tangence::Constants;
 use Tangence::Registry;
 use Tangence::Connection;
+$Tangence::Stream::SORT_HASH_KEYS = 1;
 
 my $loop = IO::Async::Loop::IO_Poll->new();
 testing_loop( $loop );
@@ -23,8 +24,46 @@ testing_loop( $loop );
 my $conn = Tangence::Connection->new(
    handle => $S1,
    on_error => sub { die "Test died early - $_[0]" },
+   identity => "testscript",
 );
 $loop->add( $conn );
+
+my $expect;
+
+# MSG_GETROOT
+$expect = "\x40" . "\0\0\0\x0c" .
+          "\1" . "\x0a" . "testscript";
+
+my $clientstream = "";
+wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+
+$S2->syswrite( "\x82" . "\0\0\1\x5c" .
+               "\x82" . "t::Bag\0" .
+                        "\3" . "\4" . "events\0" . "\3" . "\1" . "destroy\0" . "\3" . "\1" . "args\0" . "\1" . "\0" .
+                                      "isa\0" . "\2" . "\2" . "\1" . "\6" . "t::Bag" .
+                                                              "\1" . "\x10" . "Tangence::Object" .
+                                      "methods\0" . "\3" . "\x08" . "add_ball\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "o" .
+                                                                                                 "ret\0" . "\1" . "\0" .
+                                                                    "can_event\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
+                                                                                                  "ret\0" . "\1" . "\1" . "h" .
+                                                                    "can_method\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
+                                                                                                   "ret\0" . "\1" . "\1" . "h" .
+                                                                    "can_property\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
+                                                                                                     "ret\0" . "\1" . "\1" . "h" .
+                                                                    "describe\0" . "\3" . "\2" . "args\0" . "\1" . "\0" .
+                                                                                                 "ret\0" . "\1" . "\1" . "s" .
+                                                                    "get_ball\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
+                                                                                                 "ret\0" . "\1" . "\1" . "o" .
+                                                                    "introspect\0" . "\3" . "\2" . "args\0" . "\1" . "\0" .
+                                                                                                   "ret\0" . "\1" . "\1" . "h" .
+                                                                    "pull_ball\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
+                                                                                                  "ret\0" . "\1" . "\1" . "o" .
+                                      "properties\0" . "\3" . "\1" . "colours\0" . "\3" . "\2" . "dim\0" . "\1" . "\1" . "2" .
+                                                                                                 "type\0" . "\1" . "\1" . "i" .
+               "\x81" . "\0\0\0\1" . "t::Bag\0" .
+               "\4" . "\0\0\0\1" );
+
+wait_for { defined $conn->get_root };
 
 my $bagproxy = $conn->get_root;
 
@@ -38,15 +77,13 @@ $bagproxy->call_method(
    on_result => sub { push @result, shift },
 );
 
-my $expect;
-
 # MSG_CALL
 $expect = "\1" . "\0\0\0\x13" . 
           "\1" . "\x01" . "1" .
           "\1" . "\x09" . "pull_ball" .
           "\1" . "\x03" . "red";
 
-my $clientstream = "";
+$clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL' );

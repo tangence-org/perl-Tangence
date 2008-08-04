@@ -39,6 +39,8 @@ $server->new_be( handle => $S1 );
 my $conn = Tangence::Connection->new( handle => $S2 );
 $loop->add( $conn );
 
+wait_for { defined $conn->get_root };
+
 my $bagproxy = $conn->get_root;
 
 my $ballproxy;
