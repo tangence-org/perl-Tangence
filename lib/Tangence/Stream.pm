@@ -25,6 +25,11 @@ my %REQ_METHOD = (
    MSG_UPDATE,      'handle_request_UPDATE',
 );
 
+# Normally we don't care about hash key order. But, when writing test scripts
+# that will assert on the serialisation bytes, we do. Setting this to some
+# true value will sort keys first
+our $SORT_HASH_KEYS = 0;
+
 sub new
 {
    my $class = shift;
@@ -129,7 +134,9 @@ sub pack_data
       return chr(DATA_LIST) . pack_num( scalar @$d ) . join( "", map { $self->pack_data( $_ ) } @$d );
    }
    elsif( ref $d eq "HASH" ) {
-      return chr(DATA_DICT) . pack_num( scalar keys %$d ) . join( "", map { pack( "Z*", $_ ) . $self->pack_data( $d->{$_} ) } keys %$d );
+      my @keys = keys %$d;
+      @keys = sort @keys if $SORT_HASH_KEYS;
+      return chr(DATA_DICT) . pack_num( scalar @keys ) . join( "", map { pack( "Z*", $_ ) . $self->pack_data( $d->{$_} ) } @keys );
    }
    elsif( eval { $d->isa( "Tangence::Object" ) } ) {
       return chr(DATA_OBJECT) . pack( "N", $d->id );

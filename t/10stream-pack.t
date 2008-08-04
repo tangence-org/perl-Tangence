@@ -6,6 +6,7 @@ use Test::More tests => 39;
 use Test::HexString;
 
 use Tangence::Stream;
+$Tangence::Stream::SORT_HASH_KEYS = 1;
 
 my $d;
 
@@ -34,12 +35,7 @@ sub test_data
 
    $d = $s->pack_data( $args{data} );
 
-   if( exists $args{stream} ) {
-      is_hexstr( $d, $args{stream}, "pack_data $name" );
-   }
-   else {
-      ok( defined $d && !ref $d && length $d, "pack_data $name gives non-empty string" );
-   }
+   is_hexstr( $d, $args{stream}, "pack_data $name" );
 
    is_deeply( $s->unpack_data( $d ), $args{data}, "unpack_data $name" );
    is( length $d, 0, "eats all stream for $name" );
@@ -78,8 +74,8 @@ test_data "HASH of string*1",
    stream => "\3\1key\0\1\5value";
 
 test_data "HASH of string*2",
-   data   => { a => "A", b => "B" };
-   # Can't predict stream as we don't know the order
+   data   => { a => "A", b => "B" },
+   stream => "\3\2a\0\1\1Ab\0\1\1B";
 
 test_data "HASH of HASH",
    data   => { hash => {} },
