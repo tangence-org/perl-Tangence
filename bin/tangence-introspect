@@ -30,7 +30,7 @@ my $on_connected;
 
 if( !@ARGV ) {
    $on_connected = sub {
-      my $obj = $conn->get_by_id( 0 );
+      my $obj = $conn->make_proxy( 0 );
 
       $obj->get_property(
          property => "objects",
@@ -57,7 +57,7 @@ elsif( $ARGV[0] eq "-i" ) {
    require Data::Dump;
 
    $on_connected = sub {
-      my $obj = $conn->get_by_id( $objid );
+      my $obj = $conn->make_proxy( $objid );
 
       $obj->call_method(
          method  => "introspect",
@@ -79,7 +79,7 @@ elsif( $ARGV[0] eq "-p" ) {
    require Data::Dump;
 
    $on_connected = sub {
-      my $obj = $conn->get_by_id( $objid );
+      my $obj = $conn->make_proxy( $objid );
 
       $obj->get_property(
          property => $property,

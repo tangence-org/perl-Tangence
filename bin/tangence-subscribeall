@@ -93,7 +93,7 @@ sub new_object
 
    print "Subscribing to events and properties on new object $objid\n";
 
-   my $obj = $conn->get_by_id( $objid );
+   my $obj = $conn->make_proxy( $objid );
 
    $obj->call_method(
       method => "introspect",
