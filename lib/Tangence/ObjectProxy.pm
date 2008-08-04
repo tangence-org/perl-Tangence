@@ -125,6 +125,99 @@ sub get_property
    );
 }
 
+sub _update_property
+{
+   my $self = shift;
+   my ( $property, $how, @value ) = @_;
+
+   my $prop = $self->{props}->{$property} ||= {};
+
+   my $dim = $prop->{dim};
+
+   if( $dim == DIM_SCALAR ) {
+      $self->_update_property_scalar( $prop->{cache}, $how, @value );
+   }
+   elsif( $dim == DIM_HASH ) {
+      $self->_update_property_hash( $prop->{cache}, $how, @value );
+   }
+   elsif( $dim == DIM_ARRAY ) {
+      $self->_update_property_array( $prop->{cache}, $how, @value );
+   }
+   elsif( $dim == DIM_OBJSET ) {
+      $self->_update_property_objset( $prop->{cache}, $how, @value );
+   }
+   else {
+      croak "Unrecognised property dimension $dim for $property";
+   }
+}
+
+sub _update_property_scalar
+{
+   my $self = shift;
+   my ( $cache, $how, @value ) = @_;
+
+   if( $how == CHANGE_SET ) {
+      $_[0] = $value[0];
+   }
+   else {
+      croak "Change type $how is not valid for a scalar property";
+   }
+}
+
+sub _update_property_hash
+{
+   my $self = shift;
+   my ( $cache, $how, @value ) = @_;
+
+   if( $how == CHANGE_SET ) {
+      $_[0] = { %{ $value[0] } };
+   }
+   elsif( $how == CHANGE_ADD ) {
+      $cache->{$value[0]} = $value[1];
+   }
+   elsif( $how == CHANGE_DEL ) {
+      delete $cache->{$value[0]};
+   }
+   else {
+      croak "Change type $how is not valid for a hash property";
+   }
+}
+
+sub _update_property_array
+{
+   my $self = shift;
+   my ( $cache, $how, @value ) = @_;
+
+   if( $how == CHANGE_SET ) {
+      $_[0] = [ @{ $value[0] } ];
+   }
+   elsif( $how == CHANGE_PUSH ) {
+      push @$cache, @value;
+   }
+   elsif( $how == CHANGE_SHIFT ) {
+      splice @$cache, 0, $value[0], ();
+   }
+   elsif( $how == CHANGE_SPLICE ) {
+      my ( $start, $count, @new ) = @value;
+      splice @$cache, $start, $count, @new;
+   }
+   else {
+      croak "Change type $how is not valid for an array property";
+   }
+}
+
+sub get_property_cached
+{
+   my $self = shift;
+   my ( $property ) = @_;
+
+   if( exists $self->{props}->{$property}->{cache} ) {
+      return $self->{props}->{$property}->{cache};
+   }
+
+   croak "$self does not have a cached property '$property'";
+}
+
 sub set_property
 {
    my $self = shift;
@@ -172,7 +265,7 @@ sub watch_property
       or croak "Expected 'on_change' as a CODE ref";
    my $want_initial = delete $args{want_initial};
 
-   if( my $cbs = $self->{watches}->{$property} ) {
+   if( my $cbs = $self->{props}->{$property}->{cbs} ) {
       if( $want_initial ) {
          $self->get_property(
             property => $property,
@@ -190,14 +283,22 @@ sub watch_property
    }
 
    my @cbs = ( $callback );
-   $self->{watches}->{$property} = \@cbs;
+   $self->{props}->{$property}->{cbs} = \@cbs;
 
    my $conn = $self->{conn};
    $conn->watch(
       objid    => $self->{id},
       property => $property, 
-      callback => sub { foreach my $cb ( @cbs ) { $cb->( @_ ) } },
-      on_watched => $args{on_watched},
+      callback => sub {
+         my ( undef, undef, $how, @value ) = @_;
+         $self->_update_property( $property, $how, @value );
+         foreach my $cb ( @cbs ) { $cb->( @_ ) }
+      },
+
+      on_watched => sub {
+         $self->{props}->{$property}->{dim} = $_[0];
+         $args{on_watched}->();
+      },
 
       want_initial => $want_initial,
    );
