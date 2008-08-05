@@ -282,18 +282,7 @@ sub handle_request_WATCH
       return;
    }
 
-   my $id = $object->watch_property( $prop,
-      sub {
-         my ( undef, $prop, $how, @value ) = @_;
-         $self->request(
-            request => [ MSG_UPDATE, $objid, $prop, $how, @value ],
-
-            on_response => sub { "IGNORE" },
-         );
-      }
-   );
-
-   push @{ $self->{watches} }, [ $object, $prop, $id ];
+   $self->_install_watch( $object, $prop );
 
    $self->respond( $token, [ MSG_WATCHING ] );
 
@@ -359,6 +348,25 @@ sub handle_request_GETREGISTRY
    my $registry = $self->{registry};
 
    $self->respond( $token, [ MSG_RESULT, $registry ] );
+}
+
+sub _install_watch
+{
+   my $self = shift;
+   my ( $object, $prop ) = @_;
+
+   my $id = $object->watch_property( $prop,
+      sub {
+         my ( undef, $prop, $how, @value ) = @_;
+         $self->request(
+            request => [ MSG_UPDATE, $object->id, $prop, $how, @value ],
+
+            on_response => sub { "IGNORE" },
+         );
+      }
+   );
+
+   push @{ $self->{watches} }, [ $object, $prop, $id ];
 }
 
 1;
