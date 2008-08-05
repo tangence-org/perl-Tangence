@@ -204,6 +204,10 @@ sub _update_property
    else {
       croak "Unrecognised property dimension $dim for $property";
    }
+
+   if( my $cbs = $self->{props}->{$property}->{cbs} ) {
+      foreach my $cb ( @$cbs ) { $cb->( $self, $property, $how, @value ) }
+   }
 }
 
 sub _update_property_scalar
@@ -360,18 +364,12 @@ sub watch_property
       return;
    }
 
-   my @cbs = ( $callback );
-   $self->{props}->{$property}->{cbs} = \@cbs;
+   $self->{props}->{$property}->{cbs} = [ $callback ];
 
    my $conn = $self->{conn};
    $conn->watch(
       objid    => $self->{id},
       property => $property, 
-      callback => sub {
-         my ( undef, undef, $how, @value ) = @_;
-         $self->_update_property( $property, $how, @value );
-         foreach my $cb ( @cbs ) { $cb->( @_ ) }
-      },
       on_watched => $args{on_watched},
       want_initial => $want_initial,
    );

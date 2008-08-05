@@ -292,16 +292,13 @@ sub watch
 
    my $prop = delete $args{property} or croak "Need a property";
 
-   my $callback = delete $args{callback};
-   ref $callback eq "CODE" or croak "Need a callback as CODE ref";
-
    my $on_watched = delete $args{on_watched}; # optional
 
-   if( exists $self->{watches}->{$objid}->{$prop} ) {
+   if( $self->{watches}->{$objid}->{$prop} ) {
       croak "Cannot watch property $prop on object $objid - already watching";
    }
 
-   $self->{watches}->{$objid}->{$prop} = undef;
+   $self->{watches}->{$objid}->{$prop} = 1;
 
    $self->request(
       request => [ MSG_WATCH, $objid, $prop, !!$args{want_initial} ],
@@ -311,7 +308,6 @@ sub watch
          my $code = $response->[0];
 
          if( $code == MSG_WATCHING ) {
-            $self->{watches}->{$objid}->{$prop} = $callback;
             $on_watched->() if $on_watched;
          }
          elsif( $code == MSG_ERROR ) {
@@ -331,13 +327,8 @@ sub handle_request_UPDATE
 
    $self->respond( $token, [ MSG_OK ] );
 
-   my $callback = $self->{watches}->{$objid}->{$prop};
-
-   if( $callback ) {
-      $callback->( $objid, $prop, $how, @value );
-   }
-   else {
-      print STDERR "Got spurious UPDATE $how $prop on object $objid: " . join( ", ", @value ) . "\n";
+   if( my $obj = $self->{objectproxies}->{$objid} ) {
+      $obj->_update_property( $prop, $how, @value );
    }
 }
 
