@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 28;
+use Test::More tests => 29;
 use Test::HexString;
 use IO::Async::Test;
 use IO::Async::Loop::IO_Poll;
@@ -32,10 +32,14 @@ my $expect;
 
 # MSG_GETROOT
 $expect = "\x40" . "\0\0\0\x0c" .
-          "\1" . "\x0a" . "testscript";
+          "\1" . "\x0a" . "testscript" .
+# MSG_GETREGISTRY
+          "\x41" . "\0\0\0\0";
 
 my $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+
+is_hexstr( $clientstream, $expect, 'client stream initially contains MSG_GETROOT and MSG_GETREGISTRY' );
 
 $S2->syswrite( "\x82" . "\0\0\1\x5c" .
                "\x82" . "t::Bag\0" .
@@ -64,6 +68,30 @@ $S2->syswrite( "\x82" . "\0\0\1\x5c" .
                "\4" . "\0\0\0\1" );
 
 wait_for { defined $conn->get_root };
+
+$S2->syswrite( "\x82" . "\0\0\1\x6a" .
+               "\x82" . "Tangence::Registry\0" .
+                        "\3" . "\4" . "events\0" . "\3" . "\3" . "destroy\0" . "\3" . "\1" . "args\0" . "\1" . "\0" .
+                                                                 "object_constructed\0" . "\3" . "\1" . "args\0" . "\1" . "\1" . "I" .
+                                                                 "object_destroyed\0" . "\3" . "\1" . "args\0" . "\1" . "\1" . "I" .
+                                      "isa\0" . "\2" . "\2" . "\1" . "\x12" . "Tangence::Registry" .
+                                                              "\1" . "\x10" . "Tangence::Object" .
+                                      "methods\0" . "\3" . "\5" . "can_event\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
+                                                                                                "ret\0" . "\1" . "\1" . "h" .
+                                                                  "can_method\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
+                                                                                                 "ret\0" . "\1" . "\1" . "h" .
+                                                                  "can_property\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
+                                                                                                   "ret\0" . "\1" . "\1" . "h" .
+                                                                  "describe\0" . "\3" . "\2" . "args\0" . "\1" . "\0" .
+                                                                                               "ret\0" . "\1" . "\1" . "s" .
+                                                                  "introspect\0" . "\3" . "\2" . "args\0" . "\1" . "\0" .
+                                                                                                 "ret\0" . "\1" . "\1" . "h" .
+                                      "properties\0" . "\3" . "\1" . "objects\0" . "\3" . "\2" . "dim\0" . "\1" . "\1" . "2" .
+                                                                                                 "type\0" . "\1" . "\1" . "s" .
+               "\x81" . "\0\0\0\0" . "Tangence::Registry\0" .
+               "\4" . "\0\0\0\0" );
+
+wait_for { defined $conn->get_registry };
 
 my $bagproxy = $conn->get_root;
 

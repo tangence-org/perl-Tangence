@@ -202,6 +202,25 @@ sub _do_initial
          }
       }
    );
+
+   $self->request(
+      request => [ MSG_GETREGISTRY ],
+
+      on_response => sub {
+         my ( $response ) = @_;
+         my $code = $response->[0];
+
+         if( $code == MSG_RESULT ) {
+            $self->{registry} = $response->[1];
+         }
+         elsif( $code == MSG_ERROR ) {
+            print STDERR "Cannot get registry - error $response->[1]";
+         }
+         else {
+            print STDERR "Cannot get registry - code $code\n";
+         }
+      }
+   );
 }
 
 sub subscribe
@@ -326,6 +345,12 @@ sub get_root
 {
    my $self = shift;
    return $self->{rootobj};
+}
+
+sub get_registry
+{
+   my $self = shift;
+   return $self->{registry};
 }
 
 sub get_by_id
