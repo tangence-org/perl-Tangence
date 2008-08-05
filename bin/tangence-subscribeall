@@ -60,15 +60,16 @@ $loop->add( $conn );
 
 $conn->connect( 
    $URL,
+   on_connected => sub {},
+);
 
-   on_connected => sub {
-      $conn->watch( 
-         objid    => 0,
-         property => "objects",
-         callback => \&objects_changed,
-         want_initial => 1,
-      );
-   },
+my $registry;
+$loop->loop_once until defined( $registry = $conn->get_registry );
+
+$registry->watch_property( 
+   property => "objects",
+   on_change => \&objects_changed,
+   want_initial => 1,
 );
 
 $loop->loop_forever;
@@ -106,7 +107,10 @@ sub new_object
 
          foreach my $event ( keys %$events ) {
             print "Subscribing to object $objid event $event\n";
-            $conn->subscribe( $objid, $event, \&event_happened );
+            $obj->subscribe_event(
+               event => $event,
+               on_fire => \&event_happened
+            );
          }
 
          my $properties = $introspection->{properties};

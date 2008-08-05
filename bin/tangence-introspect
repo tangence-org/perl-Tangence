@@ -26,29 +26,31 @@ my $conn = Tangence::Connection->new(
 
 $loop->add( $conn );
 
-my $on_connected;
+$conn->connect( 
+   $URL,
+   on_connected => sub {},
+);
+
+my $registry;
+$loop->loop_once until defined( $registry = $conn->get_registry );
 
 if( !@ARGV ) {
-   $on_connected = sub {
-      my $obj = $conn->make_proxy( 0 );
+   $registry->get_property(
+      property => "objects",
 
-      $obj->get_property(
-         property => "objects",
+      on_value => sub {
+         my ( $objshash ) = @_;
 
-         on_value => sub {
-            my ( $objshash ) = @_;
+         foreach my $id ( sort keys %$objshash ) {
+            my $desc = $objshash->{$id};
 
-            foreach my $id ( sort keys %$objshash ) {
-               my $desc = $objshash->{$id};
+            printf "%-6d: %s\n", $id, $desc;
+         }
 
-               printf "%-6d: %s\n", $id, $desc;
-            }
+         $loop->loop_stop;
+      },
 
-            $loop->loop_stop;
-         },
-
-      );
-   };
+   );
 }
 elsif( $ARGV[0] eq "-i" ) {
    shift @ARGV; # eat -i
@@ -56,20 +58,16 @@ elsif( $ARGV[0] eq "-i" ) {
 
    require Data::Dump;
 
-   $on_connected = sub {
-      my $obj = $conn->make_proxy( $objid );
+   $registry->call_method(
+      method  => "get_by_id",
+      args    => [ $objid ],
 
-      $obj->call_method(
-         method  => "introspect",
-         args    => [],
-
-         on_result => sub {
-            my ( $data ) = @_;
-            print Data::Dump::dump( $data ) . "\n";
-            $loop->loop_stop;
-         },
-      );
-   };
+      on_result => sub {
+         my ( $obj ) = @_;
+         print Data::Dump::dump( $obj->introspect ) . "\n";
+         $loop->loop_stop;
+      },
+   );
 }
 elsif( $ARGV[0] eq "-p" ) {
    shift @ARGV; # eat -p
@@ -78,28 +76,27 @@ elsif( $ARGV[0] eq "-p" ) {
 
    require Data::Dump;
 
-   $on_connected = sub {
-      my $obj = $conn->make_proxy( $objid );
+   $registry->call_method(
+      method => "get_by_id",
+      args   => [ $objid ],
 
-      $obj->get_property(
-         property => $property,
+      on_result => sub {
+         my ( $obj ) = @_;
 
-         on_value => sub {
-            my ( $value ) = @_;
-            print Data::Dump::dump( $value ) . "\n";
-            $loop->loop_stop;
-         },
-      );
-   };
+         $obj->get_property(
+            property => $property,
+
+            on_value => sub {
+               my ( $value ) = @_;
+               print Data::Dump::dump( $value ) . "\n";
+               $loop->loop_stop;
+            },
+         );
+      },
+   );
 }
 else {
    die "Unrecognised operation $ARGV[0]\n";
 }
-
-$conn->connect( 
-   $URL,
-
-   on_connected => $on_connected,
-);
 
 $loop->loop_forever;
