@@ -295,7 +295,7 @@ sub handle_request_WATCH
 
    push @{ $self->{watches} }, [ $object, $prop, $id ];
 
-   $self->respond( $token, [ MSG_WATCHING, $pdef->{dim} ] );
+   $self->respond( $token, [ MSG_WATCHING ] );
 
    return unless $want_initial;
 

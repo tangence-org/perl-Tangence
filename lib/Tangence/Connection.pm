@@ -312,7 +312,7 @@ sub watch
 
          if( $code == MSG_WATCHING ) {
             $self->{watches}->{$objid}->{$prop} = $callback;
-            $on_watched->( $response->[1] ) if $on_watched;
+            $on_watched->() if $on_watched;
          }
          elsif( $code == MSG_ERROR ) {
             print STDERR "Cannot watch property '$prop' on object $objid - error $response->[1]\n";

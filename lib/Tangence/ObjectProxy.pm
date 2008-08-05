@@ -187,7 +187,7 @@ sub _update_property
 
    my $prop = $self->{props}->{$property} ||= {};
 
-   my $dim = $prop->{dim};
+   my $dim = $self->{schema}->{properties}->{$property}->{dim};
 
    if( $dim == DIM_SCALAR ) {
       $self->_update_property_scalar( $prop->{cache}, $how, @value );
@@ -372,12 +372,7 @@ sub watch_property
          $self->_update_property( $property, $how, @value );
          foreach my $cb ( @cbs ) { $cb->( @_ ) }
       },
-
-      on_watched => sub {
-         $self->{props}->{$property}->{dim} = $_[0];
-         $args{on_watched}->() if $args{on_watched};
-      },
-
+      on_watched => $args{on_watched},
       want_initial => $want_initial,
    );
 }
