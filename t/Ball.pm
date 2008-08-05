@@ -24,6 +24,11 @@ our %PROPS = (
       dim  => DIM_SCALAR,
       type => 'i',
    },
+
+   size => {
+      dim  => DIM_SCALAR,
+      type => 'i',
+   },
 );
 
 sub new
@@ -34,6 +39,7 @@ sub new
    my $self = $class->SUPER::new( %args );
 
    $self->{colour} = $args{colour};
+   $self->{size}   = $args{size};
 
    return $self;
 }
@@ -64,6 +70,20 @@ sub set_prop_colour
    my ( $colour ) = @_;
    $self->{colour} = $colour;
    $self->update_property( "colour", CHANGE_SET, $colour );
+}
+
+sub get_prop_size
+{
+   my $self = shift;
+   return $self->{size};
+}
+
+sub set_prop_size
+{
+   my $self = shift;
+   my ( $size ) = @_;
+   $self->{size} = $size;
+   $self->update_property( "size", CHANGE_SET, $size );
 }
 
 1;

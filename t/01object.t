@@ -58,6 +58,7 @@ is_deeply( $ball->introspect,
               },
               properties => {
                  colour => { dim => DIM_SCALAR, type => 'i' },
+                 size   => { dim => DIM_SCALAR, type => 'i' },
               },
            }, '$ball introspect' );
 

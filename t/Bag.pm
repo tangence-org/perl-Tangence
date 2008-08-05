@@ -41,7 +41,7 @@ sub new
 
    my $registry = $self->registry;
 
-   $self->{balls} = [ map { $registry->construct( "t::Ball", colour => $_ ) } @$colours ];
+   $self->{balls} = [ map { $registry->construct( "t::Ball", colour => $_, size => $args{size} ) } @$colours ];
 
    return $self;
 }

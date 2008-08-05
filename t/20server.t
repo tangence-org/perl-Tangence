@@ -25,6 +25,7 @@ my $registry = Tangence::Registry->new();
 my $bag = $registry->construct(
    "t::Bag",
    colours => [ qw( red blue green yellow ) ],
+   size => 100,
 );
 
 my $server = Tangence::Server->new(
@@ -104,7 +105,7 @@ $S2->syswrite( "\1" . "\0\0\0\x13" .
 
 # This long string is massive and annoying. Sorry.
 
-$expect = "\x82" . "\0\0\0\xb0" .
+$expect = "\x82" . "\0\0\0\xc6" .
           "\x82" . "t::Ball\0" .
                    "\3" . "\4" . "events\0" . "\3" . "\2" . "bounced\0" . "\3" . "\1" . "args\0" . "\1" . "\1" . "s" .
                                                             "destroy\0" . "\3" . "\1" . "args\0" . "\1" . "\0" .
@@ -112,8 +113,10 @@ $expect = "\x82" . "\0\0\0\xb0" .
                                                          "\1" . "\x10" . "Tangence::Object" .
                                  "methods\0" . "\3" . "\1" . "bounce\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
                                                                                         "ret\0" . "\1" . "\0" .
-                                 "properties\0" . "\3" . "\1" . "colour\0" . "\3" . "\2" . "dim\0" . "\1" . "\1" . "1" .
+                                 "properties\0" . "\3" . "\2" . "colour\0" . "\3" . "\2" . "dim\0" . "\1" . "\1" . "1" .
                                                                                            "type\0" . "\1" . "\1" . "i" .
+                                                                "size\0" . "\3" . "\2" . "dim\0" . "\1" . "\1" . "1" .
+                                                                                         "type\0" . "\1" . "\1" . "i" .
           "\x81" . "\0\0\0\2" . "t::Ball\0" .
           "\4" . "\0\0\0\2";
 

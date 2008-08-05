@@ -21,7 +21,8 @@ testing_loop( $loop );
 my $registry = Tangence::Registry->new();
 my $ball = $registry->construct(
    "t::Ball",
-   colour => "red"
+   colour => "red",
+   size   => 100,
 );
 
 my $server = Tangence::Server->new(
