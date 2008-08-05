@@ -87,14 +87,14 @@ $S2->syswrite( "\x41" . "\0\0\0\0" );
 
 # This long string is massive and annoying. Sorry.
 
-$expect = "\x82" . "\0\0\1\x6a" .
+$expect = "\x82" . "\0\0\1\x85" .
           "\x82" . "Tangence::Registry\0" .
                    "\3" . "\4" . "events\0" . "\3" . "\3" . "destroy\0" . "\3" . "\1" . "args\0" . "\1" . "\0" .
                                                             "object_constructed\0" . "\3" . "\1" . "args\0" . "\1" . "\1" . "I" .
                                                             "object_destroyed\0" . "\3" . "\1" . "args\0" . "\1" . "\1" . "I" .
                                  "isa\0" . "\2" . "\2" . "\1" . "\x12" . "Tangence::Registry" .
                                                          "\1" . "\x10" . "Tangence::Object" .
-                                 "methods\0" . "\3" . "\5" . "can_event\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
+                                 "methods\0" . "\3" . "\6" . "can_event\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
                                                                                            "ret\0" . "\1" . "\1" . "h" .
                                                              "can_method\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
                                                                                             "ret\0" . "\1" . "\1" . "h" .
@@ -102,6 +102,8 @@ $expect = "\x82" . "\0\0\1\x6a" .
                                                                                               "ret\0" . "\1" . "\1" . "h" .
                                                              "describe\0" . "\3" . "\2" . "args\0" . "\1" . "\0" .
                                                                                           "ret\0" . "\1" . "\1" . "s" .
+                                                             "get_by_id\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "i" .
+                                                                                           "ret\0" . "\1" . "\1" . "o" .
                                                              "introspect\0" . "\3" . "\2" . "args\0" . "\1" . "\0" .
                                                                                             "ret\0" . "\1" . "\1" . "h" .
                                  "properties\0" . "\3" . "\1" . "objects\0" . "\3" . "\2" . "dim\0" . "\1" . "\1" . "2" .

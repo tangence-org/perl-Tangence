@@ -8,6 +8,10 @@ use Carp;
 use Tangence::Constants;
 
 our %METHODS = (
+   get_by_id => {
+      args => 'i',
+      ret  => 'o',
+   },
 );
 
 our %EVENTS = (
