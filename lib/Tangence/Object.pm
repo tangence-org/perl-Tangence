@@ -125,6 +125,31 @@ sub can_property
    return undef;
 }
 
+sub autoprops
+{
+   my $self = shift;
+   my ( $class ) = @_;
+
+   $class ||= ( ref $self || $self );
+
+   my %props = do { no strict 'refs'; %{$class."::PROPS"} };
+
+   my %auto;
+
+   $props{$_}->{auto} and $auto{$_} = 1 for keys %props;
+
+   my @isa = do { no strict 'refs'; @{$class."::ISA"} };
+
+   foreach my $superclass ( @isa ) {
+      my $supkeys = $self->autoprops( $superclass );
+
+      # Merge keys we don't yet have
+      $auto{$_} = 1 for keys %$supkeys;
+   }
+
+   return \%auto;
+}
+
 sub introspect
 {
    my $self = shift;

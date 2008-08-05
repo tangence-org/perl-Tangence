@@ -102,7 +102,7 @@ is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL' );
 
 # This long string is massive and annoying. Sorry.
 
-$S2->syswrite( "\x82" . "\0\0\0\xc6" .
+$S2->syswrite( "\x82" . "\0\0\0\xce" .
                "\x82" . "t::Ball\0" .
                         "\3" . "\4" . "events\0" . "\3" . "\2" . "bounced\0" . "\3" . "\1" . "args\0" . "\1" . "\1" . "s" .
                                                                  "destroy\0" . "\3" . "\1" . "args\0" . "\1" . "\0" .
@@ -112,7 +112,8 @@ $S2->syswrite( "\x82" . "\0\0\0\xc6" .
                                                                                              "ret\0" . "\1" . "\0" .
                                       "properties\0" . "\3" . "\2" . "colour\0" . "\3" . "\2" . "dim\0" . "\1" . "\1" . "1" .
                                                                                                 "type\0" . "\1" . "\1" . "i" .
-                                                                     "size\0" . "\3" . "\2" . "dim\0" . "\1" . "\1" . "1" .
+                                                                     "size\0" . "\3" . "\3" . "auto\0" . "\1" . "\1" . "1" .
+                                                                                              "dim\0" . "\1" . "\1" . "1" .
                                                                                               "type\0" . "\1" . "\1" . "i" .
                "\x81" . "\0\0\0\2" . "t::Ball\0" .
                "\4" . "\0\0\0\2" );

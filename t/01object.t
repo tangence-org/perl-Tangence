@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 20;
+use Test::More tests => 21;
 
 use Tangence::Constants;
 
@@ -58,9 +58,13 @@ is_deeply( $ball->introspect,
               },
               properties => {
                  colour => { dim => DIM_SCALAR, type => 'i' },
-                 size   => { dim => DIM_SCALAR, type => 'i' },
+                 size   => { dim => DIM_SCALAR, type => 'i', auto => 1 },
               },
            }, '$ball introspect' );
+
+is_deeply( $ball->autoprops,
+           { size => 1 },
+           '$ball->autoprops' );
 
 my $bounces = 0;
 my $howhigh;

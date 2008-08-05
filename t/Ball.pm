@@ -28,6 +28,7 @@ our %PROPS = (
    size => {
       dim  => DIM_SCALAR,
       type => 'i',
+      auto => 1,
    },
 );
 
