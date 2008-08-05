@@ -41,27 +41,17 @@ wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream initially contains MSG_GETROOT and MSG_GETREGISTRY' );
 
-$S2->syswrite( "\x82" . "\0\0\1\x5c" .
+$S2->syswrite( "\x82" . "\0\0\0\xd3" .
                "\x82" . "t::Bag\0" .
                         "\3" . "\4" . "events\0" . "\3" . "\1" . "destroy\0" . "\3" . "\1" . "args\0" . "\1" . "\0" .
                                       "isa\0" . "\2" . "\2" . "\1" . "\6" . "t::Bag" .
                                                               "\1" . "\x10" . "Tangence::Object" .
-                                      "methods\0" . "\3" . "\x08" . "add_ball\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "o" .
-                                                                                                 "ret\0" . "\1" . "\0" .
-                                                                    "can_event\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
-                                                                                                  "ret\0" . "\1" . "\1" . "h" .
-                                                                    "can_method\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
-                                                                                                   "ret\0" . "\1" . "\1" . "h" .
-                                                                    "can_property\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
-                                                                                                     "ret\0" . "\1" . "\1" . "h" .
-                                                                    "describe\0" . "\3" . "\2" . "args\0" . "\1" . "\0" .
-                                                                                                 "ret\0" . "\1" . "\1" . "s" .
-                                                                    "get_ball\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
-                                                                                                 "ret\0" . "\1" . "\1" . "o" .
-                                                                    "introspect\0" . "\3" . "\2" . "args\0" . "\1" . "\0" .
-                                                                                                   "ret\0" . "\1" . "\1" . "h" .
-                                                                    "pull_ball\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
-                                                                                                  "ret\0" . "\1" . "\1" . "o" .
+                                      "methods\0" . "\3" . "\3" . "add_ball\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "o" .
+                                                                                               "ret\0" . "\1" . "\0" .
+                                                                  "get_ball\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
+                                                                                               "ret\0" . "\1" . "\1" . "o" .
+                                                                  "pull_ball\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
+                                                                                                "ret\0" . "\1" . "\1" . "o" .
                                       "properties\0" . "\3" . "\1" . "colours\0" . "\3" . "\2" . "dim\0" . "\1" . "\1" . "2" .
                                                                                                  "type\0" . "\1" . "\1" . "i" .
                "\x81" . "\0\0\0\1" . "t::Bag\0" .
@@ -69,25 +59,15 @@ $S2->syswrite( "\x82" . "\0\0\1\x5c" .
 
 wait_for { defined $conn->get_root };
 
-$S2->syswrite( "\x82" . "\0\0\1\x85" .
+$S2->syswrite( "\x82" . "\0\0\0\xfc" .
                "\x82" . "Tangence::Registry\0" .
                         "\3" . "\4" . "events\0" . "\3" . "\3" . "destroy\0" . "\3" . "\1" . "args\0" . "\1" . "\0" .
                                                                  "object_constructed\0" . "\3" . "\1" . "args\0" . "\1" . "\1" . "I" .
                                                                  "object_destroyed\0" . "\3" . "\1" . "args\0" . "\1" . "\1" . "I" .
                                       "isa\0" . "\2" . "\2" . "\1" . "\x12" . "Tangence::Registry" .
                                                               "\1" . "\x10" . "Tangence::Object" .
-                                      "methods\0" . "\3" . "\6" . "can_event\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
-                                                                                                "ret\0" . "\1" . "\1" . "h" .
-                                                                  "can_method\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
-                                                                                                 "ret\0" . "\1" . "\1" . "h" .
-                                                                  "can_property\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
-                                                                                                   "ret\0" . "\1" . "\1" . "h" .
-                                                                  "describe\0" . "\3" . "\2" . "args\0" . "\1" . "\0" .
-                                                                                               "ret\0" . "\1" . "\1" . "s" .
-                                                                  "get_by_id\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "i" .
+                                      "methods\0" . "\3" . "\1" . "get_by_id\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "i" .
                                                                                                 "ret\0" . "\1" . "\1" . "o" .
-                                                                  "introspect\0" . "\3" . "\2" . "args\0" . "\1" . "\0" .
-                                                                                                 "ret\0" . "\1" . "\1" . "h" .
                                       "properties\0" . "\3" . "\1" . "objects\0" . "\3" . "\2" . "dim\0" . "\1" . "\1" . "2" .
                                                                                                  "type\0" . "\1" . "\1" . "s" .
                "\x81" . "\0\0\0\0" . "Tangence::Registry\0" .
@@ -122,24 +102,14 @@ is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL' );
 
 # This long string is massive and annoying. Sorry.
 
-$S2->syswrite( "\x82" . "\0\0\1\x39" .
+$S2->syswrite( "\x82" . "\0\0\0\xb0" .
                "\x82" . "t::Ball\0" .
                         "\3" . "\4" . "events\0" . "\3" . "\2" . "bounced\0" . "\3" . "\1" . "args\0" . "\1" . "\1" . "s" .
                                                                  "destroy\0" . "\3" . "\1" . "args\0" . "\1" . "\0" .
                                       "isa\0" . "\2" . "\2" . "\1" . "\7" . "t::Ball" .
                                                               "\1" . "\x10" . "Tangence::Object" .
-                                      "methods\0" . "\3" . "\6" . "bounce\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
+                                      "methods\0" . "\3" . "\1" . "bounce\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
                                                                                              "ret\0" . "\1" . "\0" .
-                                                                  "can_event\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
-                                                                                                "ret\0" . "\1" . "\1" . "h" .
-                                                                  "can_method\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
-                                                                                                 "ret\0" . "\1" . "\1" . "h" .
-                                                                  "can_property\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
-                                                                                                   "ret\0" . "\1" . "\1" . "h" .
-                                                                  "describe\0" . "\3" . "\2" . "args\0" . "\1" . "\0" .
-                                                                                               "ret\0" . "\1" . "\1" . "s" .
-                                                                  "introspect\0" . "\3" . "\2" . "args\0" . "\1" . "\0" .
-                                                                                                 "ret\0" . "\1" . "\1" . "h" .
                                       "properties\0" . "\3" . "\1" . "colour\0" . "\3" . "\2" . "dim\0" . "\1" . "\1" . "1" .
                                                                                                 "type\0" . "\1" . "\1" . "i" .
                "\x81" . "\0\0\0\2" . "t::Ball\0" .

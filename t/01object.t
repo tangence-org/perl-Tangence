@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 21;
+use Test::More tests => 20;
 
 use Tangence::Constants;
 
@@ -27,9 +27,6 @@ is( $ball->describe, 't::Ball[colour="red"]', '$ball->describe' );
 is_deeply( $ball->can_method( "bounce" ),
            { args => 's', ret => '' }, '$ball->can_method "bounce"' );
 
-is_deeply( $ball->can_method( "describe" ),
-           { args => '', ret => 's' }, '$ball->can_method "describe"' );
-
 is_deeply( $ball->can_method( "fly" ),
            undef, '$ball->can_method "fly" is undef' );
 
@@ -53,12 +50,6 @@ is_deeply( $ball->introspect,
               isa => [qw( t::Ball Tangence::Object )],
               methods => {
                  bounce     => { args => 's',  ret => '' },
-
-                 describe     => { args => '',  ret => 's' },
-                 can_method   => { args => 's', ret => 'h' },
-                 can_event    => { args => 's', ret => 'h' },
-                 can_property => { args => 's', ret => 'h' },
-                 introspect   => { args => '',  ret => 'h' },
               },
               events => {
                  bounced => { args => 's' },

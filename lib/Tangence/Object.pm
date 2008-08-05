@@ -7,27 +7,6 @@ use Carp;
 use Tangence::Constants;
 
 our %METHODS = (
-   describe   => {
-      args => '',
-      ret  => 's',
-   },
-   can_method => {
-      args => 's',
-      ret  => 'h',
-   },
-   can_event => {
-      args => 's',
-      ret  => 'h',
-   },
-   can_property => {
-      args => 's',
-      ret  => 'h',
-   },
-
-   introspect => {
-      args => '',
-      ret  => 'h',
-   },
 );
 
 our %EVENTS = (
