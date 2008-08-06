@@ -53,7 +53,7 @@ $proxy->watch_property(
 undef $result;
 wait_for { defined $result };
 
-is( $proxy->get_property_cached( "scalar" ), 
+is( $proxy->prop( "scalar" ), 
    "123",
     "scalar property cache" );
 
@@ -68,7 +68,7 @@ $proxy->watch_property(
 undef $result;
 wait_for { defined $result };
 
-is_deeply( $proxy->get_property_cached( "hash" ),
+is_deeply( $proxy->prop( "hash" ),
            { one => 1, two => 2, three => 3 },
            'hash property cache' );
 
@@ -83,7 +83,7 @@ $proxy->watch_property(
 undef $result;
 wait_for { defined $result };
 
-is_deeply( $proxy->get_property_cached( "array" ),
+is_deeply( $proxy->prop( "array" ),
            [ 1, 2, 3 ],
            'array property cache' );
 
@@ -92,13 +92,13 @@ $obj->add_number( four => 4 );
 $array_changed = 0;
 wait_for { $array_changed };
 
-is( $proxy->get_property_cached( "scalar" ), 
+is( $proxy->prop( "scalar" ), 
     "1234",
     "scalar property cache after update" );
-is_deeply( $proxy->get_property_cached( "hash" ), 
+is_deeply( $proxy->prop( "hash" ), 
            { one => 1, two => 2, three => 3, four => 4 },
            'hash property cache after update' );
-is_deeply( $proxy->get_property_cached( "array" ),
+is_deeply( $proxy->prop( "array" ),
            [ 1, 2, 3, 4 ],
            'array property cache after update' );
 
@@ -110,7 +110,7 @@ wait_for { $hash_changed };
 
 ok( !$scalar_changed, 'scalar unchanged' );
 ok( !$array_changed,  'array unchanged' );
-is_deeply( $proxy->get_property_cached( "hash" ),
+is_deeply( $proxy->prop( "hash" ),
            { one => 1, two => 2, three => 3, four => 4, five => 4 },
            'hash property cache after wrong five' );
 
@@ -120,13 +120,13 @@ $obj->add_number( five => 5 );
 
 wait_for { $hash_changed };
 
-is( $proxy->get_property_cached( "scalar" ),
+is( $proxy->prop( "scalar" ),
     "12345",
     "scalar property cache after five" );
-is_deeply( $proxy->get_property_cached( "hash" ),
+is_deeply( $proxy->prop( "hash" ),
            { one => 1, two => 2, three => 3, four => 4, five => 5 },
            'hash property cache after five' );
-is_deeply( $proxy->get_property_cached( "array" ),
+is_deeply( $proxy->prop( "array" ),
            [ 1, 2, 3, 4, 5 ],
            'array property cache after five' );
 
@@ -136,12 +136,12 @@ $obj->del_number( 3 );
 
 wait_for { $array_changed };
 
-is( $proxy->get_property_cached( "scalar" ),
+is( $proxy->prop( "scalar" ),
     "1245",
     "scalar property cache after delete three" );
-is_deeply( $proxy->get_property_cached( "hash" ),
+is_deeply( $proxy->prop( "hash" ),
            { one => 1, two => 2, four => 4, five => 5 },
            'hash property cache after delete three' );
-is_deeply( $proxy->get_property_cached( "array" ),
+is_deeply( $proxy->prop( "array" ),
            [ 1, 2, 4, 5 ],
            'array property cache after delete three' );

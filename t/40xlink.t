@@ -87,7 +87,7 @@ dies_ok( sub { $ballproxy->subscribe_event(
                ); },
          'Subscribing to no_such_event fails in proxy' );
 
-is( $ballproxy->get_property_cached( "size" ), 100, 'Autoproperty initially set in proxy' );
+is( $ballproxy->prop( "size" ), 100, 'Autoproperty initially set in proxy' );
 
 my $colour;
 

@@ -307,7 +307,7 @@ sub _update_property_objset
    }
 }
 
-sub get_property_cached
+sub prop
 {
    my $self = shift;
    my ( $property ) = @_;
