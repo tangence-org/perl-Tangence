@@ -62,6 +62,27 @@ sub registry
    return $self->{registry};
 }
 
+sub smash
+{
+   my $self = shift;
+   my ( $smashkeys ) = @_;
+
+   return undef unless $smashkeys and @$smashkeys;
+
+   my @keys;
+   if( ref $smashkeys eq "HASH" ) {
+      @keys = keys %$smashkeys;
+   }
+   else {
+      @keys = @$smashkeys;
+   }
+
+   return { map {
+      my $m = "get_prop_$_";
+      $_ => $self->$m()
+   } @keys };
+}
+
 sub can_method
 {
    my $self = shift;

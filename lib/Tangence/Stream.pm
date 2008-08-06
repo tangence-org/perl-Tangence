@@ -64,7 +64,7 @@ sub new
    );
 
    $self->{peer_hasobj} = {}; # {$id} = 1
-   $self->{peer_hasclass} = {}; # {$classname} = 1;
+   $self->{peer_hasclass} = {}; # {$classname} = [\@smashkeys];
 
    return $self;
 }
@@ -151,13 +151,40 @@ sub pack_data
       if( !$self->{peer_hasobj}->{$id} ) {
          my $class = ref $d;
 
+         my $smashkeys;
+
          if( !$self->{peer_hasclass}->{$class} ) {
             my $schema = $class->introspect;
+
             $preamble .= chr(DATATYPE_CLASS) . pack( "Z*", $class ) . $self->pack_data( $schema );
-            $self->{peer_hasclass}->{$class} = 1;
+
+            $smashkeys = [ keys %{ $class->autoprops } ];
+            for my $prop ( @$smashkeys ) {
+               $self->_install_watch( $d, $prop );
+            }
+
+            @$smashkeys = sort @$smashkeys if $SORT_HASH_KEYS;
+            $smashkeys = undef unless @$smashkeys;
+
+            $preamble .= $self->pack_data( $smashkeys );
+
+            $self->{peer_hasclass}->{$class} = [ $smashkeys ];
+         }
+         else {
+            $smashkeys = $self->{peer_hasclass}->{$class}->[0];
          }
 
          $preamble .= chr(DATATYPE_CONSTRUCT) . pack( "NZ*", $id, $class );
+
+         my $smasharr;
+
+         if( $smashkeys ) {
+            my $smashdata = $d->smash( $smashkeys );
+            $smasharr = [ map { $smashdata->{$_} } @$smashkeys ];
+         }
+
+         $preamble .= $self->pack_data( $smasharr );
+
          $self->{peer_hasobj}->{$id} = 1;
       }
 
@@ -182,12 +209,23 @@ sub unpack_data
 
       if( $t == DATATYPE_CONSTRUCT ) {
          my ( $id, $class ) = unpack( "NZ*", $_[0] ); substr( $_[0], 0, 5 + length $class, "" );
-         $self->make_proxy( $id, $class );
+         my $smasharr = $self->unpack_data( $_[0] );
+
+         my $smashkeys = $self->{peer_hasclass}->{$class}->[0];
+
+         my $smashdata;
+         $smashdata->{$smashkeys->[$_]} = $smasharr->[$_] for 0 .. $#$smasharr;
+
+         $self->make_proxy( $id, $class, $smashdata );
       }
       elsif( $t == DATATYPE_CLASS ) {
          my ( $class ) = unpack( "Z*", $_[0] ); substr( $_[0], 0, 1 + length $class, "" );
          my $schema = $self->unpack_data( $_[0] );
+
          $self->make_schema( $class, $schema );
+
+         my $smashkeys = $self->unpack_data( $_[0] );
+         $self->{peer_hasclass}->{$class} = [ $smashkeys ];
       }
       else {
          die sprintf("TODO: Data stream meta-operation 0x%02x", $t);

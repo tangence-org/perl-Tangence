@@ -357,7 +357,11 @@ sub get_by_id
 sub make_proxy
 {
    my $self = shift;
-   my ( $id, $class ) = @_;
+   my ( $id, $class, $smashdata ) = @_;
+
+   if( exists $self->{objectproxies}->{$id} ) {
+      croak "Already have an object id $id";
+   }
 
    my $schema;
    if( defined $class ) {
@@ -365,7 +369,7 @@ sub make_proxy
       defined $schema or croak "Cannot construct a proxy for class $class as no schema exists";
    }
 
-   return $self->{objectproxies}->{$id} ||=
+   my $obj = $self->{objectproxies}->{$id} =
       Tangence::ObjectProxy->new(
          conn => $self,
          id   => $id,
@@ -375,6 +379,10 @@ sub make_proxy
 
          on_error => $self->{on_error},
       );
+
+   $obj->grab( $smashdata ) if defined $smashdata;
+
+   return $obj;
 }
 
 sub make_schema

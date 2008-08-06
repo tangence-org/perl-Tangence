@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 11;
+use Test::More tests => 14;
 use Test::Exception;
 use IO::Async::Test;
 use IO::Async::Loop::IO_Poll;
@@ -87,6 +87,8 @@ dies_ok( sub { $ballproxy->subscribe_event(
                ); },
          'Subscribing to no_such_event fails in proxy' );
 
+is( $ballproxy->get_property_cached( "size" ), 100, 'Autoproperty initially set in proxy' );
+
 my $colour;
 
 $ballproxy->get_property(
@@ -156,3 +158,24 @@ dies_ok( sub { $ballproxy->get_property(
                  on_value => sub {},
                ); },
          'Getting no_such_property fails in proxy' );
+
+# Test the autoproperties
+
+my $size;
+$watched = 0;
+$ballproxy->watch_property(
+   property => "size",
+   on_change => sub {
+      my ( $obj, $prop, $how, @value ) = @_;
+      $size = $value[0];
+   },
+   on_watched => sub { $watched = 1 },
+);
+
+is( $watched, 1, 'watch_property on autoprop is synchronous' );
+
+$ball->set_prop_size( 200 );
+
+wait_for { defined $size };
+
+is( $size, 200, 'autoprop watch succeeds' );

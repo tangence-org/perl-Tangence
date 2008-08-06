@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 30;
+use Test::More tests => 34;
 use Test::Exception;
 use Test::HexString;
 use IO::Async::Test;
@@ -42,7 +42,7 @@ wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream initially contains MSG_GETROOT and MSG_GETREGISTRY' );
 
-$S2->syswrite( "\x82" . "\0\0\0\xd3" .
+$S2->syswrite( "\x82" . "\0\0\0\xd5" .
                "\x82" . "t::Bag\0" .
                         "\3" . "\4" . "events\0" . "\3" . "\1" . "destroy\0" . "\3" . "\1" . "args\0" . "\1" . "\0" .
                                       "isa\0" . "\2" . "\2" . "\1" . "\6" . "t::Bag" .
@@ -55,12 +55,13 @@ $S2->syswrite( "\x82" . "\0\0\0\xd3" .
                                                                                                 "ret\0" . "\1" . "\1" . "o" .
                                       "properties\0" . "\3" . "\1" . "colours\0" . "\3" . "\2" . "dim\0" . "\1" . "\1" . "2" .
                                                                                                  "type\0" . "\1" . "\1" . "i" .
-               "\x81" . "\0\0\0\1" . "t::Bag\0" .
+                        "\0" .
+               "\x81" . "\0\0\0\1" . "t::Bag\0" . "\0" .
                "\4" . "\0\0\0\1" );
 
 wait_for { defined $conn->get_root };
 
-$S2->syswrite( "\x82" . "\0\0\0\xfc" .
+$S2->syswrite( "\x82" . "\0\0\0\xfe" .
                "\x82" . "Tangence::Registry\0" .
                         "\3" . "\4" . "events\0" . "\3" . "\3" . "destroy\0" . "\3" . "\1" . "args\0" . "\1" . "\0" .
                                                                  "object_constructed\0" . "\3" . "\1" . "args\0" . "\1" . "\1" . "I" .
@@ -71,7 +72,8 @@ $S2->syswrite( "\x82" . "\0\0\0\xfc" .
                                                                                                 "ret\0" . "\1" . "\1" . "o" .
                                       "properties\0" . "\3" . "\1" . "objects\0" . "\3" . "\2" . "dim\0" . "\1" . "\1" . "2" .
                                                                                                  "type\0" . "\1" . "\1" . "s" .
-               "\x81" . "\0\0\0\0" . "Tangence::Registry\0" .
+                        "\0" .
+               "\x81" . "\0\0\0\0" . "Tangence::Registry\0" . "\0" .
                "\4" . "\0\0\0\0" );
 
 wait_for { defined $conn->get_registry };
@@ -103,7 +105,7 @@ is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL' );
 
 # This long string is massive and annoying. Sorry.
 
-$S2->syswrite( "\x82" . "\0\0\0\xce" .
+$S2->syswrite( "\x82" . "\0\0\0\xdd" .
                "\x82" . "t::Ball\0" .
                         "\3" . "\4" . "events\0" . "\3" . "\2" . "bounced\0" . "\3" . "\1" . "args\0" . "\1" . "\1" . "s" .
                                                                  "destroy\0" . "\3" . "\1" . "args\0" . "\1" . "\0" .
@@ -116,7 +118,8 @@ $S2->syswrite( "\x82" . "\0\0\0\xce" .
                                                                      "size\0" . "\3" . "\3" . "auto\0" . "\1" . "\1" . "1" .
                                                                                               "dim\0" . "\1" . "\1" . "1" .
                                                                                               "type\0" . "\1" . "\1" . "i" .
-               "\x81" . "\0\0\0\2" . "t::Ball\0" .
+                        "\2" . "\1" . "\1" . "\4" . "size" .
+               "\x81" . "\0\0\0\2" . "t::Ball\0" . "\2" . "\1" . "\1" . "\3" . "100" .
                "\4" . "\0\0\0\2" );
 
 wait_for { @result };
@@ -242,6 +245,8 @@ dies_ok( sub { $ballproxy->subscribe_event(
                  on_fire => sub {},
                ); },
          'Subscribing to no_such_event fails in proxy' );
+
+is( $ballproxy->get_property_cached( "size" ), 100, 'Autoproperty initially set in proxy' );
 
 my $colour;
 
@@ -393,6 +398,40 @@ dies_ok( sub { $ballproxy->get_property(
                  on_value => sub {},
                ); },
          'Getting no_such_property fails in proxy' );
+
+# Test the autoproperties
+
+my $size;
+$watched = 0;
+$ballproxy->watch_property(
+   property => "size",
+   on_change => sub {
+      my ( $obj, $prop, $how, @value ) = @_;
+      $size = $value[0];
+   },
+   on_watched => sub { $watched = 1 },
+);
+
+is( $watched, 1, 'watch_property on autoprop is synchronous' );
+
+# MSG_UPDATE
+$S2->syswrite( "\x09" . "\0\0\0\x11" .
+               "\1" . "\x01" . "2" .
+               "\1" . "\x04" . "size" .
+               "\1" . "\x01" . "1" .
+               "\1" . "\x03" . "200" );
+
+wait_for { defined $size };
+
+is( $size, 200, 'autoprop watch succeeds' );
+
+# MSG_OK
+$expect = "\x80" . "\0\0\0\0";
+
+$clientstream = "";
+wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+
+is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK after autoprop UPDATE' );
 
 $bagproxy->call_method(
    method => "add_ball",

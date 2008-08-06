@@ -89,6 +89,16 @@ sub proxy_isa
    }
 }
 
+sub grab
+{
+   my $self = shift;
+   my ( $smashdata ) = @_;
+
+   foreach my $prop ( keys %{ $smashdata } ) {
+      $self->_update_property( $prop, CHANGE_SET, $smashdata->{$prop} );
+   }
+}
+
 sub call_method
 {
    my $self = shift;
@@ -362,15 +372,22 @@ sub watch_property
    my $pdef = $self->can_property( $property );
    croak "Class ".$self->class." does not have a property $property" unless $pdef;
 
+   # Autoproperties behave differently
+   my $auto = $pdef->{auto};
+
    if( my $cbs = $self->{props}->{$property}->{cbs} ) {
-      if( $want_initial ) {
+      if( $want_initial and !$auto ) {
          $self->get_property(
             property => $property,
             on_value => sub {
-               $callback->( $self->{id}, $property, CHANGE_SET, $_[0] );
+               $callback->( $self, $property, CHANGE_SET, $_[0] );
                push @$cbs, $callback;
             },
          );
+      }
+      elsif( $want_initial and $auto ) {
+         $callback->( $self, $property, CHANGE_SET, $self->{props}->{$property}->{cache} );
+         push @$cbs, $callback;
       }
       else {
          push @$cbs, $callback;
@@ -381,13 +398,18 @@ sub watch_property
 
    $self->{props}->{$property}->{cbs} = [ $callback ];
 
-   my $conn = $self->{conn};
-   $conn->watch(
-      objid    => $self->{id},
-      property => $property, 
-      on_watched => $args{on_watched},
-      want_initial => $want_initial,
-   );
+   if( $auto ) {
+      $args{on_watched}->() if $args{on_watched};
+   }
+   else {
+      my $conn = $self->{conn};
+      $conn->watch(
+         objid    => $self->{id},
+         property => $property, 
+         on_watched => $args{on_watched},
+         want_initial => $want_initial,
+      );
+   }
 }
 
 1;

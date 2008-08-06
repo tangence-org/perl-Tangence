@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 17;
+use Test::More tests => 18;
 use Test::HexString;
 use IO::Async::Test;
 use IO::Async::Loop::IO_Poll;
@@ -50,7 +50,7 @@ my $expect;
 
 # This long string is massive and annoying. Sorry.
 
-$expect = "\x82" . "\0\0\0\xd3" .
+$expect = "\x82" . "\0\0\0\xd5" .
           "\x82" . "t::Bag\0" .
                    "\3" . "\4" . "events\0" . "\3" . "\1" . "destroy\0" . "\3" . "\1" . "args\0" . "\1" . "\0" .
                                  "isa\0" . "\2" . "\2" . "\1" . "\6" . "t::Bag" .
@@ -63,7 +63,8 @@ $expect = "\x82" . "\0\0\0\xd3" .
                                                                                            "ret\0" . "\1" . "\1" . "o" .
                                  "properties\0" . "\3" . "\1" . "colours\0" . "\3" . "\2" . "dim\0" . "\1" . "\1" . "2" .
                                                                                             "type\0" . "\1" . "\1" . "i" .
-          "\x81" . "\0\0\0\1" . "t::Bag\0" .
+                   "\0" .
+          "\x81" . "\0\0\0\1" . "t::Bag\0" . "\0" .
           "\4" . "\0\0\0\1";
 
 my $serverstream;
@@ -78,7 +79,7 @@ $S2->syswrite( "\x41" . "\0\0\0\0" );
 
 # This long string is massive and annoying. Sorry.
 
-$expect = "\x82" . "\0\0\0\xfc" .
+$expect = "\x82" . "\0\0\0\xfe" .
           "\x82" . "Tangence::Registry\0" .
                    "\3" . "\4" . "events\0" . "\3" . "\3" . "destroy\0" . "\3" . "\1" . "args\0" . "\1" . "\0" .
                                                             "object_constructed\0" . "\3" . "\1" . "args\0" . "\1" . "\1" . "I" .
@@ -89,7 +90,8 @@ $expect = "\x82" . "\0\0\0\xfc" .
                                                                                            "ret\0" . "\1" . "\1" . "o" .
                                  "properties\0" . "\3" . "\1" . "objects\0" . "\3" . "\2" . "dim\0" . "\1" . "\1" . "2" .
                                                                                             "type\0" . "\1" . "\1" . "s" .
-          "\x81" . "\0\0\0\0" . "Tangence::Registry\0" .
+                   "\0" .
+          "\x81" . "\0\0\0\0" . "Tangence::Registry\0" . "\0" .
           "\4" . "\0\0\0\0";
 
 $serverstream = "";
@@ -105,7 +107,7 @@ $S2->syswrite( "\1" . "\0\0\0\x13" .
 
 # This long string is massive and annoying. Sorry.
 
-$expect = "\x82" . "\0\0\0\xce" .
+$expect = "\x82" . "\0\0\0\xdd" .
           "\x82" . "t::Ball\0" .
                    "\3" . "\4" . "events\0" . "\3" . "\2" . "bounced\0" . "\3" . "\1" . "args\0" . "\1" . "\1" . "s" .
                                                             "destroy\0" . "\3" . "\1" . "args\0" . "\1" . "\0" .
@@ -118,7 +120,8 @@ $expect = "\x82" . "\0\0\0\xce" .
                                                                 "size\0" . "\3" . "\3" . "auto\0" . "\1" . "\1" . "1" .
                                                                                          "dim\0" . "\1" . "\1" . "1" .
                                                                                          "type\0" . "\1" . "\1" . "i" .
-          "\x81" . "\0\0\0\2" . "t::Ball\0" .
+                   "\2" . "\1" . "\1" . "\4" . "size" .
+          "\x81" . "\0\0\0\2" . "t::Ball\0" . "\2" . "\1" . "\1" . "\3" . "100" .
           "\4" . "\0\0\0\2";
 
 $serverstream = "";
@@ -240,6 +243,21 @@ $serverstream = "";
 wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'received property MSG_UPDATE notice' );
+
+# Test the autoproperties
+
+$ball->set_prop_size( 200 );
+
+$expect = "\x09" . "\0\0\0\x11" .
+          "\1" . "\x01" . "2" .
+          "\1" . "\x04" . "size" .
+          "\1" . "\x01" . "1" .
+          "\1" . "\x03" . "200";
+
+$serverstream = "";
+wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
+
+is_hexstr( $serverstream, $expect, 'received property MSG_UPDATE notice on autoprop' );
 
 # MSG_CALL
 $S2->syswrite( "\1" . "\0\0\0\x12" . 
