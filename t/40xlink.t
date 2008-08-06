@@ -2,7 +2,8 @@
 
 use strict;
 
-use Test::More tests => 9;
+use Test::More tests => 11;
+use Test::Exception;
 use IO::Async::Test;
 use IO::Async::Loop::IO_Poll;
 
@@ -54,17 +55,12 @@ wait_for { defined $result };
 
 is( $result, "bouncing", 'result of call_method()' );
 
-my $error;
-$ballproxy->call_method(
-   method => "no_such_method",
-   args   => [ 123 ],
-   on_result => sub { die "Call returned a result - $_[0]" },
-   on_error  => sub { $error = shift; },
-);
-
-wait_for { defined $error };
-
-is( $error, "Object cannot respond to method no_such_method", '$error after call_method() to missing method' );
+dies_ok( sub { $ballproxy->call_method(
+                 method => "no_such_method",
+                 args   => [ 123 ],
+                 on_result => sub {},
+               ); },
+         'Calling no_such_method fails in proxy' );
 
 my $howhigh;
 my $subbed;
@@ -84,6 +80,12 @@ $ball->bounce( "10 metres" );
 wait_for { defined $howhigh };
 
 is( $howhigh, "10 metres", '$howhigh is 10 metres after subscribed event' );
+
+dies_ok( sub { $ballproxy->subscribe_event(
+                 event => "no_such_event",
+                 on_fire => sub {},
+               ); },
+         'Subscribing to no_such_event fails in proxy' );
 
 my $colour;
 
@@ -148,3 +150,9 @@ wait_for { $colourchanged };
 
 is( $colour, "orange", '$colour is orange after second MSG_UPDATE' );
 is( $colourchanged, 1, '$colourchanged is true after second MSG_UPDATE' );
+
+dies_ok( sub { $ballproxy->get_property(
+                 property => "no_such_property",
+                 on_value => sub {},
+               ); },
+         'Getting no_such_property fails in proxy' );

@@ -2,7 +2,8 @@
 
 use strict;
 
-use Test::More tests => 29;
+use Test::More tests => 30;
+use Test::Exception;
 use Test::HexString;
 use IO::Async::Test;
 use IO::Async::Loop::IO_Poll;
@@ -157,32 +158,12 @@ wait_for { defined $result };
 
 is( $result, "bouncing", 'result of MSG_CALL' );
 
-my $error;
-$ballproxy->call_method(
-   method => "no_such_method",
-   args   => [ 123 ],
-   on_result => sub { die "Call returned a result - $_[0]" },
-   on_error  => sub { $error = shift; },
-);
-
-# MSG_CALL
-$expect = "\1" . "\0\0\0\x18" .
-          "\1" . "\x01" . "2" .
-          "\1" . "\x0e" . "no_such_method" .
-          "\1" . "\x03" . "123";
-
-$clientstream = "";
-wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
-
-is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL' );
-
-# MSG_ERROR
-$S2->syswrite( "\x81" . "\0\0\0\x21" .
-               "\1" . "\x1f" . "No such method 'no_such_method'" );
-
-wait_for { defined $error };
-
-is( $error, "No such method 'no_such_method'", '$error after MSG_ERROR response' );
+dies_ok( sub { $ballproxy->call_method(
+                 method => "no_such_method",
+                 args   => [ 123 ],
+                 on_result => sub {},
+               ); },
+         'Calling no_such_method fails in proxy' );
 
 my $howhigh;
 my $subbed;
@@ -255,6 +236,12 @@ $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK' );
+
+dies_ok( sub { $ballproxy->subscribe_event(
+                 event => "no_such_event",
+                 on_fire => sub {},
+               ); },
+         'Subscribing to no_such_event fails in proxy' );
 
 my $colour;
 
@@ -400,6 +387,12 @@ $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK' );
+
+dies_ok( sub { $ballproxy->get_property(
+                 property => "no_such_property",
+                 on_value => sub {},
+               ); },
+         'Getting no_such_property fails in proxy' );
 
 $bagproxy->call_method(
    method => "add_ball",

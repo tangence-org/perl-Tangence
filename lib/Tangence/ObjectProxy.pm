@@ -103,6 +103,9 @@ sub call_method
    my $on_error = delete $args{on_error} || $self->{on_error};
    ref $on_error eq "CODE" or croak "Expected 'on_error' as a CODE ref";
 
+   my $mdef = $self->can_method( $method );
+   croak "Class ".$self->class." does not have a method $method" unless $mdef;
+
    my $conn = $self->{conn};
    $conn->request(
       request => [ MSG_CALL, $self->id, $method, @$args ],
@@ -130,6 +133,9 @@ sub subscribe_event
    my $event = delete $args{event} or croak "Need a event";
    ref( my $callback = delete $args{on_fire} ) eq "CODE"
       or croak "Expected 'on_fire' as a CODE ref";
+
+   my $edef = $self->can_event( $event );
+   croak "Class ".$self->class." does not have an event $event" unless $edef;
 
    if( my $cbs = $self->{subscriptions}->{$event} ) {
       push @$cbs, $callback;
@@ -160,6 +166,9 @@ sub get_property
 
    my $on_error = delete $args{on_error} || $self->{on_error};
    ref $on_error eq "CODE" or croak "Expected 'on_error' as a CODE ref";
+
+   my $pdef = $self->can_property( $property );
+   croak "Class ".$self->class." does not have a property $property" unless $pdef;
 
    my $conn = $self->{conn};
    $conn->request(
@@ -318,6 +327,9 @@ sub set_property
    exists $args{value} or croak "Need a value";
    my $value = delete $args{value};
 
+   my $pdef = $self->can_property( $property );
+   croak "Class ".$self->class." does not have a property $property" unless $pdef;
+
    my $conn = $self->{conn};
    $conn->request(
       request => [ MSG_SETPROP, $self->id, $property, $value ],
@@ -346,6 +358,9 @@ sub watch_property
    ref( my $callback = delete $args{on_change} ) eq "CODE"
       or croak "Expected 'on_change' as a CODE ref";
    my $want_initial = delete $args{want_initial};
+
+   my $pdef = $self->can_property( $property );
+   croak "Class ".$self->class." does not have a property $property" unless $pdef;
 
    if( my $cbs = $self->{props}->{$property}->{cbs} ) {
       if( $want_initial ) {
