@@ -18,7 +18,7 @@ my $ball = t::Ball->new(
 );
 
 ok( defined $ball, 'defined $ball' );
-ok( $ball->isa( "Tangence::Object" ), '$ball isa Tangence::Object' );
+isa_ok( $ball, "Tangence::Object", '$ball isa Tangence::Object' );
 
 is( $ball->id, "1", '$ball->id' );
 

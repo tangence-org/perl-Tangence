@@ -24,7 +24,7 @@ my $stream = Testing::Stream->new(
 );
 
 ok( defined $stream, 'defined $stream' );
-ok( $stream->isa( "Tangence::Stream" ), '$stream isa Tangence::Stream' );
+isa_ok( $stream, "Tangence::Stream", '$stream isa Tangence::Stream' );
 
 $loop->add( $stream );
 

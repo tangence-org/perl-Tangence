@@ -10,8 +10,8 @@ use t::Ball;
 my $registry = Tangence::Registry->new();
 
 ok( defined $registry, 'defined $registry' );
-ok( $registry->isa( "Tangence::Registry" ), '$registry isa Tangence::Registry' );
-ok( $registry->isa( "Tangence::Object"   ), '$registry isa Tangence::Object' );
+isa_ok( $registry, "Tangence::Registry", '$registry isa Tangence::Registry' );
+isa_ok( $registry, "Tangence::Object"  , '$registry isa Tangence::Object' );
 
 is( $registry->id, "0", '$registry->id' );
 is( $registry->describe, "Tangence::Registry", '$registry->describe' );
@@ -32,7 +32,7 @@ my $ball = $registry->construct(
 );
 
 ok( defined $ball, 'defined $ball' );
-ok( $ball->isa( "t::Ball" ), '$ball isa t::Ball' );
+isa_ok( $ball, "t::Ball", '$ball isa t::Ball' );
 
 is( $ball->id, "1", '$ball->id' );
 

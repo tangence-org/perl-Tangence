@@ -124,7 +124,7 @@ $S2->syswrite( "\x82" . "\0\0\0\xdd" .
 
 wait_for { @result };
 
-ok( ref $result[0] && $result[0]->isa( "Tangence::ObjectProxy" ), 'result contains an ObjectProxy' );
+isa_ok( $result[0], "Tangence::ObjectProxy", 'result contains an ObjectProxy' );
 
 my $ballproxy = $result[0];
 
