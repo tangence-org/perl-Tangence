@@ -124,25 +124,52 @@ sub unpack_num
    return $num;
 }
 
+sub pack_typenum
+{
+   my ( $type, $num ) = @_;
+
+   if( $num <= 0x1f ) {
+      return pack( "C", ( $type << 5 ) | $num );
+   }
+   else {
+      return pack( "C", ( $type << 5 ) | 0x1f ) . pack_num( $num );
+   }
+}
+
+sub unpack_typenum
+{
+   my ( $typenum ) = unpack( "C", $_[0] );
+   substr( $_[0], 0, 1, "" );
+
+   my $type = $typenum >> 5;
+   my $num  = $typenum & 0x1f;
+
+   if( $num == 0x1f ) {
+      $num = unpack_num( $_[0] );
+   }
+
+   return ( $type, $num );
+}
+
 sub pack_data
 {
    my $self = shift;
    my ( $d ) = @_;
 
    if( !defined $d ) {
-      return chr(DATA_UNDEF);
+      return pack_typenum( DATA_OBJECT, 0 );
    }
    elsif( !ref $d ) {
       my $octets = encode_utf8( $d );
-      return chr(DATA_STRING) . pack_num( length($octets) ) . $octets;
+      return pack_typenum( DATA_STRING, length($octets) ) . $octets;
    }
    elsif( ref $d eq "ARRAY" ) {
-      return chr(DATA_LIST) . pack_num( scalar @$d ) . join( "", map { $self->pack_data( $_ ) } @$d );
+      return pack_typenum( DATA_LIST, scalar @$d ) . join( "", map { $self->pack_data( $_ ) } @$d );
    }
    elsif( ref $d eq "HASH" ) {
       my @keys = keys %$d;
       @keys = sort @keys if $SORT_HASH_KEYS;
-      return chr(DATA_DICT) . pack_num( scalar @keys ) . join( "", map { pack( "Z*", $_ ) . $self->pack_data( $d->{$_} ) } @keys );
+      return pack_typenum( DATA_DICT, scalar @keys ) . join( "", map { pack( "Z*", $_ ) . $self->pack_data( $d->{$_} ) } @keys );
    }
    elsif( eval { $d->isa( "Tangence::Object" ) } ) {
       my $id = $d->id;
@@ -156,7 +183,7 @@ sub pack_data
          if( !$self->{peer_hasclass}->{$class} ) {
             my $schema = $class->introspect;
 
-            $preamble .= chr(DATATYPE_CLASS) . pack( "Z*", $class ) . $self->pack_data( $schema );
+            $preamble .= pack_typenum( DATA_META, DATAMETA_CLASS ) . pack( "Z*", $class ) . $self->pack_data( $schema );
 
             $smashkeys = [ keys %{ $class->autoprops } ];
             for my $prop ( @$smashkeys ) {
@@ -174,7 +201,7 @@ sub pack_data
             $smashkeys = $self->{peer_hasclass}->{$class}->[0];
          }
 
-         $preamble .= chr(DATATYPE_CONSTRUCT) . pack( "NZ*", $id, $class );
+         $preamble .= pack_typenum( DATA_META, DATAMETA_CONSTRUCT ) . pack( "NZ*", $id, $class );
 
          my $smasharr;
 
@@ -188,10 +215,10 @@ sub pack_data
          $self->{peer_hasobj}->{$id} = 1;
       }
 
-      return $preamble . chr(DATA_OBJECT) . pack( "N", $d->id );
+      return $preamble . pack_typenum( DATA_OBJECT, 4 ) . pack( "N", $d->id );
    }
    elsif( eval { $d->isa( "Tangence::ObjectProxy" ) } ) {
-      return chr(DATA_OBJECT) . pack( "N", $d->id );
+      return pack_typenum( DATA_OBJECT, 4 ) . pack( "N", $d->id );
    }
    else {
       croak "Do not know how to pack a " . ref($d);
@@ -201,13 +228,14 @@ sub pack_data
 sub unpack_data
 {
    my $self = shift;
-   my $t;
+
+   my ( $type, $num );
    
    while(1) {
-      $t = unpack( "C", $_[0] ); substr( $_[0], 0, 1, "" );
-      last unless $t & 0x80;
+      ( $type, $num ) = unpack_typenum( $_[0] );
+      last unless $type == DATA_META;
 
-      if( $t == DATATYPE_CONSTRUCT ) {
+      if( $num == DATAMETA_CONSTRUCT ) {
          my ( $id, $class ) = unpack( "NZ*", $_[0] ); substr( $_[0], 0, 5 + length $class, "" );
          my $smasharr = $self->unpack_data( $_[0] );
 
@@ -218,7 +246,7 @@ sub unpack_data
 
          $self->make_proxy( $id, $class, $smashdata );
       }
-      elsif( $t == DATATYPE_CLASS ) {
+      elsif( $num == DATAMETA_CLASS ) {
          my ( $class ) = unpack( "Z*", $_[0] ); substr( $_[0], 0, 1 + length $class, "" );
          my $schema = $self->unpack_data( $_[0] );
 
@@ -228,41 +256,41 @@ sub unpack_data
          $self->{peer_hasclass}->{$class} = [ $smashkeys ];
       }
       else {
-         die sprintf("TODO: Data stream meta-operation 0x%02x", $t);
+         die sprintf("TODO: Data stream meta-operation 0x%02x", $num);
       }
    }
 
-   if( $t == DATA_UNDEF ) {
-      return undef;
-   }
-   elsif( $t == DATA_STRING ) {
-      my ( $len ) = unpack_num( $_[0] );
-      my $octets = substr( $_[0], 0, $len, "" );
+   if( $type == DATA_STRING ) {
+      my $octets = substr( $_[0], 0, $num, "" );
       return decode_utf8( $octets );
    }
-   elsif( $t == DATA_LIST ) {
-      my ( $count ) = unpack_num( $_[0] );
+   elsif( $type == DATA_LIST ) {
       my @a;
-      foreach ( 1 .. $count ) {
+      foreach ( 1 .. $num ) {
          push @a, $self->unpack_data( $_[0] );
       }
       return \@a;
    }
-   elsif( $t == DATA_DICT ) {
-      my ( $count ) = unpack_num( $_[0] );
+   elsif( $type == DATA_DICT ) {
       my %h;
-      foreach ( 1 .. $count ) {
+      foreach ( 1 .. $num ) {
          my ( $key ) = unpack( "Z*", $_[0] ); substr( $_[0], 0, 1 + length $key, "" );
          $h{$key} = $self->unpack_data( $_[0] );
       }
       return \%h;
    }
-   elsif( $t == DATA_OBJECT ) {
-      my ( $id ) = unpack( "N", $_[0] ); substr( $_[0], 0, 4, "" );
-      return $self->get_by_id( $id );
+   elsif( $type == DATA_OBJECT ) {
+      return undef unless $num;
+      if( $num == 4 ) {
+         my ( $id ) = unpack( "N", $_[0] ); substr( $_[0], 0, 4, "" );
+         return $self->get_by_id( $id );
+      }
+      else {
+         croak "Unexpected number of bits to encode an OBJECT";
+      }
    }
    else {
-      croak "Do not know how to unpack record of type $t";
+      croak "Do not know how to unpack record of type $type";
    }
 }
 

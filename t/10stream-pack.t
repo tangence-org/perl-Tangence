@@ -43,40 +43,40 @@ sub test_data
 
 test_data "undef",
    data   => undef,
-   stream => "\0";
+   stream => "\x80";
 
 test_data "string",
    data   => "hello",
-   stream => "\1\x05hello";
+   stream => "\x25hello";
 
 test_data "integer",
    data   => 100,
-   stream => "\1\x{03}100";
+   stream => "\x{23}100";
 
 test_data "ARRAY empty",
    data   => [],
-   stream => "\2\0";
+   stream => "\x40";
 
 test_data "ARRAY of string",
    data   => [qw( a b c )],
-   stream => "\2\3\1\x{01}a\1\x{01}b\1\x{01}c";
+   stream => "\x43\x{21}a\x{21}b\x{21}c";
 
 test_data "ARRAY of ARRAY",
    data   => [ [] ],
-   stream => "\2\1\2\0";
+   stream => "\x41\x40";
 
 test_data "HASH empty",
    data   => {},
-   stream => "\3\0";
+   stream => "\x60";
 
 test_data "HASH of string*1",
    data   => { key => "value" },
-   stream => "\3\1key\0\1\5value";
+   stream => "\x61key\0\x25value";
 
 test_data "HASH of string*2",
    data   => { a => "A", b => "B" },
-   stream => "\3\2a\0\1\1Ab\0\1\1B";
+   stream => "\x62a\0\x{21}Ab\0\x{21}B";
 
 test_data "HASH of HASH",
    data   => { hash => {} },
-   stream => "\3\1hash\0\3\0";
+   stream => "\x61hash\0\x60";

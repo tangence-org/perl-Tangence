@@ -32,8 +32,8 @@ $loop->add( $conn );
 my $expect;
 
 # MSG_GETROOT
-$expect = "\x40" . "\0\0\0\x0c" .
-          "\1" . "\x0a" . "testscript" .
+$expect = "\x40" . "\0\0\0\x0b" .
+          "\x2a" . "testscript" .
 # MSG_GETREGISTRY
           "\x41" . "\0\0\0\0";
 
@@ -42,39 +42,39 @@ wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream initially contains MSG_GETROOT and MSG_GETREGISTRY' );
 
-$S2->syswrite( "\x82" . "\0\0\0\xd5" .
-               "\x82" . "t::Bag\0" .
-                        "\3" . "\4" . "events\0" . "\3" . "\1" . "destroy\0" . "\3" . "\1" . "args\0" . "\1" . "\0" .
-                                      "isa\0" . "\2" . "\2" . "\1" . "\6" . "t::Bag" .
-                                                              "\1" . "\x10" . "Tangence::Object" .
-                                      "methods\0" . "\3" . "\3" . "add_ball\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "o" .
-                                                                                               "ret\0" . "\1" . "\0" .
-                                                                  "get_ball\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
-                                                                                               "ret\0" . "\1" . "\1" . "o" .
-                                                                  "pull_ball\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
-                                                                                                "ret\0" . "\1" . "\1" . "o" .
-                                      "properties\0" . "\3" . "\1" . "colours\0" . "\3" . "\2" . "dim\0" . "\1" . "\1" . "2" .
-                                                                                                 "type\0" . "\1" . "\1" . "i" .
-                        "\0" .
-               "\x81" . "\0\0\0\1" . "t::Bag\0" . "\0" .
-               "\4" . "\0\0\0\1" );
+$S2->syswrite( "\x82" . "\0\0\0\xc0" .
+               "\xe2" . "t::Bag\0" .
+                        "\x64" . "events\0"     . "\x61" . "destroy\0" . "\x61" . "args\0" . "\x20" .
+                                 "isa\0"        . "\x42" . "\x26" . "t::Bag" .
+                                                           "\x30" . "Tangence::Object" .
+                                 "methods\0"    . "\x63" . "add_ball\0"  . "\x62" . "args\0" . "\x21" . "o" .
+                                                                                    "ret\0"  . "\x20" .
+                                                           "get_ball\0"  . "\x62" . "args\0" . "\x21" . "s" .
+                                                                                    "ret\0"  . "\x21" . "o" .
+                                                           "pull_ball\0" . "\x62" . "args\0" . "\x21" . "s" .
+                                                                                    "ret\0"  . "\x21" . "o" .
+                                 "properties\0" . "\x61" . "colours\0" . "\x62" . "dim\0"  . "\x21" . "2" .
+                                                                                  "type\0" . "\x21" . "i" .
+                        "\x80" .
+               "\xe1" . "\0\0\0\1" . "t::Bag\0" . "\x80" .
+               "\x84" . "\0\0\0\1" );
 
 wait_for { defined $conn->get_root };
 
-$S2->syswrite( "\x82" . "\0\0\0\xfe" .
-               "\x82" . "Tangence::Registry\0" .
-                        "\3" . "\4" . "events\0" . "\3" . "\3" . "destroy\0" . "\3" . "\1" . "args\0" . "\1" . "\0" .
-                                                                 "object_constructed\0" . "\3" . "\1" . "args\0" . "\1" . "\1" . "I" .
-                                                                 "object_destroyed\0" . "\3" . "\1" . "args\0" . "\1" . "\1" . "I" .
-                                      "isa\0" . "\2" . "\2" . "\1" . "\x12" . "Tangence::Registry" .
-                                                              "\1" . "\x10" . "Tangence::Object" .
-                                      "methods\0" . "\3" . "\1" . "get_by_id\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "i" .
-                                                                                                "ret\0" . "\1" . "\1" . "o" .
-                                      "properties\0" . "\3" . "\1" . "objects\0" . "\3" . "\2" . "dim\0" . "\1" . "\1" . "2" .
-                                                                                                 "type\0" . "\1" . "\1" . "s" .
-                        "\0" .
-               "\x81" . "\0\0\0\0" . "Tangence::Registry\0" . "\0" .
-               "\4" . "\0\0\0\0" );
+$S2->syswrite( "\x82" . "\0\0\0\xeb" .
+               "\xe2" . "Tangence::Registry\0" .
+                        "\x64" . "events\0"     . "\x63" . "destroy\0"            . "\x61" . "args\0" . "\x20" .
+                                                           "object_constructed\0" . "\x61" . "args\0" . "\x21" . "I" .
+                                                           "object_destroyed\0"   . "\x61" . "args\0" . "\x21" . "I" .
+                                 "isa\0"        . "\x42" . "\x32" . "Tangence::Registry" .
+                                                           "\x30" . "Tangence::Object" .
+                                 "methods\0"    . "\x61" . "get_by_id\0" . "\x62" . "args\0" . "\x21" . "i" .
+                                                                                    "ret\0"  . "\x21" . "o" .
+                                 "properties\0" . "\x61" . "objects\0" . "\x62" . "dim\0"  . "\x21" . "2" .
+                                                                                  "type\0" . "\x21" . "s" .
+                        "\x80" .
+               "\xe1" . "\0\0\0\0" . "Tangence::Registry\0" . "\x80" .
+               "\x84" . "\0\0\0\0" );
 
 wait_for { defined $conn->get_registry };
 
@@ -91,10 +91,10 @@ $bagproxy->call_method(
 );
 
 # MSG_CALL
-$expect = "\1" . "\0\0\0\x13" . 
-          "\1" . "\x01" . "1" .
-          "\1" . "\x09" . "pull_ball" .
-          "\1" . "\x03" . "red";
+$expect = "\1" . "\0\0\0\x10" . 
+          "\x21" . "1" .
+          "\x29" . "pull_ball" .
+          "\x23" . "red";
 
 $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
@@ -105,22 +105,22 @@ is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL' );
 
 # This long string is massive and annoying. Sorry.
 
-$S2->syswrite( "\x82" . "\0\0\0\xdd" .
-               "\x82" . "t::Ball\0" .
-                        "\3" . "\4" . "events\0" . "\3" . "\2" . "bounced\0" . "\3" . "\1" . "args\0" . "\1" . "\1" . "s" .
-                                                                 "destroy\0" . "\3" . "\1" . "args\0" . "\1" . "\0" .
-                                      "isa\0" . "\2" . "\2" . "\1" . "\7" . "t::Ball" .
-                                                              "\1" . "\x10" . "Tangence::Object" .
-                                      "methods\0" . "\3" . "\1" . "bounce\0" . "\3" . "\2" . "args\0" . "\1" . "\1" . "s" .
-                                                                                             "ret\0" . "\1" . "\0" .
-                                      "properties\0" . "\3" . "\2" . "colour\0" . "\3" . "\2" . "dim\0" . "\1" . "\1" . "1" .
-                                                                                                "type\0" . "\1" . "\1" . "i" .
-                                                                     "size\0" . "\3" . "\3" . "auto\0" . "\1" . "\1" . "1" .
-                                                                                              "dim\0" . "\1" . "\1" . "1" .
-                                                                                              "type\0" . "\1" . "\1" . "i" .
-                        "\2" . "\1" . "\1" . "\4" . "size" .
-               "\x81" . "\0\0\0\2" . "t::Ball\0" . "\2" . "\1" . "\1" . "\3" . "100" .
-               "\4" . "\0\0\0\2" );
+$S2->syswrite( "\x82" . "\0\0\0\xc4" .
+               "\xe2" . "t::Ball\0" .
+                        "\x64" . "events\0"     . "\x62" . "bounced\0" . "\x61" . "args\0" . "\x21" . "s" .
+                                                           "destroy\0" . "\x61" . "args\0" . "\x20" .
+                                 "isa\0"        . "\x42" . "\x27" . "t::Ball" .
+                                                           "\x30" . "Tangence::Object" .
+                                 "methods\0"    . "\x61" . "bounce\0" . "\x62" . "args\0" . "\x21" . "s" .
+                                                                                 "ret\0" . "\x20" .
+                                 "properties\0" . "\x62" . "colour\0" . "\x62" . "dim\0" . "\x21" . "1" .
+                                                                                 "type\0" . "\x21" . "i" .
+                                                           "size\0"   . "\x63" . "auto\0" . "\x21" . "1" .
+                                                                                 "dim\0" . "\x21" . "1" .
+                                                                                 "type\0" . "\x21" . "i" .
+                        "\x41" . "\x24" . "size" .
+               "\xe1" . "\0\0\0\2" . "t::Ball\0" . "\x41" . "\x23" . "100" .
+               "\x84" . "\0\0\0\2" );
 
 wait_for { @result };
 
@@ -143,10 +143,10 @@ $ballproxy->call_method(
 );
 
 # MSG_CALL
-$expect = "\1" . "\0\0\0\x16" .
-          "\1" . "\x01" . "2" .
-          "\1" . "\x06" . "bounce" .
-          "\1" . "\x09" . "20 metres";
+$expect = "\1" . "\0\0\0\x13" .
+          "\x21" . "2" .
+          "\x26" . "bounce" .
+          "\x29" . "20 metres";
 
 $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
@@ -154,8 +154,8 @@ wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL' );
 
 # MSG_RESULT
-$S2->syswrite( "\x82" . "\0\0\0\x0a" .
-               "\1" . "\x08" . "bouncing" );
+$S2->syswrite( "\x82" . "\0\0\0\x09" .
+               "\x28" . "bouncing" );
 
 wait_for { defined $result };
 
@@ -180,9 +180,9 @@ $ballproxy->subscribe_event(
 );
 
 # MSG_SUBSCRIBE
-$expect = "\2" . "\0\0\0\x0c" .
-          "\1" . "\x01" . "2" .
-          "\1" . "\x07" . "bounced";
+$expect = "\2" . "\0\0\0\x0a" .
+          "\x21" . "2" .
+          "\x27" . "bounced";
 
 $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
@@ -195,10 +195,10 @@ $S2->syswrite( "\x83" . "\0\0\0\0" );
 wait_for { $subbed };
 
 # MSG_EVENT
-$S2->syswrite( "\4" . "\0\0\0\x17" .
-               "\1" . "\x01" . "2" .
-               "\1" . "\x07" . "bounced" .
-               "\1" . "\x09" . "10 metres" );
+$S2->syswrite( "\4" . "\0\0\0\x14" .
+               "\x21" . "2" .
+               "\x27" . "bounced" .
+               "\x29" . "10 metres" );
 
 wait_for { defined $howhigh };
 
@@ -219,10 +219,10 @@ $ballproxy->subscribe_event(
 );
 
 # MSG_EVENT
-$S2->syswrite( "\4" . "\0\0\0\x16" .
-               "\1" . "\x01" . "2" .
-               "\1" . "\x07" . "bounced" .
-               "\1" . "\x08" . "5 metres" );
+$S2->syswrite( "\4" . "\0\0\0\x13" .
+               "\x21" . "2" .
+               "\x27" . "bounced" .
+               "\x28" . "5 metres" );
 
 $clientstream = "";
 wait_for_stream { $bounced } $S2 => $clientstream;
@@ -256,9 +256,9 @@ $ballproxy->get_property(
 );
 
 # MSG_GETPROP
-$expect = "\5" . "\0\0\0\x0b" .
-          "\1" . "\x01" . "2" .
-          "\1" . "\x06" . "colour";
+$expect = "\5" . "\0\0\0\x09" .
+          "\x21" . "2" .
+          "\x26" . "colour";
 
 $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
@@ -266,8 +266,8 @@ wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_GETPROP' );
 
 # MSG_RESULT
-$S2->syswrite( "\x82" . "\0\0\0\5" .
-               "\1" . "\x03" . "red" );
+$S2->syswrite( "\x82" . "\0\0\0\4" .
+               "\x23" . "red" );
 
 wait_for { defined $colour };
 
@@ -281,10 +281,10 @@ $ballproxy->set_property(
 );
 
 # MSG_SETPROP
-$expect = "\6" . "\0\0\0\x11" .
-          "\1" . "\x01" . "2" .
-          "\1" . "\x06" . "colour" .
-          "\1" . "\x04" . "blue";
+$expect = "\6" . "\0\0\0\x0e" .
+          "\x21" . "2" .
+          "\x26" . "colour" .
+          "\x24" . "blue";
 
 $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
@@ -307,10 +307,10 @@ $ballproxy->watch_property(
 );
 
 # MSG_WATCH
-$expect = "\7" . "\0\0\0\x0d" .
-          "\1" . "\x01" . "2" .
-          "\1" . "\x06" . "colour" .
-          "\1" . "\x00";
+$expect = "\7" . "\0\0\0\x0a" .
+          "\x21" . "2" .
+          "\x26" . "colour" .
+          "\x20";
 
 $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
@@ -318,17 +318,16 @@ wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_WATCH' );
 
 # MSG_WATCHING
-$S2->syswrite( "\x84" . "\0\0\0\3" .
-               "\1" . "\1" . "1" );
+$S2->syswrite( "\x84" . "\0\0\0\0" );
 
 wait_for { $watched };
 
 # MSG_UPDATE
-$S2->syswrite( "\x09" . "\0\0\0\x15" .
-               "\1" . "\x01" . "2" .
-               "\1" . "\x06" . "colour" .
-               "\1" . "\x01" . "1" .
-               "\1" . "\x05" . "green" );
+$S2->syswrite( "\x09" . "\0\0\0\x11" .
+               "\x21" . "2" .
+               "\x26" . "colour" .
+               "\x21" . "1" .
+               "\x25" . "green" );
 
 undef $colour;
 wait_for { defined $colour };
@@ -355,9 +354,9 @@ $ballproxy->watch_property(
 );
 
 # MSG_GETPROP
-$expect = "\5" . "\0\0\0\x0b" .
-          "\1" . "\x01" . "2" .
-          "\1" . "\x06" . "colour";
+$expect = "\5" . "\0\0\0\x09" .
+          "\x21" . "2" .
+          "\x26" . "colour";
 
 $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
@@ -365,19 +364,19 @@ wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_GETPROP' );
 
 # MSG_RESULT
-$S2->syswrite( "\x82" . "\0\0\0\7" .
-               "\1" . "\x05" . "green" );
+$S2->syswrite( "\x82" . "\0\0\0\6" .
+               "\x25" . "green" );
 
 wait_for { $colourchanged };
 
 is( $secondcolour, "green", '$secondcolour is green after second watch' );
 
 # MSG_UPDATE
-$S2->syswrite( "\x09" . "\0\0\0\x16" .
-               "\1" . "\x01" . "2" .
-               "\1" . "\x06" . "colour" .
-               "\1" . "\x01" . "1" .
-               "\1" . "\x06" . "orange" );
+$S2->syswrite( "\x09" . "\0\0\0\x12" .
+               "\x21" . "2" .
+               "\x26" . "colour" .
+               "\x21" . "1" .
+               "\x26" . "orange" );
 
 $colourchanged = 0;
 wait_for { $colourchanged };
@@ -415,11 +414,11 @@ $ballproxy->watch_property(
 is( $watched, 1, 'watch_property on autoprop is synchronous' );
 
 # MSG_UPDATE
-$S2->syswrite( "\x09" . "\0\0\0\x11" .
-               "\1" . "\x01" . "2" .
-               "\1" . "\x04" . "size" .
-               "\1" . "\x01" . "1" .
-               "\1" . "\x03" . "200" );
+$S2->syswrite( "\x09" . "\0\0\0\x0d" .
+               "\x21" . "2" .
+               "\x24" . "size" .
+               "\x21" . "1" .
+               "\x23" . "200" );
 
 wait_for { defined $size };
 
@@ -440,10 +439,10 @@ $bagproxy->call_method(
 );
 
 # MSG_CALL
-$expect = "\1" . "\0\0\0\x12" . 
-          "\1" . "\x01" . "1" .
-          "\1" . "\x08" . "add_ball" .
-          "\4" . "\0\0\0\2";
+$expect = "\1" . "\0\0\0\x10" . 
+          "\x21" . "1" .
+          "\x28" . "add_ball" .
+          "\x84" . "\0\0\0\2";
 
 $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
@@ -451,7 +450,7 @@ wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL with an ObjectProxy' );
 
 $S2->syswrite( "\x82" . "\0\0\0\1" .
-               "\0" );
+               "\x80" );
 
 undef @result;
 wait_for { @result };

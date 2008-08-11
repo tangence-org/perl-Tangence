@@ -35,9 +35,9 @@ $stream->request(
 );
 
 my $expect;
-$expect = "\1" . "\0\0\0\x0b" .
-          "\1" . "\x01" . "1" .
-          "\1" . "\x06" . "method";
+$expect = "\1" . "\0\0\0\x09" .
+          "\x21" . "1" .
+          "\x26" . "method";
 
 my $serverstream;
 
@@ -47,16 +47,16 @@ wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'serverstream after initial MSG_CALL' );
 
-$S2->syswrite( "\x82" . "\0\0\0\x0a" .
-               "\1" . "\x08" . "response" );
+$S2->syswrite( "\x82" . "\0\0\0\x09" .
+               "\x28" . "response" );
 
 wait_for { defined $response };
 
 is_deeply( $response, [ MSG_RESULT, "response" ], '$response to initial call' );
 
-$S2->syswrite( "\x04" . "\0\0\0\x0a" .
-               "\1" . "\x01" . "1" .
-               "\1" . "\x05" . "event" );
+$S2->syswrite( "\x04" . "\0\0\0\x08" .
+               "\x21" . "1" .
+               "\x25" . "event" );
 
 wait_for { @calls };
 
