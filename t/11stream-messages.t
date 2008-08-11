@@ -5,14 +5,14 @@ use strict;
 use Test::More tests => 6;
 use Test::HexString;
 use IO::Async::Test;
-use IO::Async::Loop::IO_Poll;
+use IO::Async::Loop;
 
 use IO::Socket::UNIX;
 use Socket qw( AF_UNIX SOCK_STREAM PF_UNSPEC );
 
 use Tangence::Constants;
 
-my $loop = IO::Async::Loop::IO_Poll->new();
+my $loop = IO::Async::Loop->new();
 testing_loop( $loop );
 
 ( my $S1, my $S2 ) = IO::Socket::UNIX->socketpair( AF_UNIX, SOCK_STREAM, PF_UNSPEC ) or

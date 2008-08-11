@@ -5,7 +5,7 @@ use strict;
 use Test::More tests => 14;
 use Test::Exception;
 use IO::Async::Test;
-use IO::Async::Loop::IO_Poll;
+use IO::Async::Loop;
 
 use IO::Socket::UNIX;
 use Socket qw( AF_UNIX SOCK_STREAM PF_UNSPEC );
@@ -16,7 +16,7 @@ use Tangence::Server;
 use Tangence::Connection;
 use t::Ball;
 
-my $loop = IO::Async::Loop::IO_Poll->new();
+my $loop = IO::Async::Loop->new();
 testing_loop( $loop );
 
 my $registry = Tangence::Registry->new();

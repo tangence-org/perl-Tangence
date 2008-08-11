@@ -6,7 +6,7 @@ use Test::More tests => 34;
 use Test::Exception;
 use Test::HexString;
 use IO::Async::Test;
-use IO::Async::Loop::IO_Poll;
+use IO::Async::Loop;
 
 use IO::Socket::UNIX;
 use Socket qw( AF_UNIX SOCK_STREAM PF_UNSPEC );
@@ -16,7 +16,7 @@ use Tangence::Registry;
 use Tangence::Connection;
 $Tangence::Stream::SORT_HASH_KEYS = 1;
 
-my $loop = IO::Async::Loop::IO_Poll->new();
+my $loop = IO::Async::Loop->new();
 testing_loop( $loop );
 
 ( my $S1, my $S2 ) = IO::Socket::UNIX->socketpair( AF_UNIX, SOCK_STREAM, PF_UNSPEC ) or

@@ -5,7 +5,7 @@ use strict;
 use Test::More tests => 18;
 use Test::HexString;
 use IO::Async::Test;
-use IO::Async::Loop::IO_Poll;
+use IO::Async::Loop;
 
 use IO::Socket::UNIX;
 use Socket qw( AF_UNIX SOCK_STREAM PF_UNSPEC );
@@ -18,7 +18,7 @@ $Tangence::Stream::SORT_HASH_KEYS = 1;
 use t::Ball;
 use t::Bag;
 
-my $loop = IO::Async::Loop::IO_Poll->new();
+my $loop = IO::Async::Loop->new();
 testing_loop( $loop );
 
 my $registry = Tangence::Registry->new();
