@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 39;
+use Test::More tests => 45;
 use Test::HexString;
 
 use Tangence::Stream;
@@ -49,6 +49,10 @@ test_data "string",
    data   => "hello",
    stream => "\x25hello";
 
+test_data "long string",
+   data   => "ABC" x 20,
+   stream => "\x3f\x3c" . ( "ABC" x 20 );
+
 test_data "integer",
    data   => 100,
    stream => "\x{23}100";
@@ -60,6 +64,10 @@ test_data "ARRAY empty",
 test_data "ARRAY of string",
    data   => [qw( a b c )],
    stream => "\x43\x{21}a\x{21}b\x{21}c";
+
+test_data "ARRAY of 0x25 undefs",
+   data   => [ (undef) x 0x25 ],
+   stream => "\x5f\x25" . ( "\x80" x 0x25 );
 
 test_data "ARRAY of ARRAY",
    data   => [ [] ],
