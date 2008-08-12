@@ -128,7 +128,7 @@ sub pack_typenum
 {
    my ( $type, $num ) = @_;
 
-   if( $num <= 0x1f ) {
+   if( $num < 0x1f ) {
       return pack( "C", ( $type << 5 ) | $num );
    }
    else {
@@ -232,6 +232,7 @@ sub unpack_data
    my ( $type, $num );
    
    while(1) {
+      length $_[0] or croak "Ran out of bytes before finding a type";
       ( $type, $num ) = unpack_typenum( $_[0] );
       last unless $type == DATA_META;
 
@@ -261,6 +262,7 @@ sub unpack_data
    }
 
    if( $type == DATA_STRING ) {
+      length $_[0] >= $num or croak "Can't pull $num bytes for string as there aren't enough";
       my $octets = substr( $_[0], 0, $num, "" );
       return decode_utf8( $octets );
    }

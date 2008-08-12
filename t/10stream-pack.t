@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 45;
+use Test::More tests => 48;
 use Test::HexString;
 
 use Tangence::Stream;
@@ -52,6 +52,10 @@ test_data "string",
 test_data "long string",
    data   => "ABC" x 20,
    stream => "\x3f\x3c" . ( "ABC" x 20 );
+
+test_data "marginal string",
+   data   => "x" x 0x1f,
+   stream => "\x3f\x1f" . ( "x" x 0x1f );
 
 test_data "integer",
    data   => 100,
