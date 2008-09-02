@@ -4,10 +4,10 @@ use strict;
 
 use Tangence::Connection;
 
-use IO::Async 0.14;
-use IO::Async::Loop::IO_Ppoll;
+use IO::Async 0.16;
+use IO::Async::Loop;
 
-my $loop = IO::Async::Loop::IO_Ppoll->new();
+my $loop = IO::Async::Loop->new();
 
 my $URL = shift @ARGV or die "Need URL as argv[1]\n";
 

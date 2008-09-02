@@ -5,8 +5,8 @@ use strict;
 use Tangence::Connection;
 use Tangence::Constants;
 
-use IO::Async 0.14;
-use IO::Async::Loop::IO_Ppoll;
+use IO::Async 0.16;
+use IO::Async::Loop;
 
 use Data::Dump;
 
@@ -40,7 +40,7 @@ register_dump_delegation( "Tangence::ObjectProxy" => sub {
       return "OBJPROXY( id=$obj->{id}, props=" . Data::Dump::dump($obj->{props}) . " )";
 } );
 
-my $loop = IO::Async::Loop::IO_Ppoll->new();
+my $loop = IO::Async::Loop->new();
 
 my $URL = shift @ARGV or die "Need URL as argv[1]\n";
 
