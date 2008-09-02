@@ -43,7 +43,7 @@ sub new
    $self->{on_error} = $on_error;
 
    # It's possible a handle was passed in the constructor.
-   $self->_do_initial if defined $self->read_handle;
+   $self->_do_initial( %args ) if defined $self->read_handle;
 
    return $self;
 }
@@ -114,7 +114,7 @@ sub connect_exec
    );
 
    $args{on_connected}->( $self ) if $args{on_connected};
-   $self->_do_initial;
+   $self->_do_initial( %args );
 }
 
 sub connect_ssh
@@ -147,7 +147,7 @@ sub connect_tcp
          $self->set_handle( $sock );
 
          $args{on_connected}->( $self ) if $args{on_connected};
-         $self->_do_initial;
+         $self->_do_initial( %args );
       },
 
       on_connect_error => sub { print STDERR "Cannot connect\n"; },
@@ -173,7 +173,7 @@ sub connect_unix
          $self->set_handle( $sock );
 
          $args{on_connected}->( $self ) if $args{on_connected};
-         $self->_do_initial;
+         $self->_do_initial( %args );
       },
 
       on_connect_error => sub { print STDERR "Cannot connect\n"; },
@@ -183,6 +183,7 @@ sub connect_unix
 sub _do_initial
 {
    my $self = shift;
+   my %args = @_;
 
    $self->request(
       request => [ MSG_GETROOT, $self->{identity} ],
@@ -193,6 +194,7 @@ sub _do_initial
 
          if( $code == MSG_RESULT ) {
             $self->{rootobj} = $response->[1];
+            $args{on_root}->( $self->{rootobj} ) if $args{on_root};
          }
          elsif( $code == MSG_ERROR ) {
             print STDERR "Cannot get root object - error $response->[1]";
@@ -212,6 +214,7 @@ sub _do_initial
 
          if( $code == MSG_RESULT ) {
             $self->{registry} = $response->[1];
+            $args{on_registry}->( $self->{registry} ) if $args{on_registry};
          }
          elsif( $code == MSG_ERROR ) {
             print STDERR "Cannot get registry - error $response->[1]";

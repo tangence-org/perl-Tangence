@@ -25,13 +25,14 @@ my $conn = Tangence::Connection->new(
 
 $loop->add( $conn );
 
+my $registry;
+
 $conn->connect( 
    $URL,
-   on_connected => sub {},
+   on_registry => sub { $registry = shift },
 );
 
-my $registry;
-$loop->loop_once until defined( $registry = $conn->get_registry );
+$loop->loop_once until defined $registry;
 
 if( !@ARGV ) {
    $registry->get_property(
