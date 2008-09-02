@@ -93,14 +93,14 @@ sub new_object
 
    print "Subscribing to events and properties on new object $objid\n";
 
-   my $obj = $conn->make_proxy( $objid );
+   $registry->call_method(
+      method => "get_by_id",
+      args   => [ $objid ],
 
-   $obj->call_method(
-      method => "introspect",
-      args   => [],
-   
       on_result => sub {
-         my ( $introspection ) = @_;
+         my ( $obj ) = @_;
+
+         my $introspection = $obj->introspect;
 
          my $events = $introspection->{events};
 
@@ -126,10 +126,9 @@ sub new_object
                      $dim == DIM_OBJSET ? \&prop_objset_changed :
                      undef;
 
-            $conn->watch(
-               objid    => $objid,
+            $obj->watch_property(
                property => $prop,
-               callback => $cb,
+               on_change => $cb,
                want_initial => 1,
             ) if defined $cb;
          }
