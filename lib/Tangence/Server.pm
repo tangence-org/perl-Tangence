@@ -115,8 +115,6 @@ sub handle_request_CALL
       return;
    }
 
-   unshift @args, $self, $token if $mdef->{async};
-
    eval {
       my $result = $object->$method( @args );
 
