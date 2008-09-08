@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 18;
+use Test::More tests => 19;
 use Test::HexString;
 use IO::Async::Test;
 use IO::Async::Loop;
@@ -36,7 +36,7 @@ my $server = Tangence::Server->new(
 ( my $S1, my $S2 ) = IO::Socket::UNIX->socketpair( AF_UNIX, SOCK_STREAM, PF_UNSPEC ) or
    die "Cannot create socket pair - $!";
 
-$server->new_be( handle => $S1 );
+my $be = $server->new_be( handle => $S1 );
 
 is_deeply( $bag->get_prop_colours,
            { red => 1, blue => 1, green => 1, yellow => 1 },
@@ -73,6 +73,8 @@ $serverstream = "";
 wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'serverstream initially contains root object' );
+
+is( $be->identity, "testscript", '$be->identity' );
 
 # MSG_GETREGISTRY
 $S2->syswrite( "\x41" . "\0\0\0\0" );

@@ -44,6 +44,8 @@ sub new_be
    );
 
    $self->{loop}->add( $be );
+
+   return $be;
 }
 
 1;
@@ -84,6 +86,12 @@ sub new
    $self->{registry} = $registry;
 
    return $self;
+}
+
+sub identity
+{
+   my $self = shift;
+   return $self->{identity};
 }
 
 sub get_by_id
@@ -334,6 +342,8 @@ sub handle_request_GETROOT
    my ( $token, $identity ) = @_;
 
    my $registry = $self->{registry};
+
+   $self->{identity} = $identity;
 
    $self->respond( $token, [ MSG_RESULT, $registry->get_by_id( 1 ) ] );
 }
