@@ -68,7 +68,12 @@ sub handle_request_CALL
    my $mdef = $object->can_method( $method ) or
       return $ctx->responderr( "Object cannot respond to method $method" );
 
-   my $result = eval { $object->$method( @args ) };
+   my $m = "method_$method";
+
+   $object->can( $m ) or
+      return $ctx->responderr( "Object cannot run method $method" );
+
+   my $result = eval { $object->$m( $ctx, @args ) };
 
    $@ and return $ctx->responderr( $@ );
 

@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 19;
+use Test::More tests => 22;
 use Test::HexString;
 use IO::Async::Test;
 use IO::Async::Loop;
@@ -151,6 +151,12 @@ $S2->syswrite( "\1" . "\0\0\0\x13" .
 
 wait_for { defined $howhigh };
 
+ok( defined $t::Ball::last_bounce_ctx, 'defined $last_bounce_ctx' );
+
+isa_ok( $t::Ball::last_bounce_ctx, "Tangence::Server::Context", '$last_bounce_ctx isa Tangence::Server::Context' );
+
+is( $t::Ball::last_bounce_ctx->connection, $be, '$last_bounce_ctx->connection' );
+
 is( $howhigh, "20 metres", '$howhigh is 20 metres after CALL' );
 
 $expect = "\x82" . "\0\0\0\x09" .
@@ -175,7 +181,7 @@ wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'received MSG_SUBSCRIBED response' );
 
-$ball->bounce( "10 metres" );
+$ball->method_bounce( {}, "10 metres" );
 
 $expect = "\4" . "\0\0\0\x14" .
           "\x21" . "2" .

@@ -75,7 +75,7 @@ $ballproxy->subscribe_event(
 
 wait_for { $subbed };
 
-$ball->bounce( "10 metres" );
+$ball->method_bounce( {}, "10 metres" );
 
 wait_for { defined $howhigh };
 

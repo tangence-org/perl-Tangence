@@ -53,10 +53,10 @@ sub describe
    return (ref $self) . "[with $balls balls]";
 }
 
-sub get_ball
+sub method_get_ball
 {
    my $self = shift;
-   my ( $colour ) = @_;
+   my ( $ctx, $colour ) = @_;
 
    my $balls = $self->{balls};
 
@@ -69,10 +69,10 @@ sub get_ball
    return undef;
 }
 
-sub pull_ball
+sub method_pull_ball
 {
    my $self = shift;
-   my ( $colour ) = @_;
+   my ( $ctx, $colour ) = @_;
 
    my $balls = $self->{balls};
 
@@ -86,10 +86,10 @@ sub pull_ball
    return undef;
 }
 
-sub add_ball
+sub method_add_ball
 {
    my $self = shift;
-   my ( $ball ) = @_;
+   my ( $ctx, $ball ) = @_;
 
    push @{ $self->{balls} }, $ball;
 

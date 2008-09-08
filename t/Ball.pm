@@ -51,10 +51,13 @@ sub describe
    return (ref $self) . qq([colour="$self->{colour}"]);
 }
 
-sub bounce
+our $last_bounce_ctx;
+
+sub method_bounce
 {
    my $self = shift;
-   my ( $howhigh ) = @_;
+   my ( $ctx, $howhigh ) = @_;
+   $last_bounce_ctx = $ctx;
    $self->fire_event( "bounced", $howhigh );
    return "bouncing";
 }

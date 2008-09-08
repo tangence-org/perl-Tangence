@@ -77,14 +77,14 @@ $id = $ball->subscribe_event( bounced => sub {
       $howhigh = $args[0];
 } );
 
-$ball->bounce( "20 metres" );
+$ball->method_bounce( {}, "20 metres" );
 
 is( $bounces, 1, '$bounces is 1 after ->bounce' );
 is( $howhigh, "20 metres", '$howhigh is 20 metres' );
 
 $ball->unsubscribe_event( bounced => $id );
 
-$ball->bounce( "10 metres" );
+$ball->method_bounce( {}, "10 metres" );
 
 is( $bounces, 1, '$bounces is still 1 after unsubscribe ->bounce' );
 
