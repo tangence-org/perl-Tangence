@@ -7,6 +7,8 @@ use Tangence::Constants;
 
 use Carp;
 
+use Tangence::Server::Context;
+
 sub new
 {
    my $class = shift;
@@ -56,29 +58,21 @@ sub handle_request_CALL
    my $self = shift;
    my ( $token, $objid, $method, @args ) = @_;
 
+   my $ctx = Tangence::Server::Context->new( $self, $token );
+
    my $registry = $self->{registry};
 
-   my $object = $registry->get_by_id( $objid );
-   unless( defined $object ) {
-      $self->respond( $token, [ MSG_ERROR, "No such object with id $objid" ] );
-      return;
-   }
+   my $object = $registry->get_by_id( $objid ) or
+      return $ctx->responderr( "No such object with id $objid" );
 
-   my $mdef = $object->can_method( $method );
+   my $mdef = $object->can_method( $method ) or
+      return $ctx->responderr( "Object cannot respond to method $method" );
 
-   unless( $mdef ) {
-      $self->respond( $token, [ MSG_ERROR, "Object cannot respond to method $method" ] );
-      return;
-   }
+   my $result = eval { $object->$method( @args ) };
 
-   eval {
-      my $result = $object->$method( @args );
+   $@ and return $ctx->responderr( $@ );
 
-      $self->respond( $token, [ MSG_RESULT, $result ] );
-   };
-   if( $@ ) {
-      $self->respond( $token, [ MSG_ERROR, $@ ] );
-   }
+   $ctx->respond( MSG_RESULT, $result );
 }
 
 sub handle_request_SUBSCRIBE
@@ -86,20 +80,15 @@ sub handle_request_SUBSCRIBE
    my $self = shift;
    my ( $token, $objid, $event ) = @_;
 
+   my $ctx = Tangence::Server::Context->new( $self, $token );
+
    my $registry = $self->{registry};
 
-   my $object = $registry->get_by_id( $objid );
-   unless( defined $object ) {
-      $self->respond( $token, [ MSG_ERROR, "No such object with id $objid" ] );
-      return;
-   }
+   my $object = $registry->get_by_id( $objid ) or
+      return $ctx->responderr( "No such object with id $objid" );
 
-   my $edef = $object->can_event( $event );
-
-   unless( $edef ) {
-      $self->respond( $token, [ MSG_ERROR, "Object cannot respond to event $event" ] );
-      return;
-   }
+   my $edef = $object->can_event( $event ) or
+      return $ctx->responderr( "Object cannot respond to event $event" );
 
    my $id = $object->subscribe_event( $event,
       sub {
@@ -114,7 +103,7 @@ sub handle_request_SUBSCRIBE
 
    push @{ $self->{subscriptions} }, [ $object, $event, $id ];
 
-   $self->respond( $token, [ MSG_SUBSCRIBED ] );
+   $ctx->respond( MSG_SUBSCRIBED );
 }
 
 sub handle_request_UNSUBSCRIBE
@@ -122,26 +111,21 @@ sub handle_request_UNSUBSCRIBE
    my $self = shift;
    my ( $token, $objid, $event, $id ) = @_;
 
+   my $ctx = Tangence::Server::Context->new( $self, $token );
+
    my $registry = $self->{registry};
 
-   my $object = $registry->get_by_id( $objid );
-   unless( defined $object ) {
-      $self->respond( $token, [ MSG_ERROR, "No such object with id $objid" ] );
-      return;
-   }
+   my $object = $registry->get_by_id( $objid ) or
+      return $ctx->responderr( "No such object with id $objid" );
 
-   my $edef = $object->can_event( $event );
-
-   unless( $edef ) {
-      $self->respond( $token, [ MSG_ERROR, "Object cannot respond to event $event" ] );
-      return;
-   }
+   my $edef = $object->can_event( $event ) or
+      return $ctx->responderr( "Object cannot respond to event $event" );
 
    $object->unsubscribe_event( $event, $id );
 
    @{ $self->{subscriptions} } = grep { $_->[2] eq $id } @{ $self->{subscriptions} };
 
-   $self->respond( $token, [ MSG_OK ] );
+   $ctx->respond( MSG_OK );
 }
 
 sub handle_request_GETPROP
@@ -149,35 +133,26 @@ sub handle_request_GETPROP
    my $self = shift;
    my ( $token, $objid, $prop ) = @_;
 
+   my $ctx = Tangence::Server::Context->new( $self, $token );
+
    my $registry = $self->{registry};
 
-   my $object = $registry->get_by_id( $objid );
-   unless( defined $object ) {
-      $self->respond( $token, [ MSG_ERROR, "No such object with id $objid" ] );
-      return;
-   }
+   my $object = $registry->get_by_id( $objid ) or
+      return $ctx->responderr( "No such object with id $objid" );
 
-   my $pdef = $object->can_property( $prop );
-
-   unless( $pdef ) {
-      $self->respond( $token, [ MSG_ERROR, "Object does not have property $prop" ] );
-      return;
-   }
+   my $pdef = $object->can_property( $prop ) or
+      return $ctx->responderr( "Object does not have property $prop" );
 
    my $m = "get_prop_$prop";
-   unless( $object->can( $m ) ) {
-      $self->respond( $token, [ MSG_ERROR, "Object cannot get property $prop" ] );
-      return;
-   }
 
-   eval {
-      my $result = $object->$m();
+   $object->can( $m ) or
+      return $ctx->responderr( "Object cannot get property $prop" );
 
-      $self->respond( $token, [ MSG_RESULT, $result ] );
-   };
-   if( $@ ) {
-      $self->respond( $token, [ MSG_ERROR, $@ ] );
-   }
+   my $result = eval { $object->$m() };
+
+   $@ and return $ctx->responderr( $@ );
+
+   $ctx->respond( MSG_RESULT, $result );
 }
 
 sub handle_request_SETPROP
@@ -185,35 +160,26 @@ sub handle_request_SETPROP
    my $self = shift;
    my ( $token, $objid, $prop, $value ) = @_;
 
+   my $ctx = Tangence::Server::Context->new( $self, $token );
+
    my $registry = $self->{registry};
 
-   my $object = $registry->get_by_id( $objid );
-   unless( defined $object ) {
-      $self->respond( $token, [ MSG_ERROR, "No such object with id $objid" ] );
-      return;
-   }
+   my $object = $registry->get_by_id( $objid ) or
+      return $ctx->responderr( "No such object with id $objid" );
 
-   my $pdef = $object->can_property( $prop );
-
-   unless( $pdef ) {
-      $self->respond( $token, [ MSG_ERROR, "Object does not have property $prop" ] );
-      return;
-   }
+   my $pdef = $object->can_property( $prop ) or
+      return $ctx->responderr( "Object does not have property $prop" );
 
    my $m = "set_prop_$prop";
-   unless( $object->can( $m ) ) {
-      $self->respond( $token, [ MSG_ERROR, "Object cannot set property $prop" ] );
-      return;
-   }
 
-   eval {
-      $object->$m( $value );
+   $object->can( $m ) or
+      return $ctx->responderr( "Object cannot set property $prop" );
 
-      $self->respond( $token, [ MSG_OK ] );
-   };
-   if( $@ ) {
-      $self->respond( $token, [ MSG_ERROR, $@ ] );
-   }
+   eval { $object->$m( $value ) };
+
+   $@ and return $ctx->responderr( $@ );
+
+   $ctx->respond( MSG_OK );
 }
 
 sub handle_request_WATCH
@@ -221,24 +187,20 @@ sub handle_request_WATCH
    my $self = shift;
    my ( $token, $objid, $prop, $want_initial ) = @_;
 
+   my $ctx = Tangence::Server::Context->new( $self, $token );
+
    my $registry = $self->{registry};
 
-   my $object = $registry->get_by_id( $objid );
-   unless( defined $object ) {
-      $self->respond( $token, [ MSG_ERROR, "No such object with id $objid" ] );
-      return;
-   }
+   my $object = $registry->get_by_id( $objid ) or
+      return $ctx->responderr( "No such object with id $objid" );
 
-   my $pdef = $object->can_property( $prop );
-
-   unless( $pdef ) {
-      $self->respond( $token, [ MSG_ERROR, "Object does not have property $prop" ] );
-      return;
-   }
+   my $pdef = $object->can_property( $prop ) or
+      return $ctx->responderr( "Object does not have property $prop" );
 
    $self->_install_watch( $object, $prop );
 
-   $self->respond( $token, [ MSG_WATCHING ] );
+   $ctx->respond( MSG_WATCHING );
+   undef $ctx;
 
    return unless $want_initial;
 
@@ -262,26 +224,21 @@ sub handle_request_UNWATCH
    my $self = shift;
    my ( $token, $objid, $prop, $id ) = @_;
 
+   my $ctx = Tangence::Server::Context->new( $self, $token );
+
    my $registry = $self->{registry};
 
-   my $object = $registry->get_by_id( $objid );
-   unless( defined $object ) {
-      $self->respond( $token, [ MSG_ERROR, "No such object with id $objid" ] );
-      return;
-   }
+   my $object = $registry->get_by_id( $objid ) or
+      return $ctx->responderr( "No such object with id $objid" );
 
-   my $pdef = $object->can_property( $prop );
-
-   unless( $pdef ) {
-      $self->respond( $token, [ MSG_ERROR, "Object does not have property $prop" ] );
-      return;
-   }
+   my $pdef = $object->can_property( $prop ) or
+      return $ctx->responderr( "Object does not have property $prop" );
 
    $object->unwatch_property( $prop, $id );
 
    @{ $self->{watches} } = grep { $_->[2] eq $id } @{ $self->{watches} };
 
-   $self->respond( $token, [ MSG_OK ] );
+   $ctx->respond( MSG_OK );
 }
 
 sub handle_request_GETROOT
@@ -289,11 +246,13 @@ sub handle_request_GETROOT
    my $self = shift;
    my ( $token, $identity ) = @_;
 
+   my $ctx = Tangence::Server::Context->new( $self, $token );
+
    my $registry = $self->{registry};
 
    $self->{identity} = $identity;
 
-   $self->respond( $token, [ MSG_RESULT, $registry->get_by_id( 1 ) ] );
+   $ctx->respond( MSG_RESULT, $registry->get_by_id( 1 ) );
 }
 
 sub handle_request_GETREGISTRY
@@ -301,9 +260,11 @@ sub handle_request_GETREGISTRY
    my $self = shift;
    my ( $token, $identity ) = @_;
 
+   my $ctx = Tangence::Server::Context->new( $self, $token );
+
    my $registry = $self->{registry};
 
-   $self->respond( $token, [ MSG_RESULT, $registry ] );
+   $ctx->respond( MSG_RESULT, $registry );
 }
 
 sub _install_watch
