@@ -194,6 +194,9 @@ wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'received MSG_EVENT' );
 
+# MSG_OK
+$S2->syswrite( "\x80" . "\0\0\0\0" );
+
 # MSG_GETPROP
 $S2->syswrite( "\5" . "\0\0\0\x09" .
                "\x21" . "2" .
@@ -252,6 +255,9 @@ wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'received property MSG_UPDATE notice' );
 
+# MSG_OK
+$S2->syswrite( "\x80" . "\0\0\0\0" );
+
 # Test the autoproperties
 
 $ball->set_prop_size( 200 );
@@ -266,6 +272,9 @@ $serverstream = "";
 wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'received property MSG_UPDATE notice on autoprop' );
+
+# MSG_OK
+$S2->syswrite( "\x80" . "\0\0\0\0" );
 
 # MSG_CALL
 $S2->syswrite( "\1" . "\0\0\0\x10" . 
