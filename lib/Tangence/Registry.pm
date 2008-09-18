@@ -69,6 +69,13 @@ sub get_by_id
    return $self->{objects}->{$id};
 }
 
+sub method_get_by_id
+{
+   my $self = shift;
+   my ( $ctx, $id ) = @_;
+   return $self->get_by_id( $id );
+}
+
 sub construct
 {
    my $self = shift;
