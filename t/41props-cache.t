@@ -6,9 +6,6 @@ use Test::More tests => 15;
 use IO::Async::Test;
 use IO::Async::Loop;
 
-use IO::Socket::UNIX;
-use Socket qw( AF_UNIX SOCK_STREAM PF_UNSPEC );
-
 use Tangence::Constants;
 use Tangence::Registry;
 use Tangence::Server;
@@ -28,8 +25,7 @@ my $server = Tangence::Server->new(
    registry => $registry,
 );
 
-( my $S1, my $S2 ) = IO::Socket::UNIX->socketpair( AF_UNIX, SOCK_STREAM, PF_UNSPEC ) or
-   die "Cannot create socket pair - $!";
+my ( $S1, $S2 ) = $loop->socketpair() or die "Cannot create socket pair - $!";
 
 $server->new_be( handle => $S1 );
 
