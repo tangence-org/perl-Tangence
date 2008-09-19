@@ -41,7 +41,39 @@ sub new
 sub destroy
 {
    my $self = shift;
-   $self->fire_event( "destroy" );
+   my %args = @_;
+
+   $self->{destroying} = 1;
+
+   my $outstanding = 1;
+
+   my $on_destroyed = $args{on_destroyed};
+
+   my $incsub = sub {
+      $outstanding++
+   };
+
+   my $decsub = sub {
+      --$outstanding and return;
+      $self->_destroy_really;
+      $on_destroyed->() if $on_destroyed;
+   };
+
+   foreach my $cb ( @{ $self->{event_subs}->{destroy} } ) {
+      $cb->( $self, "destroy", $incsub, $decsub );
+   }
+
+   $decsub->();
+}
+
+sub _destroy_really
+{
+   my $self = shift;
+
+   $self->registry->destroy_id( $self->id );
+
+   undef %$self; # Now I am dead
+   $self->{destroyed} = 1;
 }
 
 sub id
@@ -223,6 +255,8 @@ sub fire_event
 {
    my $self = shift;
    my ( $event, @args ) = @_;
+
+   $event eq "destroy" and croak "$self cannot fire destroy event directly";
 
    $self->can_event( $event ) or croak "$self has no event $event";
 

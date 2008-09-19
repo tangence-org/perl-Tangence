@@ -115,8 +115,6 @@ sub destroy_id
    my $obj = delete $self->{objects}->{$id};
    $self->update_property( "objects", CHANGE_DEL, $id );
 
-   $obj->destroy;
-
    $self->fire_event( "object_destroyed", $id );
 
    push @{ $self->{freeids} }, $id; # Recycle the ID

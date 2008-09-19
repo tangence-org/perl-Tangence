@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 14;
+use Test::More tests => 16;
 use Test::Exception;
 use IO::Async::Test;
 use IO::Async::Loop;
@@ -179,3 +179,22 @@ $ball->set_prop_size( 200 );
 wait_for { defined $size };
 
 is( $size, 200, 'autoprop watch succeeds' );
+
+# Test object destruction
+
+my $proxy_destroyed = 0;
+
+$ballproxy->subscribe_event(
+   event => "destroy",
+   on_fire => sub { $proxy_destroyed = 1 },
+);
+
+my $obj_destroyed = 0;
+
+$ball->destroy( on_destroyed => sub { $obj_destroyed = 1 } );
+
+wait_for { $proxy_destroyed };
+is( $proxy_destroyed, 1, 'proxy gets destroyed' );
+
+wait_for { $obj_destroyed };
+is( $obj_destroyed, 1, 'object gets destroyed' );

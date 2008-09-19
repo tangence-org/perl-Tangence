@@ -13,6 +13,7 @@ our @EXPORT = qw(
    MSG_WATCH
    MSG_UNWATCH
    MSG_UPDATE
+   MSG_DESTROY
    MSG_GETROOT
    MSG_GETREGISTRY
 
@@ -65,6 +66,8 @@ use constant MSG_UNWATCH => 0x08;
 # cancel a MSG_WATCH: $objid, $prop, $id -> ERROR / OK
 use constant MSG_UPDATE => 0x09;
 # notification of a property value change: $objid, $prop, $how, @value -> ERROR / OK
+use constant MSG_DESTROY => 0x0a;
+# request to drop an object proxy: $objid
 
 use constant MSG_GETROOT => 0x40;
 # request the connection's root object: $identity -> ERROR / RESULT

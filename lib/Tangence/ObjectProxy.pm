@@ -23,6 +23,20 @@ sub new
    return $self;
 }
 
+sub destroy
+{
+   my $self = shift;
+
+   $self->{destroyed} = 1;
+
+   foreach my $cb ( @{ $self->{subscriptions}->{destroy} } ) {
+      $cb->( $self, "destroy" );
+   }
+
+   undef %$self;
+   $self->{destroyed} = 1;
+}
+
 use overload '""' => \&STRING;
 
 sub STRING
@@ -154,6 +168,8 @@ sub subscribe_event
 
    my @cbs = ( $callback );
    $self->{subscriptions}->{$event} = \@cbs;
+
+   return if $event eq "destroy"; # This is automatically handled
 
    my $conn = $self->{conn};
    $conn->subscribe( 

@@ -335,6 +335,19 @@ sub handle_request_UPDATE
    }
 }
 
+sub handle_request_DESTROY
+{
+   my $self = shift;
+   my ( $token, $objid ) = @_;
+
+   if( my $obj = $self->{objectproxies}->{$objid} ) {
+      $obj->destroy;
+      delete $self->{objectproxies}->{$objid};
+   }
+
+   $self->respond( $token, [ MSG_OK ] );
+}
+
 sub get_root
 {
    my $self = shift;

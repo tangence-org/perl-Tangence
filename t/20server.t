@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 22;
+use Test::More tests => 24;
 use Test::HexString;
 use IO::Async::Test;
 use IO::Async::Loop;
@@ -309,3 +309,25 @@ $serverstream = "";
 wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'orange ball has same identity as red one earlier' );
+
+# Test object destruction
+
+my $obj_destroyed = 0;
+
+$ball->destroy( on_destroyed => sub { $obj_destroyed = 1 } );
+
+# MSG_DESTROY
+$expect = "\x0a" . "\0\0\0\2" .
+          "\x21" . "2";
+
+$serverstream = "";
+
+wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
+
+is_hexstr( $serverstream, $expect, 'MSG_DESTROY from server' );
+
+# MSG_OK
+$S2->syswrite( "\x80" . "\0\0\0\0" );
+
+wait_for { $obj_destroyed };
+is( $obj_destroyed, 1, 'object gets destroyed' );

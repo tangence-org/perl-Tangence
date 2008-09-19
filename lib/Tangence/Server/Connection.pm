@@ -291,4 +291,42 @@ sub _install_watch
    push @{ $self->{watches} }, [ $object, $prop, $id ];
 }
 
+sub object_destroyed
+{
+   my $self = shift;
+   my ( $obj ) = @_;
+
+   if( my $subs = $self->{subscriptions} ) {
+      my $i = 0;
+      while( $i < @$subs ) {
+         my $s = $subs->[$i];
+
+         $i++, next unless $s->[0] == $obj;
+
+         my ( undef, $event, $id ) = @$s;
+         $obj->unsubscribe_event( $event, $id );
+
+         splice @$subs, $i, 1;
+         # No $i++
+      }
+   }
+
+   if( my $watches = $self->{watches} ) {
+      my $i = 0;
+      while( $i < @$watches ) {
+         my $w = $watches->[$i];
+
+         $i++, next unless $w->[0] == $obj;
+
+         my ( undef, $prop, $id ) = @$w;
+         $obj->unwatch_property( $prop, $id );
+
+         splice @$watches, $i, 1;
+         # No $i++
+      }
+   }
+
+   $self->SUPER::object_destroyed( @_ );
+}
+
 1;

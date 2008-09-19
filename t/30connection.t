@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 34;
+use Test::More tests => 36;
 use Test::Exception;
 use Test::HexString;
 use IO::Async::Test;
@@ -456,3 +456,27 @@ undef @result;
 wait_for { @result };
 
 is( $result[0], undef, 'result is undef' );
+
+# Test object destruction
+
+my $proxy_destroyed = 0;
+
+$ballproxy->subscribe_event(
+   event => "destroy",
+   on_fire => sub { $proxy_destroyed = 1 },
+);
+
+# MSG_DESTROY
+$S2->syswrite( "\x0a" . "\0\0\0\2" .
+               "\x21" . "2" );
+
+wait_for { $proxy_destroyed };
+is( $proxy_destroyed, 1, 'proxy gets destroyed' );
+
+# MSG_OK
+$expect = "\x80" . "\0\0\0\0";
+
+$clientstream = "";
+wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+
+is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK after MSG_DESTROY' );

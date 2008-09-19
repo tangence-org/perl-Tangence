@@ -23,6 +23,7 @@ my %REQ_METHOD = (
    MSG_WATCH,       'handle_request_WATCH',
    MSG_UNWATCH,     'handle_request_UNWATCH',
    MSG_UPDATE,      'handle_request_UPDATE',
+   MSG_DESTROY,     'handle_request_DESTROY',
 
    MSG_GETROOT,     'handle_request_GETROOT',
    MSG_GETREGISTRY, 'handle_request_GETREGISTRY',
@@ -37,6 +38,8 @@ sub new
 {
    my $class = shift;
    my %args = @_;
+
+   my $on_closed = delete $args{on_closed};
 
    my $self = $class->SUPER::new(
       %args,
@@ -61,10 +64,23 @@ sub new
             $self->respond( $token, [ MSG_ERROR, sprintf( "Unrecognised request type 0x%02x", $type ) ] );
          }
       },
+
+      on_closed => sub {
+         my ( $self ) = @_;
+         $on_closed->( $self ) if $on_closed;
+
+         foreach my $id ( keys %{ $self->{peer_hasobj} } ) {
+            my $obj = $self->get_by_id( $id );
+            $obj->unsubscribe_event( "destroy", delete $self->{peer_hasobj}->{$id} );
+         }
+      },
    );
 
-   $self->{peer_hasobj} = {}; # {$id} = 1
+   $self->{peer_hasobj} = {}; # {$id} = $destroy_watch_id
    $self->{peer_hasclass} = {}; # {$classname} = [\@smashkeys];
+
+   # I'm likely to use a lot of these - just make one per stream
+   $self->{destroy_cb} = sub { $self->object_destroyed( @_ ) };
 
    return $self;
 }
@@ -175,6 +191,8 @@ sub pack_data
       my $id = $d->id;
       my $preamble = "";
 
+      $d->{destroyed} and croak "Cannot pack destroyed object $d";
+
       if( !$self->{peer_hasobj}->{$id} ) {
          my $class = ref $d;
 
@@ -212,7 +230,7 @@ sub pack_data
 
          $preamble .= $self->pack_data( $smasharr );
 
-         $self->{peer_hasobj}->{$id} = 1;
+         $self->{peer_hasobj}->{$id} = $d->subscribe_event( "destroy", $self->{destroy_cb} );
       }
 
       return $preamble . pack_typenum( DATA_OBJECT, 4 ) . pack( "N", $d->id );
@@ -322,6 +340,37 @@ sub on_read
    }
 
    return 1;
+}
+
+sub object_destroyed
+{
+   my $self = shift;
+   my ( $obj, $event, $startsub, $donesub ) = @_;
+
+   $startsub->();
+
+   my $objid = $obj->id;
+
+   delete $self->{peer_hasobj}->{$objid};
+
+   $self->request(
+      request => [ MSG_DESTROY, $objid ],
+
+      on_response => sub {
+         my ( $response ) = @_;
+         my $code = $response->[0];
+
+         if( $code == MSG_OK ) {
+            $donesub->();
+         }
+         elsif( $code == MSG_ERROR ) {
+            print STDERR "Cannot get connection $self to destroy object $objid - error $response->[1]\n";
+         }
+         else {
+            print STDERR "Cannot get connection $self to destroy object $objid - code $code\n";
+         }
+      },
+   );
 }
 
 1;
