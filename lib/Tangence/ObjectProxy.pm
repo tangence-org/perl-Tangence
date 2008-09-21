@@ -415,6 +415,9 @@ sub watch_property
    $self->{props}->{$property}->{cbs} = [ $callback ];
 
    if( $auto ) {
+      if( $want_initial ) {
+         $callback->( $self, $property, CHANGE_SET, $self->{props}->{$property}->{cache} );
+      }
       $args{on_watched}->() if $args{on_watched};
    }
    else {

@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 36;
+use Test::More tests => 37;
 use Test::Exception;
 use Test::HexString;
 use IO::Async::Test;
@@ -405,9 +405,12 @@ $ballproxy->watch_property(
       $size = $value[0];
    },
    on_watched => sub { $watched = 1 },
+   want_initial => 1,
 );
 
 is( $watched, 1, 'watch_property on autoprop is synchronous' );
+
+is( $size, 100, 'watch_property on autoprop gives initial value' );
 
 # MSG_UPDATE
 $S2->syswrite( "\x09" . "\0\0\0\x0d" .
@@ -416,6 +419,7 @@ $S2->syswrite( "\x09" . "\0\0\0\x0d" .
                "\x21" . "1" .
                "\x23" . "200" );
 
+undef $size;
 wait_for { defined $size };
 
 is( $size, 200, 'autoprop watch succeeds' );

@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 16;
+use Test::More tests => 17;
 use Test::Exception;
 use IO::Async::Test;
 use IO::Async::Loop;
@@ -166,12 +166,16 @@ $ballproxy->watch_property(
       $size = $value[0];
    },
    on_watched => sub { $watched = 1 },
+   want_initial => 1,
 );
 
 is( $watched, 1, 'watch_property on autoprop is synchronous' );
 
+is( $size, 100, 'watch_property on autoprop gives initial value' );
+
 $ball->set_prop_size( 200 );
 
+undef $size;
 wait_for { defined $size };
 
 is( $size, 200, 'autoprop watch succeeds' );
