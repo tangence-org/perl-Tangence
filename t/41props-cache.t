@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 15;
+use Test::More tests => 16;
 use IO::Async::Test;
 use IO::Async::Loop;
 
@@ -38,16 +38,24 @@ my $proxy = $conn->get_root;
 
 my $result;
 
+my $scalar;
 my $scalar_changed = 0;
 $proxy->watch_property(
    property => "scalar",
-   on_change => sub { $scalar_changed = 1 },
+   on_change => sub { 
+      $scalar = $_[3];
+      $scalar_changed = 1
+   },
    on_watched => sub { $result = 1 },
    want_initial => 1,
 );
 
 undef $result;
 wait_for { defined $result };
+
+wait_for { defined $scalar };
+
+is( $scalar, "123", 'Initial value from watch_property' );
 
 is( $proxy->prop( "scalar" ), 
    "123",
