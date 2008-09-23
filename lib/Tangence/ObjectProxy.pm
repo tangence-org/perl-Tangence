@@ -132,7 +132,7 @@ sub call_method
 
    my $conn = $self->{conn};
    $conn->request(
-      request => [ MSG_CALL, $self->id, $method, @$args ],
+      request => [ MSG_CALL, $self->id, $method, $args ? @$args : () ],
 
       on_response => sub {
          my ( $code, @data ) = @{$_[0]};
