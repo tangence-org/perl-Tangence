@@ -204,9 +204,6 @@ sub pack_data
             $preamble .= pack_typenum( DATA_META, DATAMETA_CLASS ) . pack( "Z*", $class ) . $self->pack_data( $schema );
 
             $smashkeys = [ keys %{ $class->autoprops } ];
-            for my $prop ( @$smashkeys ) {
-               $self->_install_watch( $d, $prop );
-            }
 
             @$smashkeys = sort @$smashkeys if $SORT_HASH_KEYS;
             $smashkeys = undef unless @$smashkeys;
@@ -226,6 +223,10 @@ sub pack_data
          if( $smashkeys ) {
             my $smashdata = $d->smash( $smashkeys );
             $smasharr = [ map { $smashdata->{$_} } @$smashkeys ];
+
+            for my $prop ( @$smashkeys ) {
+               $self->_install_watch( $d, $prop );
+            }
          }
 
          $preamble .= $self->pack_data( $smasharr );
