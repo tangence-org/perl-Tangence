@@ -1,0 +1,612 @@
+An overview of Tangence
+=======================
+
+Before I go much further, I need to write a lot more about what Tangence
+is. Tangence is all of the following:
+
+ 1. A single server/multiple client protocol for sharing information
+    about objects.
+
+ 2. An object model - it defines the abstract look-and-feel of objects 
+    that are visible in the server end, and the proxies to them that
+    exist in the client ends.
+   
+ 3. A data model - it defines the types of data that objects can take as
+    arguments to and results from methods, arguments to events, and
+    values of properties.
+ 
+ 4. A wire protocol - it defines the bits down the wire of some stream.
+
+ 5. A collection of Perl modules (a Perl distribution) which implements
+    all of the above.
+
+These writings may sometimes suffer the "Java problem"; the problem of
+the same name being applied to too many different concepts. I'll try to
+make the context or wording clear to minimise confusions.
+
+
+1. Server/Client
+----------------
+
+In a Tangence system, one program is distinct in being the server. It is
+the program that hosts the actual objects being considered. It is also
+the program that holds the networking socket to which the clients
+connect.
+
+The other programs are all clients, which connect to the server. While
+each client is notionally distinct, they all share access to the same
+objects within the server. The clients are not directly aware of each
+other's existence, though each one's effects on the system may be
+visible to the others as a result of calling methods or altering
+properties on the objects.
+
+
+2. Object Model
+---------------
+
+In Tangence, the primary item of interaction is an object. Tangence objects
+exist in the server, most likely bearing at least some relationship to
+some native objects in the server implementation (though if and when the
+occasion ever arises that a C program can host a Tangence server,
+obviously this association will be somewhat looser). The base class for
+all Tangence objects in the server is Tangence::Object.
+
+In the server, two special objects exist - one is the root object, the
+other is the Repository. These are the only two well-known objects that
+may always be known to exist. All the other objects come from these.
+
+The client(s) interact with the server almost entirely by performing
+operations on objects. These are done though instances of
+Tangence::ObjectProxy. When the client connects to the server, two
+special object proxies are constructed, to represent the root and
+repository objects. These are the base through which all the other
+interactions are performed. Other object proxies may only be obtained
+by the return values of methods on existing objects, arguments passed in
+events from them, or retrieved as the value of properties on objects.
+
+Each object is an instance of some particular class. The class provides
+all of the typing information for that instance. Principly, that class
+defines a name, and the collection of methods, events, and properties that
+exist on instances of that class. Each class may also name other classes
+as parents; recursively merging the interface of all those named.
+
+2.1. Methods
+
+Each object class may define named methods that clients can invoke on
+objects in the server. Each method has:
+
+  + a name
+  + argument types
+  + a return type
+
+The arguments to a method are positional. 
+
+Methods on objects in the server may be invoked by clients. Once a
+method is invoked by a client, the client must wait until it returns
+before it can send any other request to the server.
+
+2.2 Events
+
+Each object class may define named events that objects may emit. Each
+method has:
+
+    + a name
+    + argument types
+
+Like methods, the arguments to an event are positional.
+
+Events do not have return types, as they are simple notifications from the
+server to the client, to inform them that some event happened. Clients are
+not automatically informed of every event on every object. Instead, the
+client must specifically register interest in events.
+
+2.3 Properties
+
+Each object class may define named properties that the object has. Each
+object in the class will have a value for the property. Each property has:
+
+    + a name
+    + a laziness
+    + a dimension - scalar, array, hash or object set
+    + a type
+
+Properties do not have arguments. A client can request the current value
+of a property on an object, or set a new value. It can also register an
+interest in the property, where the server will inform the client of
+changes to the value. Changes are sent to the client in an efficient
+manner - for example, adding a single element to an array or hash will not
+need to resend the entire collection. More on this later.
+
+Certain properties may be define as "autoprops", short for automatic
+properties. These are property values that are deemed by the application
+to be important enough for all clients to be aware of all of the time
+(such as a name or other key item of information). When the server first
+sends a new object to a client, the object construction message will also
+contain initial values of these properties. The client will be
+automatically informed of any changes to these properties when they
+change, as if the client had specifically requested to be informed. When
+the object is sent to a new client, it is said to be "smashed"; the
+initial values of these automatic properties are called "smash values".
+
+[There are issues here that need resolving to move Tangence out from
+being Perl-specific into a more general-purpose layer - more on this in
+a later email].
+
+
+3. Data Model
+-------------
+
+When executing a method, firing an event, or getting, setting, or updating
+the value of a property, the data involved has a type. The underlying
+streaming layer recognises the following fundamental types of values:
+
+ * Strings
+
+ * References to Tangence objects
+
+ * Lists of values
+
+ * Dictionaries of (string) named keys to values
+
+These map closely to the fundamental types in Perl. The data model is
+applied to each argument to a method or event, the return value of a
+method, and the type of a property. In the case of a property, the type
+applies to the whole scalar, or to the individual elements in an array
+or hash, depending on the dimension of the property. Object set properties
+always contain objects.
+
+As Tangence is primarily an interprocess-communication layer, its main
+focus is that of communication. The Data Model applies transiently, to
+data as it is in transit between the server and a client. A consequence
+here is that it only considers the surface value of the types of data,
+rather than any deeper significance. It does not preserve self-referential
+data, nor can it cope with cyclic structures. More complex shaped data
+should be represented by real Tangence objects.
+
+[
+ There are also a number of unresolved issues here to deal with export to
+ other languages. Primarily, those are 
+  * the string/number duallity of perl which exists almost nowhere else
+  * how deeply typing information should be applied to collections
+  * whether a new type of "structure" should be created, which allows for
+    a hetrogenous collection, if typing is applied deeply to arrays and
+    hashes
+]
+
+
+4. Wire Protocol
+----------------
+
+The wire protocol used by Tangence operates over a reliable stream. This
+stream may be provided by a TCP socket, UNIX local socket, or even the
+STDIN/STDOUT pipe pair of an SSH connection.
+
+The following message descriptions all use the symbolic constant names
+from the Tangence::Constants perl module, to be more readable.
+
+4.1. Messages
+
+At its lowest level, the wire protocol consists of a pair of endpoints to
+the stream, each sending and receiving messages to its peer. The protocol
+at this level is symmetric between the client and the server. It consists
+of messages that are either reqests or responses. 
+
+An endpoint sends a request, which the peer must then respond to. Each
+request has exactly one response. The requests and responses are paired
+sequentially in a pipeline fashion.
+
+The two endpoints are distinct from each other, in that there is no
+requirement for a peer to respond to an outstanding request it has
+received before sending a new request of its own. There is also no
+requirement to wait on the response to a request it has sent, before
+sending another.
+
+The basic message format is a binary exchange of messages in the following
+format:
+
+ Type:    1 byte  integer
+ Length:  4 bytes integer, big-endian
+ Payload: (n-5) bytes
+
+The type is a single byte which defines the message type. The collection 
+of message types is given below. The length is a big-endian 4 byte integer
+which gives the total size of the message, including this header. Thus,
+the length will always be at least 5. The data payload of the message is
+encoded in the data serialisation scheme given below. Each argument to the
+message is encoded as a single serialisation item. For message types with
+a variable number of arguments, the length of the message itself defines
+the number of arguments given.
+
+4.2. Data Serialisation
+
+The data serialisation format applies recursively down a data structure
+tree. Each node in structure is either a string, an object reference, or
+a list or dictionary of other values. The serialised bytes encode the tree
+structure recursively. Other types of entry also exist in the serialised
+stream, which carry metadata about the types, such as object classes and
+instances.
+
+The encoding of each node in the data structure consists of a type, a
+size, and the actual data payload. The first byte of a node encodes both
+its type and size. The top three bits in the byte encode the type:
+
+ Type           Bits                    Description
+
+ DATA_STRING    0 0 1 s s s s s         string
+ DATA_LIST      0 1 0 s s s s s         list of values
+ DATA_DICT      0 1 1 s s s s s         dictionary of string->value
+ DATA_OBJECT    1 0 0 s s s s s         Tangence object reference
+        where 'sssss' gives the size
+
+ DATA_META      1 1 1 n n n n n
+        where 'nnnnn' gives the metadata type
+
+For non-metadata items, the lower five bits give a number, 0 to 31, which
+helps encode the size. For items of size 30 or below, this size is encoded
+directly. Where the size is 31 or more, the number 31 is encoded, and the
+actual size follows this leading byte. For sizes 31 to 127, the next byte
+encodes it. For sizes 128 or above, the next 4 bytes encode it in
+big-endian format, with the top bit set. Sizes above 2^31 cannot be
+encoded.
+
+Following the size, are bytes encoding the data. The exact meaning of the
+size depends on the type of the node.
+
+For strings, the size gives the number of bytes in the string. These
+bytes then follow the type/size area.
+
+For lists, the size gives the number of elements in the list. Following
+the type/size area will be this number of data serialisations, one per
+list element.
+
+For dictionaries, this size gives the number of key/value pairs. Following
+the type/size area will be this number of key/value pairs. Each pair
+consists of a null-terminated string for the key name, then a data
+serialisation for the value.
+
+For objects, the size gives the number of bytes in the object's ID number,
+followed by a big-endian encoding of the object's ID number. Currently,
+this will always be a 4 byte number.
+
+Meta-data items may be embedded within a data stream in order to create
+the object classes and instances which it contains. These metadata items
+do not count towards the overall size of a collection value.
+
+Meta-data operations encode a subtype number, rather than a size, in the
+bottom five bits.
+
+ Metadata type          Bits                    Description
+
+ DATAMETA_CONSTRUCT     1 1 1 0 0 0 0 1         Construct an object
+ DATAMETA_CLASS         1 1 1 0 0 0 1 0         Create a new object class
+
+Following each metadata item is an encoding of its arguments.
+
+DATAMETA_CONSTRUCT:
+  Object ID:    4 byte big-endian
+  Object class: null-terminated string
+  Smash values: 0 or more bytes, data encoded (list)
+
+  If the object class defines smash properties, the construct message will
+  also contain the values for the smash properties. These will be sent in
+  a list, one value per property, in the same order as the object class's
+  schema defines the smash keys.
+
+DATAMETA_CLASS:
+  Class name:   null-terminated string
+  Schema:       data encoded (dict)
+  Smash keys:   data encoded (list)
+
+  The schema will be encoded as a dictionary, in the following layout.
+
+  DATA_DICT:
+    'methods' = DATA_DICT:
+      one key per method, values are DATA_DICT:
+        'args' = string description of argument types
+        'ret'  = string description of return type
+
+    'events' = DATA_DICT:
+      one key per event, values are DATA_DICT:
+        'args' = string description of argument types
+
+    'properties' = DATA_DICT:
+      one key per property, values are DATA_DICT:
+        'dim' = dimension, one of:
+          DIM_SCALAR, DIM_HASH, DIM_ARRAY, DIM_OBJSET
+        'type' = string description of the type
+        'auto' = true if this is an autoprop
+
+    'isa' = DATA_LIST:
+      class names
+
+  The smash keys will be encoded as a possibly-empty list of strings.
+
+4.3. Message Types
+
+Each of the messages defines the layout of its data payload. Some messages
+pass a fixed number of items, some have a variable number of items in the
+last position. For these messages, no explicit encoding of the size is
+given. Instead, the data payload area is packed with as many data
+encodings as are required. The receiver should use the size of the
+containing message to know when all the items have been unpacked.
+
+The following request types are defined. Any message may be responded to
+by MSG_ERROR in case of an error, so this response type is not listed.
+Some of these messages are sent from the client to the server (C->S),
+others are sent from the server to client (S->C)
+
+MSG_CALL (C->S)
+  STRING        object ID
+  STRING        method name
+  data...       arguments
+
+  Responses: MSG_RESULT
+
+  Calls the named method on the given object.
+
+MSG_SUBSCRIBE (C->S)
+  STRING        object ID
+  STRING        event name
+
+  Responses: MSG_SUBSCRIBED
+
+  Subscribes the client to be informed of the event on given object.
+
+MSG_UNSUBSCRIBE (C->S)
+  STRING        object ID
+  STRING        event name
+  STRING        subscription ID
+
+  Responses: MSG_OK
+
+  Cancels an event subscription.
+
+MSG_EVENT (S->C)
+  STRING        object ID
+  STRING        event name
+  data...       arguments
+
+  Responses: MSG_OK
+
+  Informs the client that the event has occured.
+
+MSG_GETPROP (C->S)
+  STRING        object ID
+  STRING        property name
+
+  Responses: MSG_RESULT
+
+  Requests the current value of the property
+
+MSG_SETPROP (C->S)
+  STRING        object ID
+  STRING        property name
+  data          new value
+
+  Responses: MSG_OK
+
+  Sets the new value of the property
+
+MSG_WATCH (C->S)
+  STRING        object ID
+  STRING        property name
+  STRING        want initial?
+
+  Responses: MSG_WATCHING
+
+  Requests to be informed of changes to the property value. If the
+  boolean 'want initial' value is true, the client will be sent an
+  initial MSG_CHANGE message for the current value of the property.
+
+MSG_UNWATCH (C->S)
+  STRING        object ID
+  STRING        property name
+  STRING        watch ID
+
+  Responses: MSG_OK
+
+  Cancels a request to watch a property
+
+MSG_UPDATE (S->C)
+  STRING        object ID
+  STRING        property name
+  STRING        change type
+  data...       change value
+
+  Responses: MSG_OK
+
+  Informs the client that the property value has now changed. The
+  type of change is given by the change type argument, and defines the
+  data layout in the value arguments. The exact meaning of the operation
+  depends on the dimension of the property it acts on.
+
+  For DIM_SCALAR:
+
+    CHANGE_SET:
+      data      new value
+
+      Sets the new value of the property.
+
+  For DIM_HASH:
+    CHANGE_SET:
+      DICT      new value
+
+      Sets the new value of the property.
+
+    CHANGE_ADD:
+      STRING    key
+      data      value
+
+      Adds a new element to the hash.
+
+    CHANGE_DEL:
+      STRING    key
+
+      Deletes an element from the hash.
+
+  For DIM_ARRAY:
+    CHANGE_SET:
+      LIST      new value
+
+      Sets the new value of the property.
+
+    CHANGE_PUSH:
+      data...   additional values
+
+      Appends the additional values to the end of the array.
+
+    CHANGE_SHIFT:
+      STRING    number of elements
+
+      Removes a number of leading elements from the beginning of the
+      array.
+
+    CHANGE_SPLICE:
+      STRING    start
+      STRING    count
+      data...   new elements
+
+      Replaces the given range of the array with the new elements given.
+      The new list of values may be a different length to the replaced
+      section - in this case, subsequent elements will be shifted up or
+      down accordingly.
+
+  For DIM_OBJSET:
+    CHANGE_SET:
+      LIST      objects
+
+      Sets the new value for the property. Will be given a list of
+      Tangence object references.
+
+    CHANGE_ADD:
+      OBJECT    new object
+
+      Adds the given object to the set
+
+    CHANGE_DEL:
+      STRING    object ID
+
+      Removes the object of the given ID from the set.
+
+MSG_DESTROY (S->C)
+  STRING        object ID
+
+  Responses: MSG_OK
+
+  Informs the client that the object is due for destruction in
+  the server. Upon receipt of this message the client should destroy
+  any remaining references it has to the object. After it has sent the
+  MSG_OK response, it will not be allowed to invoke any methods,
+  subscribe to any events, nor interact with any properties on
+  the object. Any existing event subscriptions or property
+  watches will have been removed by the server before this message is
+  sent.
+
+MSG_GETROOT (C->S)
+  STRING        identity
+
+  Responses: MSG_RESULT
+
+  Initial message to be sent by the client to obtain the root object. The
+  identity may be used to identify this particular client, as part of its
+  login procedure. The result will contain a single object reference,
+  being the root object.
+
+MSG_GETREGISTRY (C->S)
+  [no arguments]
+
+  Responses: MSG_RESULT
+
+  Requests the registry object from the server. The result will contain a
+  single object reference, being the registry object.
+
+
+The following responses may be sent to a request:
+
+MSG_OK
+  [no arguments]
+
+  A simple OK message, informing the requester that the operation was
+  successful, an no error occured.
+
+MSG_ERROR
+  STRING        error message
+
+  An error occured; the text of the message is included.
+
+MSG_RESULT
+  data...       values
+
+  Contains the return value from a method call, a property value, or the
+  initial root or registry object.
+
+MSG_SUBSCRIBED
+  [no arguments]
+
+  Informs the client that a MSG_SUBSCRIBE was successful.
+
+MSG_WATCHING
+  [no arguments]
+
+  Informs the client that a MSG_WATCH was successful.
+
+
+5. Perl Distribution
+--------------------
+
+The perl distribution is available from
+
+  http://bazaar.leonerd.dyndns.org/perl/Tangence/
+
+At some stage when the details become more concrete this will start
+gaining inline documentation, but for now it just has some commenting.
+
+As a rough description of the modules:
+
+5.1. Shared by server and client
+
+  + Tangence::Constants
+    Defines various magic numbers used in the wire streaming protocol.
+
+  + Tangence::Stream
+    Implements most of the lower level wire streaming protocol, including
+    the symmetric parts of data serialisation.
+
+5.2. Used by the client
+
+  + Tangence::Connection
+    The connection to the server. Handles the higher-level client-specific
+    parts of the wire protocol.
+
+  + Tangence::ObjectProxy
+    Acts as a proxy to one particular object within the server. Used for
+    invoking methods, subscribing to events, and interacting with
+    properties.
+
+5.3. Used by the server
+
+  + Tangence::Object
+    A base class for implementing Tangence objects within the server.
+
+  + Tangence::Registry
+    The object registry; keeps a reference to every Tangence object in the
+    server.
+
+  + Tangence::Server
+    A base class for implementing the entire server.
+
+  + Tangence::Server::Connection
+    Server end of a client connection. Handles most of the higher-level
+    server-specific parts of the wire protocol.
+
+  + Tangence::Server::Context
+    An object class to represent the client calling context during the
+    invocation of a server object method or property change.
+
+
+-- 
+Paul "LeoNerd" Evans
+
+leonerd@leonerd.org.uk
+ICQ# 4135350       |  Registered Linux# 179460
+http://www.leonerd.org.uk/
