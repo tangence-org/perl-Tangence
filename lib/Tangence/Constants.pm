@@ -83,9 +83,9 @@ use constant MSG_ERROR => 0x81;
 use constant MSG_RESULT => 0x82;
 # result of a method call or property get: @values
 use constant MSG_SUBSCRIBED => 0x83;
-# result of MSG_SUBSCRIBE: $id
+# result of MSG_SUBSCRIBE: (void)
 use constant MSG_WATCHING => 0x84;
-# result of MSG_WATCH: $id, $dim
+# result of MSG_WATCH: (void)
 
 
 # Property dimensions
