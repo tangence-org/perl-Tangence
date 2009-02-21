@@ -13,48 +13,22 @@ use Encode qw( encode_utf8 decode_utf8 );
 # true value will sort keys first
 our $SORT_HASH_KEYS = 0;
 
-sub pack_num
-{
-   my ( $num ) = @_;
-
-   if( $num < 0x80 ) {
-      return pack( "C", $num );
-   }
-   else {
-      return pack( "N", $num | 0x80000000 );
-   }
-}
-
-sub unpack_num
-{
-   my ( $num ) = unpack( "C", $_[0] );
-
-   if( $num < 0x80 ) {
-      substr( $_[0], 0, 1, "" );
-      return $num;
-   }
-
-   ( $num ) = unpack( "N", $_[0] );
-   substr( $_[0], 0, 4, "" );
-
-   $num &= 0x7fffffff;
-
-   return $num;
-}
-
-sub pack_typenum
+sub pack_leader
 {
    my ( $type, $num ) = @_;
 
    if( $num < 0x1f ) {
       return pack( "C", ( $type << 5 ) | $num );
    }
+   elsif( $num < 0x80 ) {
+      return pack( "CC", ( $type << 5 ) | 0x1f, $num );
+   }
    else {
-      return pack( "C", ( $type << 5 ) | 0x1f ) . pack_num( $num );
+      return pack( "CN", ( $type << 5 ) | 0x1f, $num | 0x80000000 );
    }
 }
 
-sub unpack_typenum
+sub unpack_leader
 {
    my ( $typenum ) = unpack( "C", $_[0] );
    substr( $_[0], 0, 1, "" );
@@ -63,7 +37,16 @@ sub unpack_typenum
    my $num  = $typenum & 0x1f;
 
    if( $num == 0x1f ) {
-      $num = unpack_num( $_[0] );
+      ( $num ) = unpack( "C", $_[0] );
+
+      if( $num < 0x80 ) {
+         substr( $_[0], 0, 1, "" );
+      }
+      else {
+         ( $num ) = unpack( "N", $_[0] );
+         $num &= 0x7fffffff;
+         substr( $_[0], 0, 4, "" );
+      }
    }
 
    return ( $type, $num );
@@ -75,19 +58,19 @@ sub pack_data
    my ( $d ) = @_;
 
    if( !defined $d ) {
-      return pack_typenum( DATA_OBJECT, 0 );
+      return pack_leader( DATA_OBJECT, 0 );
    }
    elsif( !ref $d ) {
       my $octets = encode_utf8( $d );
-      return pack_typenum( DATA_STRING, length($octets) ) . $octets;
+      return pack_leader( DATA_STRING, length($octets) ) . $octets;
    }
    elsif( ref $d eq "ARRAY" ) {
-      return pack_typenum( DATA_LIST, scalar @$d ) . join( "", map { $self->pack_data( $_ ) } @$d );
+      return pack_leader( DATA_LIST, scalar @$d ) . join( "", map { $self->pack_data( $_ ) } @$d );
    }
    elsif( ref $d eq "HASH" ) {
       my @keys = keys %$d;
       @keys = sort @keys if $SORT_HASH_KEYS;
-      return pack_typenum( DATA_DICT, scalar @keys ) . join( "", map { pack( "Z*", $_ ) . $self->pack_data( $d->{$_} ) } @keys );
+      return pack_leader( DATA_DICT, scalar @keys ) . join( "", map { pack( "Z*", $_ ) . $self->pack_data( $d->{$_} ) } @keys );
    }
    elsif( eval { $d->isa( "Tangence::Object" ) } ) {
       my $id = $d->id;
@@ -103,7 +86,7 @@ sub pack_data
          if( !$self->{peer_hasclass}->{$class} ) {
             my $schema = $class->introspect;
 
-            $preamble .= pack_typenum( DATA_META, DATAMETA_CLASS ) . pack( "Z*", $class ) . $self->pack_data( $schema );
+            $preamble .= pack_leader( DATA_META, DATAMETA_CLASS ) . pack( "Z*", $class ) . $self->pack_data( $schema );
 
             $smashkeys = [ keys %{ $class->autoprops } ];
 
@@ -118,7 +101,7 @@ sub pack_data
             $smashkeys = $self->{peer_hasclass}->{$class}->[0];
          }
 
-         $preamble .= pack_typenum( DATA_META, DATAMETA_CONSTRUCT ) . pack( "NZ*", $id, $class );
+         $preamble .= pack_leader( DATA_META, DATAMETA_CONSTRUCT ) . pack( "NZ*", $id, $class );
 
          my $smasharr;
 
@@ -136,10 +119,10 @@ sub pack_data
          $self->{peer_hasobj}->{$id} = $d->subscribe_event( "destroy", $self->{destroy_cb} );
       }
 
-      return $preamble . pack_typenum( DATA_OBJECT, 4 ) . pack( "N", $d->id );
+      return $preamble . pack_leader( DATA_OBJECT, 4 ) . pack( "N", $d->id );
    }
    elsif( eval { $d->isa( "Tangence::ObjectProxy" ) } ) {
-      return pack_typenum( DATA_OBJECT, 4 ) . pack( "N", $d->id );
+      return pack_leader( DATA_OBJECT, 4 ) . pack( "N", $d->id );
    }
    else {
       croak "Do not know how to pack a " . ref($d);
@@ -154,7 +137,7 @@ sub unpack_data
    
    while(1) {
       length $_[0] or croak "Ran out of bytes before finding a type";
-      ( $type, $num ) = unpack_typenum( $_[0] );
+      ( $type, $num ) = unpack_leader( $_[0] );
       last unless $type == DATA_META;
 
       if( $num == DATAMETA_CONSTRUCT ) {
