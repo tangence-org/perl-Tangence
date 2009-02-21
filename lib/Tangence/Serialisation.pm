@@ -13,7 +13,7 @@ use Encode qw( encode_utf8 decode_utf8 );
 # true value will sort keys first
 our $SORT_HASH_KEYS = 0;
 
-sub pack_leader
+sub _pack_leader
 {
    my ( $type, $num ) = @_;
 
@@ -28,7 +28,7 @@ sub pack_leader
    }
 }
 
-sub unpack_leader
+sub _unpack_leader
 {
    my ( $typenum ) = unpack( "C", $_[0] );
    substr( $_[0], 0, 1, "" );
@@ -58,19 +58,19 @@ sub pack_data
    my ( $d ) = @_;
 
    if( !defined $d ) {
-      return pack_leader( DATA_OBJECT, 0 );
+      return _pack_leader( DATA_OBJECT, 0 );
    }
    elsif( !ref $d ) {
       my $octets = encode_utf8( $d );
-      return pack_leader( DATA_STRING, length($octets) ) . $octets;
+      return _pack_leader( DATA_STRING, length($octets) ) . $octets;
    }
    elsif( ref $d eq "ARRAY" ) {
-      return pack_leader( DATA_LIST, scalar @$d ) . join( "", map { $self->pack_data( $_ ) } @$d );
+      return _pack_leader( DATA_LIST, scalar @$d ) . join( "", map { $self->pack_data( $_ ) } @$d );
    }
    elsif( ref $d eq "HASH" ) {
       my @keys = keys %$d;
       @keys = sort @keys if $SORT_HASH_KEYS;
-      return pack_leader( DATA_DICT, scalar @keys ) . join( "", map { pack( "Z*", $_ ) . $self->pack_data( $d->{$_} ) } @keys );
+      return _pack_leader( DATA_DICT, scalar @keys ) . join( "", map { pack( "Z*", $_ ) . $self->pack_data( $d->{$_} ) } @keys );
    }
    elsif( eval { $d->isa( "Tangence::Object" ) } ) {
       my $id = $d->id;
@@ -86,7 +86,7 @@ sub pack_data
          if( !$self->{peer_hasclass}->{$class} ) {
             my $schema = $class->introspect;
 
-            $preamble .= pack_leader( DATA_META, DATAMETA_CLASS ) . pack( "Z*", $class ) . $self->pack_data( $schema );
+            $preamble .= _pack_leader( DATA_META, DATAMETA_CLASS ) . pack( "Z*", $class ) . $self->pack_data( $schema );
 
             $smashkeys = [ keys %{ $class->autoprops } ];
 
@@ -101,7 +101,7 @@ sub pack_data
             $smashkeys = $self->{peer_hasclass}->{$class}->[0];
          }
 
-         $preamble .= pack_leader( DATA_META, DATAMETA_CONSTRUCT ) . pack( "NZ*", $id, $class );
+         $preamble .= _pack_leader( DATA_META, DATAMETA_CONSTRUCT ) . pack( "NZ*", $id, $class );
 
          my $smasharr;
 
@@ -119,10 +119,10 @@ sub pack_data
          $self->{peer_hasobj}->{$id} = $d->subscribe_event( "destroy", $self->{destroy_cb} );
       }
 
-      return $preamble . pack_leader( DATA_OBJECT, 4 ) . pack( "N", $d->id );
+      return $preamble . _pack_leader( DATA_OBJECT, 4 ) . pack( "N", $d->id );
    }
    elsif( eval { $d->isa( "Tangence::ObjectProxy" ) } ) {
-      return pack_leader( DATA_OBJECT, 4 ) . pack( "N", $d->id );
+      return _pack_leader( DATA_OBJECT, 4 ) . pack( "N", $d->id );
    }
    else {
       croak "Do not know how to pack a " . ref($d);
@@ -137,7 +137,7 @@ sub unpack_data
    
    while(1) {
       length $_[0] or croak "Ran out of bytes before finding a type";
-      ( $type, $num ) = unpack_leader( $_[0] );
+      ( $type, $num ) = _unpack_leader( $_[0] );
       last unless $type == DATA_META;
 
       if( $num == DATAMETA_CONSTRUCT ) {

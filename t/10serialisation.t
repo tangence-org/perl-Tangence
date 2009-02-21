@@ -10,24 +10,24 @@ $Tangence::Serialisation::SORT_HASH_KEYS = 1;
 
 my $d;
 
-is_hexstr( $d = Tangence::Serialisation::pack_leader( 0, 0 ), "\0", 'pack_leader 0, 0' );
-is_deeply( [ Tangence::Serialisation::unpack_leader( $d ) ], [ 0, 0 ], 'unpack_leader' );
+is_hexstr( $d = Tangence::Serialisation::_pack_leader( 0, 0 ), "\0", '_pack_leader 0, 0' );
+is_deeply( [ Tangence::Serialisation::_unpack_leader( $d ) ], [ 0, 0 ], '_unpack_leader' );
 is( length $d, 0, 'eats all string' );
 
-is_hexstr( $d = Tangence::Serialisation::pack_leader( 1, 0 ), "\x20", 'pack_leader 1, 0' );
-is_deeply( [ Tangence::Serialisation::unpack_leader( $d ) ], [ 1, 0 ], 'unpack_leader' );
+is_hexstr( $d = Tangence::Serialisation::_pack_leader( 1, 0 ), "\x20", '_pack_leader 1, 0' );
+is_deeply( [ Tangence::Serialisation::_unpack_leader( $d ) ], [ 1, 0 ], '_unpack_leader' );
 is( length $d, 0, 'eats all string' );
 
-is_hexstr( $d = Tangence::Serialisation::pack_leader( 1, 5 ), "\x25", 'pack_leader 1, 5' );
-is_deeply( [ Tangence::Serialisation::unpack_leader( $d ) ], [ 1, 5 ], 'unpack_leader' );
+is_hexstr( $d = Tangence::Serialisation::_pack_leader( 1, 5 ), "\x25", '_pack_leader 1, 5' );
+is_deeply( [ Tangence::Serialisation::_unpack_leader( $d ) ], [ 1, 5 ], '_unpack_leader' );
 is( length $d, 0, 'eats all string' );
 
-is_hexstr( $d = Tangence::Serialisation::pack_leader( 2, 64 ), "\x5f\x40", 'pack_leader 2, 64' );
-is_deeply( [ Tangence::Serialisation::unpack_leader( $d ) ], [ 2, 64 ], 'unpack_leader' );
+is_hexstr( $d = Tangence::Serialisation::_pack_leader( 2, 64 ), "\x5f\x40", '_pack_leader 2, 64' );
+is_deeply( [ Tangence::Serialisation::_unpack_leader( $d ) ], [ 2, 64 ], '_unpack_leader' );
 is( length $d, 0, 'eats all string' );
 
-is_hexstr( $d = Tangence::Serialisation::pack_leader( 2, 500 ), "\x5f\x80\0\1\xf4", 'pack_leader 2, 64' );
-is_deeply( [ Tangence::Serialisation::unpack_leader( $d ) ], [ 2, 500 ], 'unpack_leader' );
+is_hexstr( $d = Tangence::Serialisation::_pack_leader( 2, 500 ), "\x5f\x80\0\1\xf4", '_pack_leader 2, 64' );
+is_deeply( [ Tangence::Serialisation::_unpack_leader( $d ) ], [ 2, 500 ], '_unpack_leader' );
 is( length $d, 0, 'eats all string' );
 
 # We're just testing the simple pack and unpack methods here, so no object
