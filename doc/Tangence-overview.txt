@@ -227,8 +227,9 @@ stream, which carry metadata about the types, such as object classes and
 instances.
 
 The encoding of each node in the data structure consists of a type, a
-size, and the actual data payload. The first byte of a node encodes both
-its type and size. The top three bits in the byte encode the type:
+size, and the actual data payload. The type and size of a node are encoded
+in its leader byte (or bytes). The top three bits of the first byte
+determines the type:
 
  Type           Bits                    Description
 
@@ -249,20 +250,20 @@ encodes it. For sizes 128 or above, the next 4 bytes encode it in
 big-endian format, with the top bit set. Sizes above 2^31 cannot be
 encoded.
 
-Following the size, are bytes encoding the data. The exact meaning of the
+Following the leader are bytes encoding the data. The exact meaning of the
 size depends on the type of the node.
 
 For strings, the size gives the number of bytes in the string. These
-bytes then follow the type/size area.
+bytes then follow the leader.
 
 For lists, the size gives the number of elements in the list. Following
-the type/size area will be this number of data serialisations, one per
-list element.
+the leader will be this number of data serialisations, one per list
+element.
 
 For dictionaries, this size gives the number of key/value pairs. Following
-the type/size area will be this number of key/value pairs. Each pair
-consists of a null-terminated string for the key name, then a data
-serialisation for the value.
+the leader will be this number of key/value pairs. Each pair consists of a
+null-terminated string for the key name, then a data serialisation for the
+value.
 
 For objects, the size gives the number of bytes in the object's ID number,
 followed by a big-endian encoding of the object's ID number. Currently,
