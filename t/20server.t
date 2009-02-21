@@ -10,7 +10,7 @@ use IO::Async::Loop;
 use Tangence::Constants;
 use Tangence::Registry;
 use Tangence::Server;
-$Tangence::Stream::SORT_HASH_KEYS = 1;
+$Tangence::Serialisation::SORT_HASH_KEYS = 1;
 
 use t::Ball;
 use t::Bag;

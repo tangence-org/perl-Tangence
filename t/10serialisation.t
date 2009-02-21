@@ -5,26 +5,26 @@ use strict;
 use Test::More tests => 48;
 use Test::HexString;
 
-use Tangence::Stream;
-$Tangence::Stream::SORT_HASH_KEYS = 1;
+use Tangence::Serialisation;
+$Tangence::Serialisation::SORT_HASH_KEYS = 1;
 
 my $d;
 
-is( $d = Tangence::Stream::pack_num(      0 ),               "\0", 'pack_num 0' );
-is( Tangence::Stream::unpack_num( $d ), 0, 'unpack_num 0' );
+is( $d = Tangence::Serialisation::pack_num(      0 ),               "\0", 'pack_num 0' );
+is( Tangence::Serialisation::unpack_num( $d ), 0, 'unpack_num 0' );
 is( length $d, 0, 'eats all string' );
 
-is( $d = Tangence::Stream::pack_num(      1 ),               "\1", 'pack_num 1' );
-is( Tangence::Stream::unpack_num( $d ), 1, 'unpack_num 1' );
+is( $d = Tangence::Serialisation::pack_num(      1 ),               "\1", 'pack_num 1' );
+is( Tangence::Serialisation::unpack_num( $d ), 1, 'unpack_num 1' );
 is( length $d, 0, 'eats all string' );
 
-is( $d = Tangence::Stream::pack_num( 0x1000 ), "\x80\x00\x10\x00", 'pack_num 0x1000' );
-is( Tangence::Stream::unpack_num( $d ), 0x1000, 'unpack_num 0x1000' );
+is( $d = Tangence::Serialisation::pack_num( 0x1000 ), "\x80\x00\x10\x00", 'pack_num 0x1000' );
+is( Tangence::Serialisation::unpack_num( $d ), 0x1000, 'unpack_num 0x1000' );
 is( length $d, 0, 'eats all string' );
 
 # We're just testing the simple pack and unpack methods here, so no object
 # will actually be needed
-my $s = "Tangence::Stream";
+my $s = "Tangence::Serialisation";
 
 sub test_data
 {
