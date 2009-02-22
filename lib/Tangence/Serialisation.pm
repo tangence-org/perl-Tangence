@@ -208,4 +208,50 @@ sub unpack_data
    }
 }
 
+### New deep-typed interface. Will slowly replace the untyped 'pack_data'
+### system so we don't mind temporary code duplication here
+
+sub pack_typed
+{
+   my $self = shift;
+   my ( $sig, $d ) = @_;
+
+   if( $sig eq "str" ) {
+      ref $d and croak "$d is not a string";
+      my $octets = encode_utf8( $d );
+      return _pack_leader( DATA_STRING, length($octets) ) . $octets;
+   }
+   else {
+      print STDERR "TODO: Pack as $sig from $d\n";
+      die;
+   }
+}
+
+sub unpack_typed
+{
+   my $self = shift;
+   my $sig = shift;
+
+   my ( $type, $num );
+   
+   while(1) {
+      length $_[0] or croak "Ran out of bytes before finding a leader";
+      ( $type, $num ) = _unpack_leader( $_[0] );
+      last unless $type == DATA_META;
+
+      $self->_unpack_meta( $num, $_[0] );
+   }
+
+   if( $sig eq "str" ) {
+      $type eq DATA_STRING or croak "Expected to unpack a string but did not find one";
+      length $_[0] >= $num or croak "Can't pull $num bytes for string as there aren't enough";
+      my $octets = substr( $_[0], 0, $num, "" );
+      return decode_utf8( $octets );
+   }
+   else {
+      print STDERR "TODO: Unpack as $sig\n";
+      die;
+   }
+}
+
 1;

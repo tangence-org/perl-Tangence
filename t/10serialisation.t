@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 54;
+use Test::More tests => 57;
 use Test::HexString;
 
 use Tangence::Serialisation;
@@ -100,3 +100,21 @@ test_data "HASH of string*2",
 test_data "HASH of HASH",
    data   => { hash => {} },
    stream => "\x61hash\0\x60";
+
+sub test_typed
+{
+   my $name = shift;
+   my %args = @_;
+
+   $d = $s->pack_typed( $args{sig}, $args{data} );
+
+   is_hexstr( $d, $args{stream}, "pack_typed $name" );
+
+   is_deeply( $s->unpack_typed( $args{sig}, $d ), $args{data}, "unpack_typed $name" );
+   is( length $d, 0, "eats all stream for $name" );
+}
+
+test_typed "string",
+   sig    => "str",
+   data   => "hello",
+   stream => "\x25hello";
