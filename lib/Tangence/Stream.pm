@@ -30,6 +30,29 @@ my %REQ_METHOD = (
    MSG_GETREGISTRY, 'handle_request_GETREGISTRY',
 );
 
+# Signatures of each request and response type
+my %MSG_SIGS = (
+   MSG_CALL,        [ 'str', 'str', '*' ],
+   MSG_SUBSCRIBE,   [ 'str', 'str' ],
+   MSG_UNSUBSCRIBE, [ 'str', 'str', 'str' ],
+   MSG_EVENT,       [ 'str', 'str', '*' ],
+   MSG_GETPROP,     [ 'str', 'str' ],
+   MSG_SETPROP,     [ 'str', 'str', '?' ],
+   MSG_WATCH,       [ 'str', 'str', 'str' ],
+   MSG_UNWATCH,     [ 'str', 'str', 'str' ],
+   MSG_UPDATE,      [ 'str', 'str', 'str', '*' ],
+   MSG_DESTROY,     [ 'str' ],
+
+   MSG_GETROOT,     [ '?' ],
+   MSG_GETREGISTRY, [],
+
+   MSG_OK,          [],
+   MSG_ERROR,       [ 'str' ],
+   MSG_RESULT,      [ '*' ],
+   MSG_SUBSCRIBED,  [],
+   MSG_WATCHING,    [],
+);
+
 sub new
 {
    my $class = shift;
@@ -81,7 +104,7 @@ sub new
    return $self;
 }
 
-sub marshall_request
+sub marshall_message
 {
    my $self = shift;
    my ( $req ) = @_;
@@ -89,22 +112,30 @@ sub marshall_request
    my ( $type, @data ) = @$req;
 
    my $record = "";
-   $record .= $self->pack_data( $_ ) for @data;
+
+   my $sig = $MSG_SIGS{$type} or croak "Cannot find a message signature for $type";
+
+   foreach my $s ( @$sig ) {
+      if( $s eq "*" ) {
+         $record .= $self->pack_data( $_ ) for @data;
+      }
+      elsif( $s eq "?" ) {
+         $record .= $self->pack_data( shift @data );
+      }
+      else {
+         $record .= $self->pack_typed( $s, shift @data );
+      }
+   }
 
    return pack( "CNa*", $type, length($record), $record );
 }
 
-sub marshall_response
+# Use the same method for both
 {
-   my $self = shift;
-   my ( $resp ) = @_;
+   no strict 'refs';
 
-   my ( $type, @data ) = @$resp;
-
-   my $record = "";
-   $record .= $self->pack_data( $_ ) for @data;
-
-   return pack( "CNa*", $type, length($record), $record );
+   *marshall_request = \&marshall_message;
+   *marshall_response = \&marshall_message;
 }
 
 sub on_read
@@ -120,9 +151,24 @@ sub on_read
    substr( $$buffref, 0, 5, "" );
    my $record = substr( $$buffref, 0, $len, "" );
 
+   my $sig = $MSG_SIGS{$type};
+   unless( $sig ) {
+      carp "Cannot find a message signature for $type";
+      return 1;
+   }
+
    my @data;
-   while( length $record ) {
-      push @data, $self->unpack_data( $record );
+
+   foreach my $s ( @$sig ) {
+      if( $s eq "*" ) {
+         push @data, $self->unpack_data( $record ) while length $record;
+      }
+      elsif( $s eq "?" ) {
+         push @data, $self->unpack_data( $record );
+      }
+      else {
+         push @data, $self->unpack_typed( $s, $record );
+      }
    }
 
    if( $type < 0x80 ) {
