@@ -388,11 +388,11 @@ sub watch_property
    my $pdef = $self->can_property( $property );
    croak "Class ".$self->class." does not have a property $property" unless $pdef;
 
-   # Autoproperties behave differently
-   my $auto = $pdef->{auto};
+   # Smashed properties behave differently
+   my $smash = $pdef->{smash};
 
    if( my $cbs = $self->{props}->{$property}->{cbs} ) {
-      if( $want_initial and !$auto ) {
+      if( $want_initial and !$smash ) {
          $self->get_property(
             property => $property,
             on_value => sub {
@@ -401,7 +401,7 @@ sub watch_property
             },
          );
       }
-      elsif( $want_initial and $auto ) {
+      elsif( $want_initial and $smash ) {
          $callback->( $self, $property, CHANGE_SET, $self->{props}->{$property}->{cache} );
          push @$cbs, $callback;
       }
@@ -414,7 +414,7 @@ sub watch_property
 
    $self->{props}->{$property}->{cbs} = [ $callback ];
 
-   if( $auto ) {
+   if( $smash ) {
       if( $want_initial ) {
          $callback->( $self, $property, CHANGE_SET, $self->{props}->{$property}->{cache} );
       }

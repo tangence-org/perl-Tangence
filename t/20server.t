@@ -105,7 +105,7 @@ $S2->syswrite( "\1" . "\0\0\0\x10" .
 
 # This long string is massive and annoying. Sorry.
 
-$expect = "\x82" . "\0\0\0\xcc" .
+$expect = "\x82" . "\0\0\0\xcd" .
           "\xe2" . "t::Ball\0" .
                    "\x64" . "events\0"     . "\x62" . "bounced\0" . "\x61" . "args\0" . "\x23" . "str" .
                                                       "destroy\0" . "\x61" . "args\0" . "\x20" .
@@ -115,8 +115,8 @@ $expect = "\x82" . "\0\0\0\xcc" .
                                                                             "ret\0" . "\x20" .
                             "properties\0" . "\x62" . "colour\0" . "\x62" . "dim\0" . "\x21" . "1" .
                                                                             "type\0" . "\x23" . "int" .
-                                                      "size\0"   . "\x63" . "auto\0" . "\x21" . "1" .
-                                                                            "dim\0" . "\x21" . "1" .
+                                                      "size\0"   . "\x63" . "dim\0" . "\x21" . "1" .
+                                                                            "smash\0" . "\x21" . "1" .
                                                                             "type\0" . "\x23" . "int" .
                    "\x41" . "\x24" . "size" .
           "\xe1" . "\0\0\0\2" . "t::Ball\0" . "\x41" . "\x23" . "100" .
@@ -254,7 +254,7 @@ is_hexstr( $serverstream, $expect, 'received property MSG_UPDATE notice' );
 # MSG_OK
 $S2->syswrite( "\x80" . "\0\0\0\0" );
 
-# Test the autoproperties
+# Test the smashed properties
 
 $ball->set_prop_size( 200 );
 
@@ -267,7 +267,7 @@ $expect = "\x09" . "\0\0\0\x0d" .
 $serverstream = "";
 wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
 
-is_hexstr( $serverstream, $expect, 'received property MSG_UPDATE notice on autoprop' );
+is_hexstr( $serverstream, $expect, 'received property MSG_UPDATE notice on smashed prop' );
 
 # MSG_OK
 $S2->syswrite( "\x80" . "\0\0\0\0" );

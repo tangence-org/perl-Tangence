@@ -178,7 +178,7 @@ sub can_property
    return undef;
 }
 
-sub autoprops
+sub smashkeys
 {
    my $self = shift;
    my ( $class ) = @_;
@@ -187,20 +187,20 @@ sub autoprops
 
    my %props = do { no strict 'refs'; %{$class."::PROPS"} };
 
-   my %auto;
+   my %smash;
 
-   $props{$_}->{auto} and $auto{$_} = 1 for keys %props;
+   $props{$_}->{smash} and $smash{$_} = 1 for keys %props;
 
    my @isa = do { no strict 'refs'; @{$class."::ISA"} };
 
    foreach my $superclass ( @isa ) {
-      my $supkeys = $self->autoprops( $superclass );
+      my $supkeys = $self->smashkeys( $superclass );
 
       # Merge keys we don't yet have
-      $auto{$_} = 1 for keys %$supkeys;
+      $smash{$_} = 1 for keys %$supkeys;
    }
 
-   return \%auto;
+   return \%smash;
 }
 
 sub introspect

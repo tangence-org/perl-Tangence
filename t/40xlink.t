@@ -83,7 +83,7 @@ dies_ok( sub { $ballproxy->subscribe_event(
                ); },
          'Subscribing to no_such_event fails in proxy' );
 
-is( $ballproxy->prop( "size" ), 100, 'Autoproperty initially set in proxy' );
+is( $ballproxy->prop( "size" ), 100, 'Smashed property initially set in proxy' );
 
 my $colour;
 
@@ -155,7 +155,7 @@ dies_ok( sub { $ballproxy->get_property(
                ); },
          'Getting no_such_property fails in proxy' );
 
-# Test the autoproperties
+# Test the smashed properties
 
 my $size;
 $watched = 0;
@@ -169,16 +169,16 @@ $ballproxy->watch_property(
    want_initial => 1,
 );
 
-is( $watched, 1, 'watch_property on autoprop is synchronous' );
+is( $watched, 1, 'watch_property on smashed prop is synchronous' );
 
-is( $size, 100, 'watch_property on autoprop gives initial value' );
+is( $size, 100, 'watch_property on smashed prop gives initial value' );
 
 $ball->set_prop_size( 200 );
 
 undef $size;
 wait_for { defined $size };
 
-is( $size, 200, 'autoprop watch succeeds' );
+is( $size, 200, 'smashed prop watch succeeds' );
 
 # Test object destruction
 

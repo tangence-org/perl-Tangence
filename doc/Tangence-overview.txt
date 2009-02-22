@@ -117,16 +117,16 @@ changes to the value. Changes are sent to the client in an efficient
 manner - for example, adding a single element to an array or hash will not
 need to resend the entire collection. More on this later.
 
-Certain properties may be define as "autoprops", short for automatic
-properties. These are property values that are deemed by the application
-to be important enough for all clients to be aware of all of the time
-(such as a name or other key item of information). When the server first
-sends a new object to a client, the object construction message will also
-contain initial values of these properties. The client will be
-automatically informed of any changes to these properties when they
-change, as if the client had specifically requested to be informed. When
-the object is sent to a new client, it is said to be "smashed"; the
-initial values of these automatic properties are called "smash values".
+Certain properties may be deemed by the application to be important enough
+for all clients to be aware of all of the time (such as a name or other
+key item of information). These properties are called "smashed
+properties". When the server first sends a new object to a client, the
+object construction message will also contain initial values of these
+properties. The client will be automatically informed of any changes to
+these properties when they change, as if the client had specifically
+requested to be informed.  When the object is sent to a new client, it is
+said to be "smashed"; the initial values of these automatic properties are
+called "smash values".
 
 [There are issues here that need resolving to move Tangence out from
 being Perl-specific into a more general-purpose layer - more on this in
@@ -340,7 +340,7 @@ DATAMETA_CLASS:
         'dim' = dimension, one of:
           DIM_SCALAR, DIM_HASH, DIM_ARRAY, DIM_OBJSET
         'type' = string description of the type
-        'auto' = true if this is an autoprop
+        'smash' = true if this is a smashed property
 
     'isa' = DATA_LIST:
       class names

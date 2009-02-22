@@ -118,7 +118,7 @@ sub pack_data
 
             $preamble .= _pack_leader( DATA_META, DATAMETA_CLASS ) . pack( "Z*", $class ) . $self->pack_data( $schema );
 
-            $smashkeys = [ keys %{ $class->autoprops } ];
+            $smashkeys = [ keys %{ $class->smashkeys } ];
 
             @$smashkeys = sort @$smashkeys if $SORT_HASH_KEYS;
             $smashkeys = undef unless @$smashkeys;

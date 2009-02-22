@@ -101,7 +101,7 @@ is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL' );
 
 # This long string is massive and annoying. Sorry.
 
-$S2->syswrite( "\x82" . "\0\0\0\xcc" .
+$S2->syswrite( "\x82" . "\0\0\0\xcd" .
                "\xe2" . "t::Ball\0" .
                         "\x64" . "events\0"     . "\x62" . "bounced\0" . "\x61" . "args\0" . "\x23" . "str" .
                                                            "destroy\0" . "\x61" . "args\0" . "\x20" .
@@ -111,8 +111,8 @@ $S2->syswrite( "\x82" . "\0\0\0\xcc" .
                                                                                  "ret\0" . "\x20" .
                                  "properties\0" . "\x62" . "colour\0" . "\x62" . "dim\0" . "\x21" . "1" .
                                                                                  "type\0" . "\x23" . "int" .
-                                                           "size\0"   . "\x63" . "auto\0" . "\x21" . "1" .
-                                                                                 "dim\0" . "\x21" . "1" .
+                                                           "size\0"   . "\x63" . "dim\0" . "\x21" . "1" .
+                                                                                 "smash\0" . "\x21" . "1" .
                                                                                  "type\0" . "\x23" . "int" .
                         "\x41" . "\x24" . "size" .
                "\xe1" . "\0\0\0\2" . "t::Ball\0" . "\x41" . "\x23" . "100" .
@@ -242,7 +242,7 @@ dies_ok( sub { $ballproxy->subscribe_event(
                ); },
          'Subscribing to no_such_event fails in proxy' );
 
-is( $ballproxy->prop( "size" ), 100, 'Autoproperty initially set in proxy' );
+is( $ballproxy->prop( "size" ), 100, 'Smashed property initially set in proxy' );
 
 my $colour;
 
@@ -394,7 +394,7 @@ dies_ok( sub { $ballproxy->get_property(
                ); },
          'Getting no_such_property fails in proxy' );
 
-# Test the autoproperties
+# Test the smashed properties
 
 my $size;
 $watched = 0;
@@ -408,9 +408,9 @@ $ballproxy->watch_property(
    want_initial => 1,
 );
 
-is( $watched, 1, 'watch_property on autoprop is synchronous' );
+is( $watched, 1, 'watch_property on smashed prop is synchronous' );
 
-is( $size, 100, 'watch_property on autoprop gives initial value' );
+is( $size, 100, 'watch_property on smashed prop gives initial value' );
 
 # MSG_UPDATE
 $S2->syswrite( "\x09" . "\0\0\0\x0d" .
@@ -422,7 +422,7 @@ $S2->syswrite( "\x09" . "\0\0\0\x0d" .
 undef $size;
 wait_for { defined $size };
 
-is( $size, 200, 'autoprop watch succeeds' );
+is( $size, 200, 'smashed prop watch succeeds' );
 
 # MSG_OK
 $expect = "\x80" . "\0\0\0\0";
@@ -430,7 +430,7 @@ $expect = "\x80" . "\0\0\0\0";
 $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 
-is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK after autoprop UPDATE' );
+is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK after smashed prop UPDATE' );
 
 $bagproxy->call_method(
    method => "add_ball",

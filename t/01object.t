@@ -58,13 +58,13 @@ is_deeply( $ball->introspect,
               },
               properties => {
                  colour => { dim => DIM_SCALAR, type => 'int' },
-                 size   => { dim => DIM_SCALAR, type => 'int', auto => 1 },
+                 size   => { dim => DIM_SCALAR, type => 'int', smash => 1 },
               },
            }, '$ball introspect' );
 
-is_deeply( $ball->autoprops,
+is_deeply( $ball->smashkeys,
            { size => 1 },
-           '$ball->autoprops' );
+           '$ball->smashkeys' );
 
 my $bounces = 0;
 my $howhigh;
