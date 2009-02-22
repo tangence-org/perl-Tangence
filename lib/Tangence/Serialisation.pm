@@ -52,6 +52,36 @@ sub _unpack_leader
    return ( $type, $num );
 }
 
+sub _unpack_meta
+{
+   my $self = shift;
+   my $num = shift;
+
+   if( $num == DATAMETA_CONSTRUCT ) {
+      my ( $id, $class ) = unpack( "NZ*", $_[0] ); substr( $_[0], 0, 5 + length $class, "" );
+      my $smasharr = $self->unpack_data( $_[0] );
+
+      my $smashkeys = $self->{peer_hasclass}->{$class}->[0];
+
+      my $smashdata;
+      $smashdata->{$smashkeys->[$_]} = $smasharr->[$_] for 0 .. $#$smasharr;
+
+      $self->make_proxy( $id, $class, $smashdata );
+   }
+   elsif( $num == DATAMETA_CLASS ) {
+      my ( $class ) = unpack( "Z*", $_[0] ); substr( $_[0], 0, 1 + length $class, "" );
+      my $schema = $self->unpack_data( $_[0] );
+
+      $self->make_schema( $class, $schema );
+
+      my $smashkeys = $self->unpack_data( $_[0] );
+      $self->{peer_hasclass}->{$class} = [ $smashkeys ];
+   }
+   else {
+      die sprintf("TODO: Data stream meta-operation 0x%02x", $num);
+   }
+}
+
 sub pack_data
 {
    my $self = shift;
@@ -140,29 +170,7 @@ sub unpack_data
       ( $type, $num ) = _unpack_leader( $_[0] );
       last unless $type == DATA_META;
 
-      if( $num == DATAMETA_CONSTRUCT ) {
-         my ( $id, $class ) = unpack( "NZ*", $_[0] ); substr( $_[0], 0, 5 + length $class, "" );
-         my $smasharr = $self->unpack_data( $_[0] );
-
-         my $smashkeys = $self->{peer_hasclass}->{$class}->[0];
-
-         my $smashdata;
-         $smashdata->{$smashkeys->[$_]} = $smasharr->[$_] for 0 .. $#$smasharr;
-
-         $self->make_proxy( $id, $class, $smashdata );
-      }
-      elsif( $num == DATAMETA_CLASS ) {
-         my ( $class ) = unpack( "Z*", $_[0] ); substr( $_[0], 0, 1 + length $class, "" );
-         my $schema = $self->unpack_data( $_[0] );
-
-         $self->make_schema( $class, $schema );
-
-         my $smashkeys = $self->unpack_data( $_[0] );
-         $self->{peer_hasclass}->{$class} = [ $smashkeys ];
-      }
-      else {
-         die sprintf("TODO: Data stream meta-operation 0x%02x", $num);
-      }
+      $self->_unpack_meta( $num, $_[0] );
    }
 
    if( $type == DATA_STRING ) {
