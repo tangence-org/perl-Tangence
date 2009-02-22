@@ -231,10 +231,24 @@ my %int_sigs = (
    s32 => DATANUM_SINT32,
    u64 => DATANUM_UINT64,
    s64 => DATANUM_SINT64,
-
-   # Now some special names
-   int => DATANUM_UINT32, # TODO: This needs to determine best size
 );
+
+sub _best_int_type_for
+{
+   my ( $n ) = @_;
+
+   # TODO: Consider 64bit values
+
+   if( $n < 0 ) {
+      return DATANUM_SINT8  if $n >= -0x80;
+      return DATANUM_SINT16 if $n >= -0x8000;
+      return DATANUM_SINT32;
+   }
+
+   return DATANUM_UINT8  if $n <= 0xff;
+   return DATANUM_UINT16 if $n <= 0xffff;
+   return DATANUM_UINT32;
+}
 
 sub pack_typed
 {
@@ -245,7 +259,13 @@ sub pack_typed
       return _pack_leader( DATA_NUMBER, $d ? DATANUM_BOOLTRUE : DATANUM_BOOLFALSE );
    }
    elsif( exists $int_sigs{$sig} ) {
+      ref $d and croak "$d is not a number";
       my $subtype = $int_sigs{$sig};
+      return _pack_leader( DATA_NUMBER, $subtype ) . pack( $pack_int_format{$subtype}, $d );
+   }
+   elsif( $sig eq "int" ) {
+      ref $d and croak "$d is not a number";
+      my $subtype = _best_int_type_for( $d );
       return _pack_leader( DATA_NUMBER, $subtype ) . pack( $pack_int_format{$subtype}, $d );
    }
    elsif( $sig eq "str" ) {
@@ -283,6 +303,13 @@ sub unpack_typed
    elsif( exists $int_sigs{$sig} ) {
       $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
       $num == $int_sigs{$sig} or croak "Expected subtype $int_sigs{$sig} but got $num";
+      my ( $n ) = unpack( $pack_int_format{$num}, $_[0] );
+      substr( $_[0], 0, length pack( $pack_int_format{$num}, 0 ), "" ); # TODO: Do this more efficiently
+      return $n;
+   }
+   elsif( $sig eq "int" ) {
+      $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
+      exists $pack_int_format{$num} or croak "Expected an integer subtype but got $num";
       my ( $n ) = unpack( $pack_int_format{$num}, $_[0] );
       substr( $_[0], 0, length pack( $pack_int_format{$num}, 0 ), "" ); # TODO: Do this more efficiently
       return $n;

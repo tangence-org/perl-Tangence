@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 78;
+use Test::More tests => 87;
 use Test::HexString;
 
 use Tangence::Serialisation;
@@ -144,10 +144,25 @@ test_typed "num s32",
    data   => 100,
    stream => "\x07\x00\x00\x00\x64";
 
+test_typed "int tiny",
+   sig    => "int",
+   data   => 20,
+   stream => "\x02\x14";
+
+test_typed "int -ve tiny",
+   sig    => "int",
+   data   => -30,
+   stream => "\x03\xe2";
+
 test_typed "int",
    sig    => "int",
    data   => 0x01234567,
    stream => "\x06\x01\x23\x45\x67";
+
+test_typed "int -ve",
+   sig    => "int",
+   data   => -0x07654321,
+   stream => "\x07\xf8\x9a\xbc\xdf";
 
 test_typed "string",
    sig    => "str",
