@@ -504,7 +504,7 @@ MSG_DESTROY (S->C)
   sent.
 
 MSG_GETROOT (C->S)
-  STRING        identity
+  data          identity
 
   Responses: MSG_RESULT
 
