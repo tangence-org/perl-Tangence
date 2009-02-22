@@ -44,12 +44,12 @@ properties on the objects.
 2. Object Model
 ---------------
 
-In Tangence, the primary item of interaction is an object. Tangence objects
-exist in the server, most likely bearing at least some relationship to
-some native objects in the server implementation (though if and when the
-occasion ever arises that a C program can host a Tangence server,
-obviously this association will be somewhat looser). The base class for
-all Tangence objects in the server is Tangence::Object.
+In Tangence, the primary item of interaction is an object. Tangence
+objects exist in the server, most likely bearing at least some
+relationship to some native objects in the server implementation (though
+if and when the occasion ever arises that a C program can host a Tangence
+server, obviously this association will be somewhat looser). The base
+class for all Tangence objects in the server is Tangence::Object.
 
 In the server, two special objects exist - one is the root object, the
 other is the Repository. These are the only two well-known objects that
