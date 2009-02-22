@@ -99,7 +99,7 @@ is_hexstr( $serverstream, $expect, 'serverstream initially contains registry' );
 
 # MSG_CALL
 $S2->syswrite( "\1" . "\0\0\0\x10" . 
-               "\x21" . "1" .
+               "\x02" . "\x01" .
                "\x29" . "pull_ball" .
                "\x23" . "red" );
 
@@ -141,7 +141,7 @@ $ball->subscribe_event( bounced => sub {
 
 # MSG_CALL
 $S2->syswrite( "\1" . "\0\0\0\x13" .
-               "\x21" . "2" .
+               "\x02" . "\x02" .
                "\x26" . "bounce" .
                "\x29" . "20 metres" );
 
@@ -166,7 +166,7 @@ is_hexstr( $serverstream, $expect, 'serverstream after response to CALL' );
 
 # MSG_SUBSCRIBE
 $S2->syswrite( "\2" . "\0\0\0\x0a" .
-               "\x21" . "2" .
+               "\x02" . "\x02" .
                "\x27" . "bounced" );
 
 $expect = "\x83" . "\0\0\0\0";
@@ -180,7 +180,7 @@ is_hexstr( $serverstream, $expect, 'received MSG_SUBSCRIBED response' );
 $ball->method_bounce( {}, "10 metres" );
 
 $expect = "\4" . "\0\0\0\x14" .
-          "\x21" . "2" .
+          "\x02" . "\x02" .
           "\x27" . "bounced" .
           "\x29" . "10 metres";
 
@@ -195,7 +195,7 @@ $S2->syswrite( "\x80" . "\0\0\0\0" );
 
 # MSG_GETPROP
 $S2->syswrite( "\5" . "\0\0\0\x09" .
-               "\x21" . "2" .
+               "\x02" . "\x02" .
                "\x26" . "colour" );
 
 $expect = "\x82" . "\0\0\0\4" .
@@ -209,7 +209,7 @@ is_hexstr( $serverstream, $expect, 'received property value after MSG_GETPROP' )
 
 # MSG_SETPROP
 $S2->syswrite( "\6" . "\0\0\0\x0e" .
-               "\x21" . "2" .
+               "\x02" . "\x02" .
                "\x26" . "colour" .
                "\x24" . "blue" );
 
@@ -225,9 +225,9 @@ is( $ball->get_prop_colour, "blue", '$ball->colour is now blue' );
 
 # MSG_WATCH
 $S2->syswrite( "\7" . "\0\0\0\x0a" .
-               "\x21" . "2" .
+               "\x02" . "\x02" .
                "\x26" . "colour" .
-               "\x20" );
+               "\x00" );
 
 $expect = "\x84" . "\0\0\0\0";
 
@@ -240,9 +240,9 @@ is_hexstr( $serverstream, $expect, 'received MSG_WATCHING response' );
 $ball->set_prop_colour( "orange" );
 
 $expect = "\x09" . "\0\0\0\x12" .
-          "\x21" . "2" .
+          "\x02" . "\x02" .
           "\x26" . "colour" .
-          "\x21" . "1" .
+          "\x02" . "\x01" .
           "\x26" . "orange";
 
 $serverstream = "";
@@ -259,9 +259,9 @@ $S2->syswrite( "\x80" . "\0\0\0\0" );
 $ball->set_prop_size( 200 );
 
 $expect = "\x09" . "\0\0\0\x0d" .
-          "\x21" . "2" .
+          "\x02" . "\x02" .
           "\x24" . "size" .
-          "\x21" . "1" .
+          "\x02" . "\x01" .
           "\x23" . "200";
 
 $serverstream = "";
@@ -274,7 +274,7 @@ $S2->syswrite( "\x80" . "\0\0\0\0" );
 
 # MSG_CALL
 $S2->syswrite( "\1" . "\0\0\0\x10" . 
-               "\x21" . "1" .
+               "\x02" . "\x01" .
                "\x28" . "add_ball" .
                "\x84" . "\0\0\0\2" );
 
@@ -293,7 +293,7 @@ is_deeply( $bag->get_prop_colours,
 
 # MSG_CALL
 $S2->syswrite( "\1" . "\0\0\0\x12" .
-               "\x21" . "1" .
+               "\x02" . "\x01" .
                "\x28" . "get_ball" .
                "\x26" . "orange" );
 
@@ -314,7 +314,7 @@ $ball->destroy( on_destroyed => sub { $obj_destroyed = 1 } );
 
 # MSG_DESTROY
 $expect = "\x0a" . "\0\0\0\2" .
-          "\x21" . "2";
+          "\x02" . "\x02";
 
 $serverstream = "";
 

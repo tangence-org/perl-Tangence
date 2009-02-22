@@ -362,7 +362,7 @@ Some of these messages are sent from the client to the server (C->S),
 others are sent from the server to client (S->C)
 
 MSG_CALL (C->S)
-  STRING        object ID
+  INT           object ID
   STRING        method name
   data...       arguments
 
@@ -371,7 +371,7 @@ MSG_CALL (C->S)
   Calls the named method on the given object.
 
 MSG_SUBSCRIBE (C->S)
-  STRING        object ID
+  INT           object ID
   STRING        event name
 
   Responses: MSG_SUBSCRIBED
@@ -379,16 +379,16 @@ MSG_SUBSCRIBE (C->S)
   Subscribes the client to be informed of the event on given object.
 
 MSG_UNSUBSCRIBE (C->S)
-  STRING        object ID
+  INT           object ID
   STRING        event name
-  STRING        subscription ID
+  INT           subscription ID
 
   Responses: MSG_OK
 
   Cancels an event subscription.
 
 MSG_EVENT (S->C)
-  STRING        object ID
+  INT           object ID
   STRING        event name
   data...       arguments
 
@@ -397,7 +397,7 @@ MSG_EVENT (S->C)
   Informs the client that the event has occured.
 
 MSG_GETPROP (C->S)
-  STRING        object ID
+  INT           object ID
   STRING        property name
 
   Responses: MSG_RESULT
@@ -405,7 +405,7 @@ MSG_GETPROP (C->S)
   Requests the current value of the property
 
 MSG_SETPROP (C->S)
-  STRING        object ID
+  INT           object ID
   STRING        property name
   data          new value
 
@@ -414,9 +414,9 @@ MSG_SETPROP (C->S)
   Sets the new value of the property
 
 MSG_WATCH (C->S)
-  STRING        object ID
+  INT           object ID
   STRING        property name
-  STRING        want initial?
+  BOOL          want initial?
 
   Responses: MSG_WATCHING
 
@@ -425,18 +425,18 @@ MSG_WATCH (C->S)
   initial MSG_CHANGE message for the current value of the property.
 
 MSG_UNWATCH (C->S)
-  STRING        object ID
+  INT           object ID
   STRING        property name
-  STRING        watch ID
+  INT           watch ID
 
   Responses: MSG_OK
 
   Cancels a request to watch a property
 
 MSG_UPDATE (S->C)
-  STRING        object ID
+  INT           object ID
   STRING        property name
-  STRING        change type
+  U8            change type
   data...       change value
 
   Responses: MSG_OK
@@ -515,7 +515,7 @@ MSG_UPDATE (S->C)
       Removes the object of the given ID from the set.
 
 MSG_DESTROY (S->C)
-  STRING        object ID
+  INT           object ID
 
   Responses: MSG_OK
 

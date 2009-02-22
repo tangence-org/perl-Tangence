@@ -32,7 +32,7 @@ $stream->request(
 
 my $expect;
 $expect = "\1" . "\0\0\0\x09" .
-          "\x21" . "1" .
+          "\x02" . "\x01" .
           "\x26" . "method";
 
 my $serverstream;
@@ -51,7 +51,7 @@ wait_for { defined $response };
 is_deeply( $response, [ MSG_RESULT, "response" ], '$response to initial call' );
 
 $S2->syswrite( "\x04" . "\0\0\0\x08" .
-               "\x21" . "1" .
+               "\x02" . "\x01" .
                "\x25" . "event" );
 
 wait_for { @calls };

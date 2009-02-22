@@ -32,16 +32,16 @@ my %REQ_METHOD = (
 
 # Signatures of each request and response type
 my %MSG_SIGS = (
-   MSG_CALL,        [ 'str', 'str', '*' ],
-   MSG_SUBSCRIBE,   [ 'str', 'str' ],
-   MSG_UNSUBSCRIBE, [ 'str', 'str', 'str' ],
-   MSG_EVENT,       [ 'str', 'str', '*' ],
-   MSG_GETPROP,     [ 'str', 'str' ],
-   MSG_SETPROP,     [ 'str', 'str', '?' ],
-   MSG_WATCH,       [ 'str', 'str', 'str' ],
-   MSG_UNWATCH,     [ 'str', 'str', 'str' ],
-   MSG_UPDATE,      [ 'str', 'str', 'str', '*' ],
-   MSG_DESTROY,     [ 'str' ],
+   MSG_CALL,        [ 'int', 'str', '*' ],
+   MSG_SUBSCRIBE,   [ 'int', 'str' ],
+   MSG_UNSUBSCRIBE, [ 'int', 'str', 'int' ],
+   MSG_EVENT,       [ 'int', 'str', '*' ],
+   MSG_GETPROP,     [ 'int', 'str' ],
+   MSG_SETPROP,     [ 'int', 'str', '?' ],
+   MSG_WATCH,       [ 'int', 'str', 'bool' ],
+   MSG_UNWATCH,     [ 'int', 'str', 'int' ],
+   MSG_UPDATE,      [ 'int', 'str', 'u8', '*' ],
+   MSG_DESTROY,     [ 'int' ],
 
    MSG_GETROOT,     [ '?' ],
    MSG_GETREGISTRY, [],

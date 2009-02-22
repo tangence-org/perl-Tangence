@@ -88,7 +88,7 @@ $bagproxy->call_method(
 
 # MSG_CALL
 $expect = "\1" . "\0\0\0\x10" . 
-          "\x21" . "1" .
+          "\x02" . "\x01" .
           "\x29" . "pull_ball" .
           "\x23" . "red";
 
@@ -140,7 +140,7 @@ $ballproxy->call_method(
 
 # MSG_CALL
 $expect = "\1" . "\0\0\0\x13" .
-          "\x21" . "2" .
+          "\x02" . "\x02" .
           "\x26" . "bounce" .
           "\x29" . "20 metres";
 
@@ -177,7 +177,7 @@ $ballproxy->subscribe_event(
 
 # MSG_SUBSCRIBE
 $expect = "\2" . "\0\0\0\x0a" .
-          "\x21" . "2" .
+          "\x02" . "\x02" .
           "\x27" . "bounced";
 
 $clientstream = "";
@@ -192,7 +192,7 @@ wait_for { $subbed };
 
 # MSG_EVENT
 $S2->syswrite( "\4" . "\0\0\0\x14" .
-               "\x21" . "2" .
+               "\x02" . "\x02" .
                "\x27" . "bounced" .
                "\x29" . "10 metres" );
 
@@ -216,7 +216,7 @@ $ballproxy->subscribe_event(
 
 # MSG_EVENT
 $S2->syswrite( "\4" . "\0\0\0\x13" .
-               "\x21" . "2" .
+               "\x02" . "\x02" .
                "\x27" . "bounced" .
                "\x28" . "5 metres" );
 
@@ -253,7 +253,7 @@ $ballproxy->get_property(
 
 # MSG_GETPROP
 $expect = "\5" . "\0\0\0\x09" .
-          "\x21" . "2" .
+          "\x02" . "\x02" .
           "\x26" . "colour";
 
 $clientstream = "";
@@ -278,7 +278,7 @@ $ballproxy->set_property(
 
 # MSG_SETPROP
 $expect = "\6" . "\0\0\0\x0e" .
-          "\x21" . "2" .
+          "\x02" . "\x02" .
           "\x26" . "colour" .
           "\x24" . "blue";
 
@@ -304,9 +304,9 @@ $ballproxy->watch_property(
 
 # MSG_WATCH
 $expect = "\7" . "\0\0\0\x0a" .
-          "\x21" . "2" .
+          "\x02" . "\x02" .
           "\x26" . "colour" .
-          "\x20";
+          "\x00";
 
 $clientstream = "";
 wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
@@ -320,9 +320,9 @@ wait_for { $watched };
 
 # MSG_UPDATE
 $S2->syswrite( "\x09" . "\0\0\0\x11" .
-               "\x21" . "2" .
+               "\x02" . "\x02" .
                "\x26" . "colour" .
-               "\x21" . "1" .
+               "\x02" . "\x01" .
                "\x25" . "green" );
 
 undef $colour;
@@ -351,7 +351,7 @@ $ballproxy->watch_property(
 
 # MSG_GETPROP
 $expect = "\5" . "\0\0\0\x09" .
-          "\x21" . "2" .
+          "\x02" . "\x02" .
           "\x26" . "colour";
 
 $clientstream = "";
@@ -369,9 +369,9 @@ is( $secondcolour, "green", '$secondcolour is green after second watch' );
 
 # MSG_UPDATE
 $S2->syswrite( "\x09" . "\0\0\0\x12" .
-               "\x21" . "2" .
+               "\x02" . "\x02" .
                "\x26" . "colour" .
-               "\x21" . "1" .
+               "\x02" . "\x01" .
                "\x26" . "orange" );
 
 $colourchanged = 0;
@@ -414,9 +414,9 @@ is( $size, 100, 'watch_property on autoprop gives initial value' );
 
 # MSG_UPDATE
 $S2->syswrite( "\x09" . "\0\0\0\x0d" .
-               "\x21" . "2" .
+               "\x02" . "\x02" .
                "\x24" . "size" .
-               "\x21" . "1" .
+               "\x02" . "\x01" .
                "\x23" . "200" );
 
 undef $size;
@@ -440,7 +440,7 @@ $bagproxy->call_method(
 
 # MSG_CALL
 $expect = "\1" . "\0\0\0\x10" . 
-          "\x21" . "1" .
+          "\x02" . "\x01" .
           "\x28" . "add_ball" .
           "\x84" . "\0\0\0\2";
 
@@ -468,7 +468,7 @@ $ballproxy->subscribe_event(
 
 # MSG_DESTROY
 $S2->syswrite( "\x0a" . "\0\0\0\2" .
-               "\x21" . "2" );
+               "\x02" . "\x02" );
 
 wait_for { $proxy_destroyed };
 is( $proxy_destroyed, 1, 'proxy gets destroyed' );
