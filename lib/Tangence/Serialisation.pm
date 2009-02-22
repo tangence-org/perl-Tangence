@@ -211,12 +211,44 @@ sub unpack_data
 ### New deep-typed interface. Will slowly replace the untyped 'pack_data'
 ### system so we don't mind temporary code duplication here
 
+my %pack_int_format = (
+   DATANUM_UINT8,  "C",
+   DATANUM_SINT8,  "c",
+   DATANUM_UINT16, "S>",
+   DATANUM_SINT16, "s>",
+   DATANUM_UINT32, "L>",
+   DATANUM_SINT32, "l>",
+   DATANUM_UINT64, "Q>",
+   DATANUM_SINT64, "q>",
+);
+
+my %int_sigs = (
+   u8  => DATANUM_UINT8,
+   s8  => DATANUM_SINT8,
+   u16 => DATANUM_UINT16,
+   s16 => DATANUM_SINT16,
+   u32 => DATANUM_UINT32,
+   s32 => DATANUM_SINT32,
+   u64 => DATANUM_UINT64,
+   s64 => DATANUM_SINT64,
+
+   # Now some special names
+   int => DATANUM_UINT32, # TODO: This needs to determine best size
+);
+
 sub pack_typed
 {
    my $self = shift;
    my ( $sig, $d ) = @_;
 
-   if( $sig eq "str" ) {
+   if( $sig eq "bool" ) {
+      return _pack_leader( DATA_NUMBER, $d ? DATANUM_BOOLTRUE : DATANUM_BOOLFALSE );
+   }
+   elsif( exists $int_sigs{$sig} ) {
+      my $subtype = $int_sigs{$sig};
+      return _pack_leader( DATA_NUMBER, $subtype ) . pack( $pack_int_format{$subtype}, $d );
+   }
+   elsif( $sig eq "str" ) {
       ref $d and croak "$d is not a string";
       my $octets = encode_utf8( $d );
       return _pack_leader( DATA_STRING, length($octets) ) . $octets;
@@ -242,8 +274,21 @@ sub unpack_typed
       $self->_unpack_meta( $num, $_[0] );
    }
 
-   if( $sig eq "str" ) {
-      $type eq DATA_STRING or croak "Expected to unpack a string but did not find one";
+   if( $sig eq "bool" ) {
+      $type == DATA_NUMBER or croak "Expected to unpack a number(bool) but did not find one";
+      $num == DATANUM_BOOLFALSE and return 0;
+      $num == DATANUM_BOOLTRUE  and return 1;
+      croak "Expected to find a DATANUM_BOOL subtype but got $num";
+   }
+   elsif( exists $int_sigs{$sig} ) {
+      $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
+      $num == $int_sigs{$sig} or croak "Expected subtype $int_sigs{$sig} but got $num";
+      my ( $n ) = unpack( $pack_int_format{$num}, $_[0] );
+      substr( $_[0], 0, length pack( $pack_int_format{$num}, 0 ), "" ); # TODO: Do this more efficiently
+      return $n;
+   }
+   elsif( $sig eq "str" ) {
+      $type == DATA_STRING or croak "Expected to unpack a string but did not find one";
       length $_[0] >= $num or croak "Can't pull $num bytes for string as there aren't enough";
       my $octets = substr( $_[0], 0, $num, "" );
       return decode_utf8( $octets );

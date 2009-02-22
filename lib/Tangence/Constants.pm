@@ -35,11 +35,24 @@ our @EXPORT = qw(
    CHANGE_SHIFT
    CHANGE_SPLICE
 
+   DATA_NUMBER
    DATA_STRING
    DATA_LIST
    DATA_DICT
    DATA_OBJECT
    DATA_META
+
+   DATANUM_BOOLFALSE
+   DATANUM_BOOLTRUE
+   DATANUM_UINT8
+   DATANUM_SINT8
+   DATANUM_UINT16
+   DATANUM_SINT16
+   DATANUM_UINT32
+   DATANUM_SINT32
+   DATANUM_UINT64
+   DATANUM_SINT64
+
    DATAMETA_CONSTRUCT
    DATAMETA_CLASS
 );
@@ -103,6 +116,17 @@ use constant CHANGE_SHIFT  => 5; # ARRAY: Count of old elements to remove
 use constant CHANGE_SPLICE => 6; # ARRAY: Start index, count, [ new elements ]
 
 # Stream data types
+use constant DATA_NUMBER => 0; # Number: num=subtype:
+use constant DATANUM_BOOLFALSE => 0; # Boolean false
+use constant DATANUM_BOOLTRUE  => 1; # Boolean true
+use constant DATANUM_UINT8     => 2; # Unsigned 8bit
+use constant DATANUM_SINT8     => 3; # Signed 8bit
+use constant DATANUM_UINT16    => 4; # Unsigned 16bit
+use constant DATANUM_SINT16    => 5; # Signed 16bit
+use constant DATANUM_UINT32    => 6; # Unsigned 32bit
+use constant DATANUM_SINT32    => 7; # Signed 32bit
+use constant DATANUM_UINT64    => 8; # Unsigned 64bit
+use constant DATANUM_SINT64    => 9; # Signed 64bit
 use constant DATA_STRING => 1; # String: num=length: octets
 use constant DATA_LIST   => 2; # List: num=elements: value0 . value1...
 use constant DATA_DICT   => 3; # Dictionary: num=pairs: key0 . value0 . key1 . value1...

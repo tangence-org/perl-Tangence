@@ -140,7 +140,11 @@ When executing a method, firing an event, or getting, setting, or updating
 the value of a property, the data involved has a type. The underlying
 streaming layer recognises the following fundamental types of values:
 
- * Strings
+ * Booleans
+
+ * Integers, both signed and unsigned, in 8, 16, 32 and 64bit lengths
+
+ * Unicode strings
 
  * References to Tangence objects
 
@@ -233,6 +237,9 @@ determines the type:
 
  Type           Bits                    Description
 
+ DATA_NUMBER    0 0 0 t t t t t         numeric
+        where 'ttttt' gives the number subtype
+
  DATA_STRING    0 0 1 s s s s s         string
  DATA_LIST      0 1 0 s s s s s         list of values
  DATA_DICT      0 1 1 s s s s s         dictionary of string->value
@@ -242,13 +249,31 @@ determines the type:
  DATA_META      1 1 1 n n n n n
         where 'nnnnn' gives the metadata type
 
-For non-metadata items, the lower five bits give a number, 0 to 31, which
-helps encode the size. For items of size 30 or below, this size is encoded
-directly. Where the size is 31 or more, the number 31 is encoded, and the
-actual size follows this leading byte. For sizes 31 to 127, the next byte
-encodes it. For sizes 128 or above, the next 4 bytes encode it in
-big-endian format, with the top bit set. Sizes above 2^31 cannot be
-encoded.
+For numbers, the lower five bits encode the numeric type, which defines
+how many more bytes will be used
+
+ Subtype                Subtype bits    Extra bytes     Description
+
+ DATANUM_BOOLFALSE      0 0 0 0 0       0               Boolean false
+ DATANUM_BOOLTRUE       0 0 0 0 1       0               Boolean true
+ DATANUM_UINT8          0 0 0 1 0       1               Unsigned 8bit
+ DATANUM_SINT8          0 0 0 1 1       1               Signed 8bit
+ DATANUM_UINT16         0 0 1 0 0       2               Unsigned 16bit
+ DATANUM_SINT16         0 0 1 0 1       2               Signed 16bit
+ DATANUM_UINT32         0 0 1 1 0       4               Unsigned 32bit
+ DATANUM_SINT32         0 0 1 1 1       4               Signed 32bit
+ DATANUM_UINT64         0 1 0 0 0       8               Unsigned 64bit
+ DATANUM_SINT64         0 1 0 0 1       8               Signed 64bit
+
+All multi-byte integers are always stored in big-endian form.
+
+For string, list, dict and object types, the lower five bits give a
+number, 0 to 31, which helps encode the size. For items of size 30 or
+below, this size is encoded directly. Where the size is 31 or more, the
+number 31 is encoded, and the actual size follows this leading byte. For
+sizes 31 to 127, the next byte encodes it. For sizes 128 or above, the
+next 4 bytes encode it in big-endian format, with the top bit set. Sizes
+above 2^31 cannot be encoded.
 
 Following the leader are bytes encoding the data. The exact meaning of the
 size depends on the type of the node.

@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 57;
+use Test::More tests => 78;
 use Test::HexString;
 
 use Tangence::Serialisation;
@@ -113,6 +113,41 @@ sub test_typed
    is_deeply( $s->unpack_typed( $args{sig}, $d ), $args{data}, "unpack_typed $name" );
    is( length $d, 0, "eats all stream for $name" );
 }
+
+test_typed "bool f",
+   sig    => "bool",
+   data   => 0,
+   stream => "\x00";
+
+test_typed "bool t",
+   sig    => "bool",
+   data   => 1,
+   stream => "\x01";
+
+test_typed "num u8",
+   sig    => "u8",
+   data   => 10,
+   stream => "\x02\x0a";
+
+test_typed "num s8",
+   sig    => "s8",
+   data   => 10,
+   stream => "\x03\x0a";
+
+test_typed "num s8 -ve",
+   sig    => "s8",
+   data   => -10,
+   stream => "\x03\xf6";
+
+test_typed "num s32",
+   sig    => "s32",
+   data   => 100,
+   stream => "\x07\x00\x00\x00\x64";
+
+test_typed "int",
+   sig    => "int",
+   data   => 0x01234567,
+   stream => "\x06\x01\x23\x45\x67";
 
 test_typed "string",
    sig    => "str",
