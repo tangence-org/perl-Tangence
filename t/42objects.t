@@ -55,7 +55,7 @@ wait_for { defined $ballproxy };
 ok( $ballproxy->proxy_isa( "t::Ball" ), 'proxy for isa t::Ball' );
 
 is_deeply( $ballproxy->can_method( "bounce" ),
-           { args => "s", ret => "" },
+           { args => "str", ret => "" },
            'proxy can_method bounce' );
 
 my $colour;

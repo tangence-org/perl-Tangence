@@ -8,26 +8,26 @@ use Tangence::Constants;
 
 our %METHODS = (
    bounce => {
-      args => 's',
+      args => 'str',
       ret  => '',
    },
 );
 
 our %EVENTS = (
    bounced => {
-      args => 's',
+      args => 'str',
    },
 );
 
 our %PROPS = (
    colour => {
       dim  => DIM_SCALAR,
-      type => 'i',
+      type => 'int',
    },
 
    size => {
       dim  => DIM_SCALAR,
-      type => 'i',
+      type => 'int',
       auto => 1,
    },
 );

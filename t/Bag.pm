@@ -8,17 +8,17 @@ use Tangence::Constants;
 
 our %METHODS = (
    get_ball => {
-      args => 's',
-      ret  => 'o',
+      args => 'str',
+      ret  => 'obj',
    },
 
    pull_ball => {
-      args => 's',
-      ret  => 'o',
+      args => 'str',
+      ret  => 'obj',
    },
 
    add_ball => {
-      args => 'o',
+      args => 'obj',
       ret  => '',
    },
 );
@@ -26,7 +26,7 @@ our %METHODS = (
 our %PROPS = (
    colours => {
       dim  => DIM_HASH,
-      type => 'i',
+      type => 'int',
    },
 );
 

@@ -9,24 +9,24 @@ use Tangence::Constants;
 
 our %METHODS = (
    get_by_id => {
-      args => 'i',
-      ret  => 'o',
+      args => 'int',
+      ret  => 'obj',
    },
 );
 
 our %EVENTS = (
    object_constructed => {
-      args => 'I',
+      args => 'int',
    },
    object_destroyed => {
-      args => 'I',
+      args => 'int',
    },
 );
 
 our %PROPS = (
    objects => {
       dim  => DIM_HASH,
-      type => 's',
+      type => 'str',
    }
 );
 

@@ -38,36 +38,36 @@ wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream initially contains MSG_GETROOT and MSG_GETREGISTRY' );
 
-$S2->syswrite( "\x82" . "\0\0\0\xc0" .
+$S2->syswrite( "\x82" . "\0\0\0\xcc" .
                "\xe2" . "t::Bag\0" .
                         "\x64" . "events\0"     . "\x61" . "destroy\0" . "\x61" . "args\0" . "\x20" .
                                  "isa\0"        . "\x42" . "\x26" . "t::Bag" .
                                                            "\x30" . "Tangence::Object" .
-                                 "methods\0"    . "\x63" . "add_ball\0"  . "\x62" . "args\0" . "\x21" . "o" .
+                                 "methods\0"    . "\x63" . "add_ball\0"  . "\x62" . "args\0" . "\x23" . "obj" .
                                                                                     "ret\0"  . "\x20" .
-                                                           "get_ball\0"  . "\x62" . "args\0" . "\x21" . "s" .
-                                                                                    "ret\0"  . "\x21" . "o" .
-                                                           "pull_ball\0" . "\x62" . "args\0" . "\x21" . "s" .
-                                                                                    "ret\0"  . "\x21" . "o" .
+                                                           "get_ball\0"  . "\x62" . "args\0" . "\x23" . "str" .
+                                                                                    "ret\0"  . "\x23" . "obj" .
+                                                           "pull_ball\0" . "\x62" . "args\0" . "\x23" . "str" .
+                                                                                    "ret\0"  . "\x23" . "obj" .
                                  "properties\0" . "\x61" . "colours\0" . "\x62" . "dim\0"  . "\x21" . "2" .
-                                                                                  "type\0" . "\x21" . "i" .
+                                                                                  "type\0" . "\x23" . "int" .
                         "\x80" .
                "\xe1" . "\0\0\0\1" . "t::Bag\0" . "\x80" .
                "\x84" . "\0\0\0\1" );
 
 wait_for { defined $conn->get_root };
 
-$S2->syswrite( "\x82" . "\0\0\0\xeb" .
+$S2->syswrite( "\x82" . "\0\0\0\xf5" .
                "\xe2" . "Tangence::Registry\0" .
                         "\x64" . "events\0"     . "\x63" . "destroy\0"            . "\x61" . "args\0" . "\x20" .
-                                                           "object_constructed\0" . "\x61" . "args\0" . "\x21" . "I" .
-                                                           "object_destroyed\0"   . "\x61" . "args\0" . "\x21" . "I" .
+                                                           "object_constructed\0" . "\x61" . "args\0" . "\x23" . "int" .
+                                                           "object_destroyed\0"   . "\x61" . "args\0" . "\x23" . "int" .
                                  "isa\0"        . "\x42" . "\x32" . "Tangence::Registry" .
                                                            "\x30" . "Tangence::Object" .
-                                 "methods\0"    . "\x61" . "get_by_id\0" . "\x62" . "args\0" . "\x21" . "i" .
-                                                                                    "ret\0"  . "\x21" . "o" .
+                                 "methods\0"    . "\x61" . "get_by_id\0" . "\x62" . "args\0" . "\x23" . "int" .
+                                                                                    "ret\0"  . "\x23" . "obj" .
                                  "properties\0" . "\x61" . "objects\0" . "\x62" . "dim\0"  . "\x21" . "2" .
-                                                                                  "type\0" . "\x21" . "s" .
+                                                                                  "type\0" . "\x23" . "str" .
                         "\x80" .
                "\xe1" . "\0\0\0\0" . "Tangence::Registry\0" . "\x80" .
                "\x84" . "\0\0\0\0" );
@@ -101,19 +101,19 @@ is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL' );
 
 # This long string is massive and annoying. Sorry.
 
-$S2->syswrite( "\x82" . "\0\0\0\xc4" .
+$S2->syswrite( "\x82" . "\0\0\0\xcc" .
                "\xe2" . "t::Ball\0" .
-                        "\x64" . "events\0"     . "\x62" . "bounced\0" . "\x61" . "args\0" . "\x21" . "s" .
+                        "\x64" . "events\0"     . "\x62" . "bounced\0" . "\x61" . "args\0" . "\x23" . "str" .
                                                            "destroy\0" . "\x61" . "args\0" . "\x20" .
                                  "isa\0"        . "\x42" . "\x27" . "t::Ball" .
                                                            "\x30" . "Tangence::Object" .
-                                 "methods\0"    . "\x61" . "bounce\0" . "\x62" . "args\0" . "\x21" . "s" .
+                                 "methods\0"    . "\x61" . "bounce\0" . "\x62" . "args\0" . "\x23" . "str" .
                                                                                  "ret\0" . "\x20" .
                                  "properties\0" . "\x62" . "colour\0" . "\x62" . "dim\0" . "\x21" . "1" .
-                                                                                 "type\0" . "\x21" . "i" .
+                                                                                 "type\0" . "\x23" . "int" .
                                                            "size\0"   . "\x63" . "auto\0" . "\x21" . "1" .
                                                                                  "dim\0" . "\x21" . "1" .
-                                                                                 "type\0" . "\x21" . "i" .
+                                                                                 "type\0" . "\x23" . "int" .
                         "\x41" . "\x24" . "size" .
                "\xe1" . "\0\0\0\2" . "t::Ball\0" . "\x41" . "\x23" . "100" .
                "\x84" . "\0\0\0\2" );
@@ -127,7 +127,7 @@ my $ballproxy = $result[0];
 ok( $ballproxy->proxy_isa( "t::Ball" ), 'proxy for isa t::Ball' );
 
 is_deeply( $ballproxy->can_method( "bounce" ),
-           { args => "s", ret => "" },
+           { args => "str", ret => "" },
            'proxy can_method bounce' );
 
 my $result;

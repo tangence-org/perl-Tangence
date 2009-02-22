@@ -25,13 +25,13 @@ is( $ball->id, "1", '$ball->id' );
 is( $ball->describe, 't::Ball[colour="red"]', '$ball->describe' );
 
 is_deeply( $ball->can_method( "bounce" ),
-           { args => 's', ret => '' }, '$ball->can_method "bounce"' );
+           { args => 'str', ret => '' }, '$ball->can_method "bounce"' );
 
 is_deeply( $ball->can_method( "fly" ),
            undef, '$ball->can_method "fly" is undef' );
 
 is_deeply( $ball->can_event( "bounced" ),
-           { args => 's' }, '$ball->can_event "bounced"' );
+           { args => 'str' }, '$ball->can_event "bounced"' );
 
 is_deeply( $ball->can_event( "destroy" ),
            { args => '' }, '$ball->can_event "destroy"' );
@@ -40,7 +40,7 @@ is_deeply( $ball->can_event( "flew" ),
            undef, '$ball->can_event "flew" is undef' );
 
 is_deeply( $ball->can_property( "colour" ),
-           { dim => DIM_SCALAR, type => 'i' }, '$ball->can_property "colour"' );
+           { dim => DIM_SCALAR, type => 'int' }, '$ball->can_property "colour"' );
 
 is_deeply( $ball->can_property( "style" ),
            undef, '$ball->can_property "style" is undef' );
@@ -49,16 +49,16 @@ is_deeply( $ball->introspect,
            {
               isa => [qw( t::Ball Tangence::Object )],
               methods => {
-                 bounce     => { args => 's',  ret => '' },
+                 bounce     => { args => 'str',  ret => '' },
               },
               events => {
-                 bounced => { args => 's' },
+                 bounced => { args => 'str' },
 
                  destroy => { args => '' },
               },
               properties => {
-                 colour => { dim => DIM_SCALAR, type => 'i' },
-                 size   => { dim => DIM_SCALAR, type => 'i', auto => 1 },
+                 colour => { dim => DIM_SCALAR, type => 'int' },
+                 size   => { dim => DIM_SCALAR, type => 'int', auto => 1 },
               },
            }, '$ball introspect' );
 

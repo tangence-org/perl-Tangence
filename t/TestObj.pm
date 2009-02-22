@@ -9,17 +9,17 @@ use Tangence::Constants;
 our %PROPS = (
    scalar => {
       dim  => DIM_SCALAR,
-      type => 'i',
+      type => 'int',
    },
 
    hash => {
       dim  => DIM_HASH,
-      type => 'i',
+      type => 'int',
    },
 
    array => {
       dim  => DIM_ARRAY,
-      type => 'i',
+      type => 'int',
    },
 );
 
