@@ -38,7 +38,11 @@ each client is notionally distinct, they all share access to the same
 objects within the server. The clients are not directly aware of each
 other's existence, though each one's effects on the system may be
 visible to the others as a result of calling methods or altering
-properties on the objects.
+properties on the objects. Internally, the clients will use proxy objects
+through which to access the objects in the server. There will be a
+one-to-one correspondance between server objects and client proxies. Not
+every server object needs to have a corresponding proxy in every client -
+proxies are created lazily when they are required.
 
 
 2. Object Model
@@ -48,20 +52,19 @@ In Tangence, the primary item of interaction is an object. Tangence
 objects exist in the server, most likely bearing at least some
 relationship to some native objects in the server implementation (though
 if and when the occasion ever arises that a C program can host a Tangence
-server, obviously this association will be somewhat looser). The base
-class for all Tangence objects in the server is Tangence::Object.
+server, obviously this association will be somewhat looser).
 
-In the server, two special objects exist - one is the root object, the
+In the server, two special objects exist - one is the Root object, the
 other is the Repository. These are the only two well-known objects that
-may always be known to exist. All the other objects come from these.
+the client knows always exist. All the other objects are initially
+accessed via these.
 
 The client(s) interact with the server almost entirely by performing
-operations on objects. These are done though instances of
-Tangence::ObjectProxy. When the client connects to the server, two
-special object proxies are constructed, to represent the root and
-repository objects. These are the base through which all the other
-interactions are performed. Other object proxies may only be obtained
-by the return values of methods on existing objects, arguments passed in
+operations on objects. When the client connects to the server, two special
+object proxies are constructed in the client, to represent the Root and
+Repository objects. These are the base through which all the other
+interactions are performed. Other object proxies may only be obtained by
+the return values of methods on existing objects, arguments passed in
 events from them, or retrieved as the value of properties on objects.
 
 Each object is an instance of some particular class. The class provides
@@ -69,6 +72,12 @@ all of the typing information for that instance. Principly, that class
 defines a name, and the collection of methods, events, and properties that
 exist on instances of that class. Each class may also name other classes
 as parents; recursively merging the interface of all those named.
+
+Tangence concerns itself with the interface of and ways to interact with
+the objects in the server, and not with any ways in which the objects
+themselves are actually implemented. The class inheritance therefore only
+applies to the interface, and does not directly relate to any
+implementation behaviour the server might implement.
 
 2.1. Methods
 
@@ -79,7 +88,8 @@ objects in the server. Each method has:
   + argument types
   + a return type
 
-The arguments to a method are positional. 
+The arguments to a method are positional. The return is a single value
+(not a list of values, such as Perl could represent).
 
 Methods on objects in the server may be invoked by clients. Once a
 method is invoked by a client, the client must wait until it returns
@@ -98,7 +108,8 @@ Like methods, the arguments to an event are positional.
 Events do not have return types, as they are simple notifications from the
 server to the client, to inform them that some event happened. Clients are
 not automatically informed of every event on every object. Instead, the
-client must specifically register interest in events.
+client must specifically register interest in specific events on specific
+objects.
 
 2.3 Properties
 
@@ -106,16 +117,46 @@ Each object class may define named properties that the object has. Each
 object in the class will have a value for the property. Each property has:
 
     + a name
-    + a laziness
     + a dimension - scalar, array, hash or object set
     + a type
+    + a boolean indicating if it is "smashed"
 
 Properties do not have arguments. A client can request the current value
 of a property on an object, or set a new value. It can also register an
 interest in the property, where the server will inform the client of
-changes to the value. Changes are sent to the client in an efficient
-manner - for example, adding a single element to an array or hash will not
-need to resend the entire collection. More on this later.
+changes to the value.
+
+Each property has a dimension; one of scalar, array, hash, or object set.
+The behaviour of each type of property is:
+
+2.3.1 Scalar Properties
+
+The property is a single atomic scalar. It is set atomically by the
+server, and may be queried.
+
+2.3.2 Array Properties
+
+The property is a contiguous array of individual elements. Each element is
+indexed by a non-negative integer. The property type gives the type of
+each element in the array.
+
+2.3.3 Hash Properties
+
+The property is an association between string and values. Each element is
+uniquely indexed by a null-terminated string. The property type gives the
+type of each element in the hash.  The elements do not have an inherent
+ordering and are indexed by unique strings.
+
+2.3.4 Object Set Properties
+
+The property is an unordered collection of Tangence objects.
+
+Scalar properties have a single atomic value. If it changes, the client is
+informed of the entire new value, even if its type indicates it to be a
+list or dictionary type. For non-scalar properties, the value of each
+element in the collection is set individually by the server. Elements can
+be changed, added or removed. Changes to individual elements can be sent
+to the clients independently of the others.
 
 Certain properties may be deemed by the application to be important enough
 for all clients to be aware of all of the time (such as a name or other
@@ -170,7 +211,6 @@ should be represented by real Tangence objects.
 [
  There are also a number of unresolved issues here to deal with export to
  other languages. Primarily, those are 
-  * the string/number duallity of perl which exists almost nowhere else
   * how deeply typing information should be applied to collections
   * whether a new type of "structure" should be created, which allows for
     a hetrogenous collection, if typing is applied deeply to arrays and
@@ -220,6 +260,13 @@ encoded in the data serialisation scheme given below. Each argument to the
 message is encoded as a single serialisation item. For message types with
 a variable number of arguments, the length of the message itself defines
 the number of arguments given.
+
+The stream protocol is designed to be used in situations where the CPU
+power of each endpoint is high, but the connection in between may have
+high latency, or low bandwidth. It is therefore optimised in favour of
+roundtrips and byte count overhead, at the expense of processing power
+needed to encode or decode it. One consequence here is that no attempt is
+made to align multi-byte values.
 
 4.2. Data Serialisation
 
