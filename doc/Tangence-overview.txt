@@ -634,5 +634,4 @@ As a rough description of the modules:
 Paul "LeoNerd" Evans
 
 leonerd@leonerd.org.uk
-ICQ# 4135350       |  Registered Linux# 179460
 http://www.leonerd.org.uk/
