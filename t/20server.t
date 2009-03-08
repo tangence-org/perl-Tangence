@@ -66,7 +66,8 @@ $expect = "\x82" . "\0\0\0\xcc" .
 my $serverstream;
 
 $serverstream = "";
-wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
+wait_for_stream { length $serverstream >= 5 and
+                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'serverstream initially contains root object' );
 
@@ -93,7 +94,8 @@ $expect = "\x82" . "\0\0\0\xf5" .
           "\x84" . "\0\0\0\0";
 
 $serverstream = "";
-wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
+wait_for_stream { length $serverstream >= 5 and
+                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'serverstream initially contains registry' );
 
@@ -123,7 +125,8 @@ $expect = "\x82" . "\0\0\0\xcd" .
           "\x84" . "\0\0\0\2";
 
 $serverstream = "";
-wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
+wait_for_stream { length $serverstream >= 5 and
+                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'serverstream after response to CALL' );
 
@@ -160,7 +163,8 @@ $expect = "\x82" . "\0\0\0\x09" .
 
 $serverstream = "";
 
-wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
+wait_for_stream { length $serverstream >= 5 and
+                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'serverstream after response to CALL' );
 
@@ -173,7 +177,8 @@ $expect = "\x83" . "\0\0\0\0";
 
 $serverstream = "";
 
-wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
+wait_for_stream { length $serverstream >= 5 and
+                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'received MSG_SUBSCRIBED response' );
 
@@ -186,7 +191,8 @@ $expect = "\4" . "\0\0\0\x14" .
 
 $serverstream = "";
 
-wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
+wait_for_stream { length $serverstream >= 5 and
+                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'received MSG_EVENT' );
 
@@ -203,7 +209,8 @@ $expect = "\x82" . "\0\0\0\4" .
 
 $serverstream = "";
 
-wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
+wait_for_stream { length $serverstream >= 5 and
+                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'received property value after MSG_GETPROP' );
 
@@ -217,7 +224,8 @@ $expect = "\x80" . "\0\0\0\0";
 
 $serverstream = "";
 
-wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
+wait_for_stream { length $serverstream >= 5 and
+                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'received OK after MSG_SETPROP' );
 
@@ -233,7 +241,8 @@ $expect = "\x84" . "\0\0\0\0";
 
 $serverstream = "";
 
-wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
+wait_for_stream { length $serverstream >= 5 and
+                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'received MSG_WATCHING response' );
 
@@ -247,7 +256,8 @@ $expect = "\x09" . "\0\0\0\x12" .
 
 $serverstream = "";
 
-wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
+wait_for_stream { length $serverstream >= 5 and
+                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'received property MSG_UPDATE notice' );
 
@@ -265,7 +275,8 @@ $expect = "\x09" . "\0\0\0\x0d" .
           "\x23" . "200";
 
 $serverstream = "";
-wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
+wait_for_stream { length $serverstream >= 5 and
+                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'received property MSG_UPDATE notice on smashed prop' );
 
@@ -283,7 +294,8 @@ $expect = "\x82" . "\0\0\0\1" .
 
 $serverstream = "";
 
-wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
+wait_for_stream { length $serverstream >= 5 and
+                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'serverstream after response to "add_ball"' );
 
@@ -302,7 +314,8 @@ $expect = "\x82" . "\0\0\0\5" .
 
 $serverstream = "";
 
-wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
+wait_for_stream { length $serverstream >= 5 and
+                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'orange ball has same identity as red one earlier' );
 
@@ -318,7 +331,8 @@ $expect = "\x0a" . "\0\0\0\2" .
 
 $serverstream = "";
 
-wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
+wait_for_stream { length $serverstream >= 5 and
+                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'MSG_DESTROY from server' );
 

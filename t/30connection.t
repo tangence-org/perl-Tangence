@@ -34,7 +34,8 @@ $expect = "\x40" . "\0\0\0\x0b" .
           "\x41" . "\0\0\0\0";
 
 my $clientstream = "";
-wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+wait_for_stream { length $clientstream >= 5 and
+                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream initially contains MSG_GETROOT and MSG_GETREGISTRY' );
 
@@ -93,7 +94,8 @@ $expect = "\1" . "\0\0\0\x10" .
           "\x23" . "red";
 
 $clientstream = "";
-wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+wait_for_stream { length $clientstream >= 5 and
+                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL' );
 
@@ -145,7 +147,8 @@ $expect = "\1" . "\0\0\0\x13" .
           "\x29" . "20 metres";
 
 $clientstream = "";
-wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+wait_for_stream { length $clientstream >= 5 and
+                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL' );
 
@@ -181,7 +184,8 @@ $expect = "\2" . "\0\0\0\x0a" .
           "\x27" . "bounced";
 
 $clientstream = "";
-wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+wait_for_stream { length $clientstream >= 5 and
+                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_SUBSCRIBE' );
 
@@ -204,7 +208,8 @@ is( $howhigh, "10 metres", '$howhigh is 10 metres after MSG_EVENT' );
 $expect = "\x80" . "\0\0\0\0";
 
 $clientstream = "";
-wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+wait_for_stream { length $clientstream >= 5 and
+                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK' );
 
@@ -232,7 +237,8 @@ is_hexstr( $clientstream, "", '$client stream is empty after second subscribe' )
 $expect = "\x80" . "\0\0\0\0";
 
 $clientstream = "";
-wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+wait_for_stream { length $clientstream >= 5 and
+                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK' );
 
@@ -257,7 +263,8 @@ $expect = "\5" . "\0\0\0\x09" .
           "\x26" . "colour";
 
 $clientstream = "";
-wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+wait_for_stream { length $clientstream >= 5 and
+                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_GETPROP' );
 
@@ -283,7 +290,8 @@ $expect = "\6" . "\0\0\0\x0e" .
           "\x24" . "blue";
 
 $clientstream = "";
-wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+wait_for_stream { length $clientstream >= 5 and
+                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_SETPROP' );
 
@@ -309,7 +317,8 @@ $expect = "\7" . "\0\0\0\x0a" .
           "\x00";
 
 $clientstream = "";
-wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+wait_for_stream { length $clientstream >= 5 and
+                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_WATCH' );
 
@@ -334,7 +343,8 @@ is( $colour, "green", '$colour is green after MSG_UPDATE' );
 $expect = "\x80" . "\0\0\0\0";
 
 $clientstream = "";
-wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+wait_for_stream { length $clientstream >= 5 and
+                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK' );
 
@@ -355,7 +365,8 @@ $expect = "\5" . "\0\0\0\x09" .
           "\x26" . "colour";
 
 $clientstream = "";
-wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+wait_for_stream { length $clientstream >= 5 and
+                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_GETPROP' );
 
@@ -384,7 +395,8 @@ is( $colourchanged, 1, '$colourchanged is true after second MSG_UPDATE' );
 $expect = "\x80" . "\0\0\0\0";
 
 $clientstream = "";
-wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+wait_for_stream { length $clientstream >= 5 and
+                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK' );
 
@@ -428,7 +440,8 @@ is( $size, 200, 'smashed prop watch succeeds' );
 $expect = "\x80" . "\0\0\0\0";
 
 $clientstream = "";
-wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+wait_for_stream { length $clientstream >= 5 and
+                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK after smashed prop UPDATE' );
 
@@ -445,7 +458,8 @@ $expect = "\1" . "\0\0\0\x10" .
           "\x84" . "\0\0\0\2";
 
 $clientstream = "";
-wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+wait_for_stream { length $clientstream >= 5 and
+                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL with an ObjectProxy' );
 
@@ -477,6 +491,7 @@ is( $proxy_destroyed, 1, 'proxy gets destroyed' );
 $expect = "\x80" . "\0\0\0\0";
 
 $clientstream = "";
-wait_for_stream { length $clientstream >= length $expect } $S2 => $clientstream;
+wait_for_stream { length $clientstream >= 5 and
+                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK after MSG_DESTROY' );
