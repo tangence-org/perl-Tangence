@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 21;
+use Test::More tests => 24;
 
 use Tangence::Constants;
 
@@ -30,6 +30,12 @@ is_deeply( $ball->can_method( "bounce" ),
 is_deeply( $ball->can_method( "fly" ),
            undef, '$ball->can_method "fly" is undef' );
 
+is_deeply( $ball->can_method(),
+           { 
+              bounce => { args => 'str', ret => '' },
+           },
+           '$ball->can_method() yields all' );
+
 is_deeply( $ball->can_event( "bounced" ),
            { args => 'str' }, '$ball->can_event "bounced"' );
 
@@ -39,11 +45,25 @@ is_deeply( $ball->can_event( "destroy" ),
 is_deeply( $ball->can_event( "flew" ),
            undef, '$ball->can_event "flew" is undef' );
 
+is_deeply( $ball->can_event(),
+           {
+              bounced => { args => 'str' },
+              destroy => { args => '' },
+           },
+           '$ball->can_event() yields all' );
+
 is_deeply( $ball->can_property( "colour" ),
            { dim => DIM_SCALAR, type => 'int' }, '$ball->can_property "colour"' );
 
 is_deeply( $ball->can_property( "style" ),
            undef, '$ball->can_property "style" is undef' );
+
+is_deeply( $ball->can_property(),
+           {
+              colour => { dim => DIM_SCALAR, type => 'int' },
+              size   => { dim => DIM_SCALAR, type => 'int', smash => 1 },
+           },
+           '$ball->can_property() yields all' );
 
 is_deeply( $ball->introspect,
            {
