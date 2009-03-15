@@ -101,7 +101,7 @@ sub pack_data
    my ( $d ) = @_;
 
    if( !defined $d ) {
-      return _pack_leader( DATA_OBJECT, 0 );
+      return $self->pack_obj( undef );
    }
    elsif( !ref $d ) {
       return $self->pack_str( $d );
@@ -114,57 +114,8 @@ sub pack_data
       @keys = sort @keys if $SORT_HASH_KEYS;
       return _pack_leader( DATA_DICT, scalar @keys ) . join( "", map { pack( "Z*", $_ ) . $self->pack_data( $d->{$_} ) } @keys );
    }
-   elsif( eval { $d->isa( "Tangence::Object" ) } ) {
-      my $id = $d->id;
-      my $preamble = "";
-
-      $d->{destroyed} and croak "Cannot pack destroyed object $d";
-
-      if( !$self->{peer_hasobj}->{$id} ) {
-         my $class = ref $d;
-
-         my $smashkeys;
-
-         if( !$self->{peer_hasclass}->{$class} ) {
-            my $schema = $class->introspect;
-
-            $preamble .= _pack_leader( DATA_META, DATAMETA_CLASS ) . pack( "Z*", $class ) . $self->pack_data( $schema );
-
-            $smashkeys = [ keys %{ $class->smashkeys } ];
-
-            @$smashkeys = sort @$smashkeys if $SORT_HASH_KEYS;
-            $smashkeys = undef unless @$smashkeys;
-
-            $preamble .= $self->pack_data( $smashkeys );
-
-            $self->{peer_hasclass}->{$class} = [ $smashkeys ];
-         }
-         else {
-            $smashkeys = $self->{peer_hasclass}->{$class}->[0];
-         }
-
-         $preamble .= _pack_leader( DATA_META, DATAMETA_CONSTRUCT ) . pack( "NZ*", $id, $class );
-
-         my $smasharr;
-
-         if( $smashkeys ) {
-            my $smashdata = $d->smash( $smashkeys );
-            $smasharr = [ map { $smashdata->{$_} } @$smashkeys ];
-
-            for my $prop ( @$smashkeys ) {
-               $self->_install_watch( $d, $prop );
-            }
-         }
-
-         $preamble .= $self->pack_data( $smasharr );
-
-         $self->{peer_hasobj}->{$id} = $d->subscribe_event( "destroy", $self->{destroy_cb} );
-      }
-
-      return $preamble . _pack_leader( DATA_OBJECT, 4 ) . pack( "N", $d->id );
-   }
-   elsif( eval { $d->isa( "Tangence::ObjectProxy" ) } ) {
-      return _pack_leader( DATA_OBJECT, 4 ) . pack( "N", $d->id );
+   elsif( eval { $d->isa( "Tangence::Object" ) or $d->isa( "Tangence::ObjectProxy" ) } ) {
+      return $self->pack_obj( $d );
    }
    else {
       croak "Do not know how to pack a " . ref($d);
@@ -196,14 +147,7 @@ sub unpack_data
       return \%h;
    }
    elsif( $type == DATA_OBJECT ) {
-      return undef unless $num;
-      if( $num == 4 ) {
-         my ( $id ) = unpack( "N", $_[0] ); substr( $_[0], 0, 4, "" );
-         return $self->get_by_id( $id );
-      }
-      else {
-         croak "Unexpected number of bits to encode an OBJECT";
-      }
+      return $self->unpack_obj( $_[0], $type, $num );
    }
    else {
       croak "Do not know how to unpack record of type $type";
@@ -311,6 +255,86 @@ sub unpack_str
    length $_[0] >= $num or croak "Can't pull $num bytes for string as there aren't enough";
    my $octets = substr( $_[0], 0, $num, "" );
    return decode_utf8( $octets );
+}
+
+sub pack_obj
+{
+   my $self = shift;
+   my ( $d ) = @_;
+
+   if( !defined $d ) {
+      return _pack_leader( DATA_OBJECT, 0 );
+   }
+   elsif( eval { $d->isa( "Tangence::Object" ) } ) {
+      my $id = $d->id;
+      my $preamble = "";
+
+      $d->{destroyed} and croak "Cannot pack destroyed object $d";
+
+      if( !$self->{peer_hasobj}->{$id} ) {
+         my $class = ref $d;
+
+         my $smashkeys;
+
+         if( !$self->{peer_hasclass}->{$class} ) {
+            my $schema = $class->introspect;
+
+            $preamble .= _pack_leader( DATA_META, DATAMETA_CLASS ) . pack( "Z*", $class ) . $self->pack_data( $schema );
+
+            $smashkeys = [ keys %{ $class->smashkeys } ];
+
+            @$smashkeys = sort @$smashkeys if $SORT_HASH_KEYS;
+            $smashkeys = undef unless @$smashkeys;
+
+            $preamble .= $self->pack_data( $smashkeys );
+
+            $self->{peer_hasclass}->{$class} = [ $smashkeys ];
+         }
+         else {
+            $smashkeys = $self->{peer_hasclass}->{$class}->[0];
+         }
+
+         $preamble .= _pack_leader( DATA_META, DATAMETA_CONSTRUCT ) . pack( "NZ*", $id, $class );
+
+         my $smasharr;
+
+         if( $smashkeys ) {
+            my $smashdata = $d->smash( $smashkeys );
+            $smasharr = [ map { $smashdata->{$_} } @$smashkeys ];
+
+            for my $prop ( @$smashkeys ) {
+               $self->_install_watch( $d, $prop );
+            }
+         }
+
+         $preamble .= $self->pack_data( $smasharr );
+
+         $self->{peer_hasobj}->{$id} = $d->subscribe_event( "destroy", $self->{destroy_cb} );
+      }
+
+      return $preamble . _pack_leader( DATA_OBJECT, 4 ) . pack( "N", $d->id );
+   }
+   elsif( eval { $d->isa( "Tangence::ObjectProxy" ) } ) {
+      return _pack_leader( DATA_OBJECT, 4 ) . pack( "N", $d->id );
+   }
+   else {
+      croak "Do not know how to pack a " . ref($d);
+   }
+}
+
+sub unpack_obj
+{
+   my $self = shift;
+   my ( $type, $num ) = @_ > 1 ? @_[1,2] : $self->_unpack_leader_dometa( $_[0] );
+
+   return undef unless $num;
+   if( $num == 4 ) {
+      my ( $id ) = unpack( "N", $_[0] ); substr( $_[0], 0, 4, "" );
+      return $self->get_by_id( $id );
+   }
+   else {
+      croak "Unexpected number of bits to encode an OBJECT";
+   }
 }
 
 sub pack_typed
