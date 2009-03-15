@@ -82,6 +82,19 @@ sub _unpack_meta
    }
 }
 
+sub _unpack_leader_dometa
+{
+   my $self = shift;
+
+   while(1) {
+      length $_[0] or croak "Ran out of bytes before finding a leader";
+      my ( $type, $num ) = _unpack_leader( $_[0] );
+      return $type, $num unless $type == DATA_META;
+
+      $self->_unpack_meta( $num, $_[0] );
+   }
+}
+
 sub pack_data
 {
    my $self = shift;
@@ -163,15 +176,7 @@ sub unpack_data
 {
    my $self = shift;
 
-   my ( $type, $num );
-   
-   while(1) {
-      length $_[0] or croak "Ran out of bytes before finding a type";
-      ( $type, $num ) = _unpack_leader( $_[0] );
-      last unless $type == DATA_META;
-
-      $self->_unpack_meta( $num, $_[0] );
-   }
+   my ( $type, $num ) = $self->_unpack_leader_dometa( $_[0] );
 
    if( $type == DATA_STRING ) {
       length $_[0] >= $num or croak "Can't pull $num bytes for string as there aren't enough";
@@ -210,6 +215,24 @@ sub unpack_data
 
 ### New deep-typed interface. Will slowly replace the untyped 'pack_data'
 ### system so we don't mind temporary code duplication here
+
+sub pack_bool
+{
+   my $self = shift;
+   my ( $d ) = @_;
+   return _pack_leader( DATA_NUMBER, $d ? DATANUM_BOOLTRUE : DATANUM_BOOLFALSE );
+}
+
+sub unpack_bool
+{
+   my $self = shift;
+   my ( $type, $num ) = $self->_unpack_leader_dometa( $_[0] );
+
+   $type == DATA_NUMBER or croak "Expected to unpack a number(bool) but did not find one";
+   $num == DATANUM_BOOLFALSE and return 0;
+   $num == DATANUM_BOOLTRUE  and return 1;
+   croak "Expected to find a DATANUM_BOOL subtype but got $num";
+}
 
 my %pack_int_format = (
    DATANUM_UINT8,  "C",
@@ -250,28 +273,61 @@ sub _best_int_type_for
    return DATANUM_UINT32;
 }
 
+sub pack_int
+{
+   my $self = shift;
+   my ( $d ) = @_;
+
+   ref $d and croak "$d is not a number";
+   my $subtype = _best_int_type_for( $d );
+   return _pack_leader( DATA_NUMBER, $subtype ) . pack( $pack_int_format{$subtype}, $d );
+}
+
+sub unpack_int
+{
+   my $self = shift;
+   my ( $type, $num ) = $self->_unpack_leader_dometa( $_[0] );
+
+   $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
+   exists $pack_int_format{$num} or croak "Expected an integer subtype but got $num";
+   my ( $n ) = unpack( $pack_int_format{$num}, $_[0] );
+   substr( $_[0], 0, length pack( $pack_int_format{$num}, 0 ), "" ); # TODO: Do this more efficiently
+   return $n;
+}
+
+sub pack_str
+{
+   my $self = shift;
+   my ( $d ) = @_;
+
+   ref $d and croak "$d is not a string";
+   my $octets = encode_utf8( $d );
+   return _pack_leader( DATA_STRING, length($octets) ) . $octets;
+}
+
+sub unpack_str
+{
+   my $self = shift;
+   my ( $type, $num ) = $self->_unpack_leader_dometa( $_[0] );
+
+   $type == DATA_STRING or croak "Expected to unpack a string but did not find one";
+   length $_[0] >= $num or croak "Can't pull $num bytes for string as there aren't enough";
+   my $octets = substr( $_[0], 0, $num, "" );
+   return decode_utf8( $octets );
+}
+
 sub pack_typed
 {
    my $self = shift;
    my ( $sig, $d ) = @_;
 
-   if( $sig eq "bool" ) {
-      return _pack_leader( DATA_NUMBER, $d ? DATANUM_BOOLTRUE : DATANUM_BOOLFALSE );
+   if( my $code = $self->can( "pack_$sig" ) ) {
+      return $code->( $self, $d );
    }
    elsif( exists $int_sigs{$sig} ) {
       ref $d and croak "$d is not a number";
       my $subtype = $int_sigs{$sig};
       return _pack_leader( DATA_NUMBER, $subtype ) . pack( $pack_int_format{$subtype}, $d );
-   }
-   elsif( $sig eq "int" ) {
-      ref $d and croak "$d is not a number";
-      my $subtype = _best_int_type_for( $d );
-      return _pack_leader( DATA_NUMBER, $subtype ) . pack( $pack_int_format{$subtype}, $d );
-   }
-   elsif( $sig eq "str" ) {
-      ref $d and croak "$d is not a string";
-      my $octets = encode_utf8( $d );
-      return _pack_leader( DATA_STRING, length($octets) ) . $octets;
    }
    else {
       print STDERR "TODO: Pack as $sig from $d\n";
@@ -284,41 +340,17 @@ sub unpack_typed
    my $self = shift;
    my $sig = shift;
 
-   my ( $type, $num );
-   
-   while(1) {
-      length $_[0] or croak "Ran out of bytes before finding a leader";
-      ( $type, $num ) = _unpack_leader( $_[0] );
-      last unless $type == DATA_META;
-
-      $self->_unpack_meta( $num, $_[0] );
-   }
-
-   if( $sig eq "bool" ) {
-      $type == DATA_NUMBER or croak "Expected to unpack a number(bool) but did not find one";
-      $num == DATANUM_BOOLFALSE and return 0;
-      $num == DATANUM_BOOLTRUE  and return 1;
-      croak "Expected to find a DATANUM_BOOL subtype but got $num";
+   if( my $code = $self->can( "unpack_$sig" ) ) {
+      return $code->( $self, $_[0] );
    }
    elsif( exists $int_sigs{$sig} ) {
+      my ( $type, $num ) = $self->_unpack_leader_dometa( $_[0] );
+
       $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
       $num == $int_sigs{$sig} or croak "Expected subtype $int_sigs{$sig} but got $num";
       my ( $n ) = unpack( $pack_int_format{$num}, $_[0] );
       substr( $_[0], 0, length pack( $pack_int_format{$num}, 0 ), "" ); # TODO: Do this more efficiently
       return $n;
-   }
-   elsif( $sig eq "int" ) {
-      $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
-      exists $pack_int_format{$num} or croak "Expected an integer subtype but got $num";
-      my ( $n ) = unpack( $pack_int_format{$num}, $_[0] );
-      substr( $_[0], 0, length pack( $pack_int_format{$num}, 0 ), "" ); # TODO: Do this more efficiently
-      return $n;
-   }
-   elsif( $sig eq "str" ) {
-      $type == DATA_STRING or croak "Expected to unpack a string but did not find one";
-      length $_[0] >= $num or croak "Can't pull $num bytes for string as there aren't enough";
-      my $octets = substr( $_[0], 0, $num, "" );
-      return decode_utf8( $octets );
    }
    else {
       print STDERR "TODO: Unpack as $sig\n";

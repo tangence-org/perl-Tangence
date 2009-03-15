@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 87;
+use Test::More tests => 108;
 use Test::HexString;
 
 use Tangence::Serialisation;
@@ -100,6 +100,56 @@ test_data "HASH of string*2",
 test_data "HASH of HASH",
    data   => { hash => {} },
    stream => "\x61hash\0\x60";
+
+sub test_specific
+{
+   my $name = shift;
+   my %args = @_;
+
+   my $pack_method = "pack_$args{type}";
+   $d = $s->$pack_method( $args{data} );
+
+   is_hexstr( $d, $args{stream}, "$pack_method $name" );
+
+   my $unpack_method = "unpack_$args{type}";
+   is_deeply( $s->$unpack_method( $d ), $args{data}, "$unpack_method $name" );
+   is( length $d, 0, "eats all stream for $name" );
+}
+
+test_specific "bool f",
+   type   => "bool",
+   data   => 0,
+   stream => "\x00";
+
+test_specific "bool t",
+   type   => "bool",
+   data   => 1,
+   stream => "\x01";
+
+test_specific "int tiny",
+   type   => "int",
+   data   => 20,
+   stream => "\x02\x14";
+
+test_specific "int -ve tiny",
+   type   => "int",
+   data   => -30,
+   stream => "\x03\xe2";
+
+test_specific "int",
+   type   => "int",
+   data   => 0x01234567,
+   stream => "\x06\x01\x23\x45\x67";
+
+test_specific "int -ve",
+   type   => "int",
+   data   => -0x07654321,
+   stream => "\x07\xf8\x9a\xbc\xdf";
+
+test_specific "string",
+   type   => "str",
+   data   => "hello",
+   stream => "\x25hello";
 
 sub test_typed
 {
