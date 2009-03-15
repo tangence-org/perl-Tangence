@@ -104,8 +104,7 @@ sub pack_data
       return _pack_leader( DATA_OBJECT, 0 );
    }
    elsif( !ref $d ) {
-      my $octets = encode_utf8( $d );
-      return _pack_leader( DATA_STRING, length($octets) ) . $octets;
+      return $self->pack_str( $d );
    }
    elsif( ref $d eq "ARRAY" ) {
       return _pack_leader( DATA_LIST, scalar @$d ) . join( "", map { $self->pack_data( $_ ) } @$d );
@@ -179,9 +178,7 @@ sub unpack_data
    my ( $type, $num ) = $self->_unpack_leader_dometa( $_[0] );
 
    if( $type == DATA_STRING ) {
-      length $_[0] >= $num or croak "Can't pull $num bytes for string as there aren't enough";
-      my $octets = substr( $_[0], 0, $num, "" );
-      return decode_utf8( $octets );
+      return $self->unpack_str( $_[0], $type, $num );
    }
    elsif( $type == DATA_LIST ) {
       my @a;
@@ -226,7 +223,7 @@ sub pack_bool
 sub unpack_bool
 {
    my $self = shift;
-   my ( $type, $num ) = $self->_unpack_leader_dometa( $_[0] );
+   my ( $type, $num ) = @_ > 1 ? @_[1,2] : $self->_unpack_leader_dometa( $_[0] );
 
    $type == DATA_NUMBER or croak "Expected to unpack a number(bool) but did not find one";
    $num == DATANUM_BOOLFALSE and return 0;
@@ -286,7 +283,7 @@ sub pack_int
 sub unpack_int
 {
    my $self = shift;
-   my ( $type, $num ) = $self->_unpack_leader_dometa( $_[0] );
+   my ( $type, $num ) = @_ > 1 ? @_[1,2] : $self->_unpack_leader_dometa( $_[0] );
 
    $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
    exists $pack_int_format{$num} or croak "Expected an integer subtype but got $num";
@@ -308,7 +305,7 @@ sub pack_str
 sub unpack_str
 {
    my $self = shift;
-   my ( $type, $num ) = $self->_unpack_leader_dometa( $_[0] );
+   my ( $type, $num ) = @_ > 1 ? @_[1,2] : $self->_unpack_leader_dometa( $_[0] );
 
    $type == DATA_STRING or croak "Expected to unpack a string but did not find one";
    length $_[0] >= $num or croak "Can't pull $num bytes for string as there aren't enough";
