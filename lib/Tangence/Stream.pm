@@ -4,10 +4,8 @@ use strict;
 
 use base qw( IO::Async::Sequencer );
 
-# Import Serialisation role
-use base qw( Tangence::Serialisation );
-
 use Tangence::Constants;
+use Tangence::Message;
 
 use Carp;
 
@@ -111,23 +109,23 @@ sub marshall_message
 
    my ( $type, @data ) = @$req;
 
-   my $record = "";
+   my $message = Tangence::Message->new( $self, $type );
 
    my $sig = $MSG_SIGS{$type} or croak "Cannot find a message signature for $type";
 
    foreach my $s ( @$sig ) {
       if( $s eq "*" ) {
-         $record .= $self->pack_data( $_ ) for @data;
+         $message->pack_data( $_ ) for @data;
       }
       elsif( $s eq "?" ) {
-         $record .= $self->pack_data( shift @data );
+         $message->pack_data( shift @data );
       }
       else {
-         $record .= $self->pack_typed( $s, shift @data );
+         $message->pack_typed( $s, shift @data );
       }
    }
 
-   return pack( "CNa*", $type, length($record), $record );
+   return $message->bytes;
 }
 
 # Use the same method for both
@@ -143,13 +141,8 @@ sub on_read
    my $self = shift;
    my ( $buffref, $closed ) = @_;
 
-   return 0 unless length $$buffref >= 5;
-
-   my ( $type, $len ) = unpack( "CN", $$buffref );
-   return 0 unless length $$buffref >= 5 + $len;
-
-   substr( $$buffref, 0, 5, "" );
-   my $record = substr( $$buffref, 0, $len, "" );
+   my $message = Tangence::Message->try_new_from_bytes( $self, $$buffref ) or return 0;
+   my $type = $message->type;
 
    my $sig = $MSG_SIGS{$type};
    unless( $sig ) {
@@ -161,13 +154,13 @@ sub on_read
 
    foreach my $s ( @$sig ) {
       if( $s eq "*" ) {
-         push @data, $self->unpack_data( $record ) while length $record;
+         push @data, $message->unpack_data() while length $message->{record}; # cheating
       }
       elsif( $s eq "?" ) {
-         push @data, $self->unpack_data( $record );
+         push @data, $message->unpack_data();
       }
       else {
-         push @data, $self->unpack_typed( $s, $record );
+         push @data, $message->unpack_typed( $s );
       }
    }
 

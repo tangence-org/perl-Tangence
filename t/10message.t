@@ -5,14 +5,8 @@ use strict;
 use Test::More tests => 93;
 use Test::HexString;
 
-use Tangence::Serialisation;
-$Tangence::Serialisation::SORT_HASH_KEYS = 1;
-
-my $d;
-
-# We're just testing the simple pack and unpack methods here, so no object
-# will actually be needed
-my $s = "Tangence::Serialisation";
+use Tangence::Message;
+$Tangence::Message::SORT_HASH_KEYS = 1;
 
 sub test_data
 {
@@ -20,13 +14,13 @@ sub test_data
    my %args = @_;
 
    # Test round-trip of data to stream and back again
+   my $m = Tangence::Message->new( 0 );
+   $m->pack_data( $args{data} );
 
-   $d = $s->pack_data( $args{data} );
+   is_hexstr( $m->{record}, $args{stream}, "pack_data $name" );
 
-   is_hexstr( $d, $args{stream}, "pack_data $name" );
-
-   is_deeply( $s->unpack_data( $d ), $args{data}, "unpack_data $name" );
-   is( length $d, 0, "eats all stream for $name" );
+   is_deeply( $m->unpack_data(), $args{data}, "unpack_data $name" );
+   is( length $m->{record}, 0, "eats all stream for $name" );
 }
 
 test_data "undef",
@@ -86,14 +80,15 @@ sub test_specific
    my $name = shift;
    my %args = @_;
 
+   my $m = Tangence::Message->new( 0 );
    my $pack_method = "pack_$args{type}";
-   $d = $s->$pack_method( $args{data} );
+   $m->$pack_method( $args{data} );
 
-   is_hexstr( $d, $args{stream}, "$pack_method $name" );
+   is_hexstr( $m->{record}, $args{stream}, "$pack_method $name" );
 
    my $unpack_method = "unpack_$args{type}";
-   is_deeply( $s->$unpack_method( $d ), $args{data}, "$unpack_method $name" );
-   is( length $d, 0, "eats all stream for $name" );
+   is_deeply( $m->$unpack_method(), $args{data}, "$unpack_method $name" );
+   is( length $m->{record}, 0, "eats all stream for $name" );
 }
 
 test_specific "bool f",
@@ -136,12 +131,13 @@ sub test_typed
    my $name = shift;
    my %args = @_;
 
-   $d = $s->pack_typed( $args{sig}, $args{data} );
+   my $m = Tangence::Message->new( 0 );
+   $m->pack_typed( $args{sig}, $args{data} );
 
-   is_hexstr( $d, $args{stream}, "pack_typed $name" );
+   is_hexstr( $m->{record}, $args{stream}, "pack_typed $name" );
 
-   is_deeply( $s->unpack_typed( $args{sig}, $d ), $args{data}, "unpack_typed $name" );
-   is( length $d, 0, "eats all stream for $name" );
+   is_deeply( $m->unpack_typed( $args{sig} ), $args{data}, "unpack_typed $name" );
+   is( length $m->{record}, 0, "eats all stream for $name" );
 }
 
 test_typed "bool f",

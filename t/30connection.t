@@ -11,7 +11,7 @@ use IO::Async::Loop;
 use Tangence::Constants;
 use Tangence::Registry;
 use Tangence::Connection;
-$Tangence::Serialisation::SORT_HASH_KEYS = 1;
+$Tangence::Message::SORT_HASH_KEYS = 1;
 
 my $loop = IO::Async::Loop->new();
 testing_loop( $loop );
