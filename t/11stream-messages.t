@@ -39,7 +39,8 @@ my $serverstream;
 
 $serverstream = "";
 
-wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
+wait_for_stream { length $serverstream >= 5 and
+                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'serverstream after initial MSG_CALL' );
 
@@ -66,7 +67,8 @@ $expect = "\x80" . "\0\0\0\0";
 
 $serverstream = "";
 
-wait_for_stream { length $serverstream >= length $expect } $S2 => $serverstream;
+wait_for_stream { length $serverstream >= 5 and
+                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, '$serverstream after response' );
 
