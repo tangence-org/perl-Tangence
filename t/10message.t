@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 93;
+use Test::More tests => 124;
 use Test::HexString;
 
 use Tangence::Message;
@@ -15,7 +15,7 @@ sub test_data
 
    # Test round-trip of data to stream and back again
    my $m = Tangence::Message->new( 0 );
-   $m->pack_data( $args{data} );
+   is( $m->pack_data( $args{data} ), $m, "pack_data returns \$m for $name" );
 
    is_hexstr( $m->{record}, $args{stream}, "pack_data $name" );
 
@@ -82,7 +82,7 @@ sub test_specific
 
    my $m = Tangence::Message->new( 0 );
    my $pack_method = "pack_$args{type}";
-   $m->$pack_method( $args{data} );
+   is( $m->$pack_method( $args{data} ), $m, "$pack_method returns \$m for $name" );
 
    is_hexstr( $m->{record}, $args{stream}, "$pack_method $name" );
 
@@ -132,7 +132,7 @@ sub test_typed
    my %args = @_;
 
    my $m = Tangence::Message->new( 0 );
-   $m->pack_typed( $args{sig}, $args{data} );
+   is( $m->pack_typed( $args{sig}, $args{data} ), $m, "pack_typed returns \$m for $name" );
 
    is_hexstr( $m->{record}, $args{stream}, "pack_typed $name" );
 

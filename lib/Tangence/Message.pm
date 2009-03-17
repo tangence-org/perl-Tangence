@@ -167,11 +167,13 @@ sub pack_data
       $self->{record} .= pack( "Z*", $_ ) and $self->pack_data( $d->{$_} ) for @keys;
    }
    elsif( eval { $d->isa( "Tangence::Object" ) or $d->isa( "Tangence::ObjectProxy" ) } ) {
-      return $self->pack_obj( $d );
+      $self->pack_obj( $d );
    }
    else {
       croak "Do not know how to pack a " . ref($d);
    }
+
+   return $self;
 }
 
 sub unpack_data
@@ -214,6 +216,7 @@ sub pack_bool
    my $self = shift;
    my ( $d ) = @_;
    $self->_pack_leader( DATA_NUMBER, $d ? DATANUM_BOOLTRUE : DATANUM_BOOLFALSE );
+   return $self;
 }
 
 sub unpack_bool
@@ -275,6 +278,7 @@ sub pack_int
    my $subtype = _best_int_type_for( $d );
    $self->_pack_leader( DATA_NUMBER, $subtype );
    $self->{record} .= pack( $pack_int_format{$subtype}, $d );
+   return $self;
 }
 
 sub unpack_int
@@ -298,6 +302,7 @@ sub pack_str
    my $octets = encode_utf8( $d );
    $self->_pack_leader( DATA_STRING, length($octets) );
    $self->{record} .= $octets;
+   return $self;
 }
 
 sub unpack_str
@@ -381,6 +386,7 @@ sub pack_obj
    else {
       croak "Do not know how to pack a " . ref($d);
    }
+   return $self;
 }
 
 sub unpack_obj
@@ -418,6 +424,8 @@ sub pack_typed
       print STDERR "TODO: Pack as $sig from $d\n";
       die;
    }
+
+   return $self;
 }
 
 sub unpack_typed
