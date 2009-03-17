@@ -115,7 +115,7 @@ sub marshall_message
 
    foreach my $s ( @$sig ) {
       if( $s eq "*" ) {
-         $message->pack_data( $_ ) for @data;
+         $message->pack_all_data( @data );
       }
       elsif( $s eq "?" ) {
          $message->pack_data( shift @data );
@@ -154,7 +154,7 @@ sub on_read
 
    foreach my $s ( @$sig ) {
       if( $s eq "*" ) {
-         push @data, $message->unpack_data() while length $message->{record}; # cheating
+         push @data, $message->unpack_all_data();
       }
       elsif( $s eq "?" ) {
          push @data, $message->unpack_data();

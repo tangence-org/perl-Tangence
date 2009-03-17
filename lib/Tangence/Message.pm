@@ -208,6 +208,23 @@ sub unpack_data
    }
 }
 
+sub pack_all_data
+{
+   my $self = shift;
+   $self->pack_data( $_ ) for @_;
+
+   return $self;
+}
+
+sub unpack_all_data
+{
+   my $self = shift;
+   my @data;
+   push @data, $self->unpack_data while length $self->{record};
+
+   return @data;
+}
+
 ### New deep-typed interface. Will slowly replace the untyped 'pack_data'
 ### system so we don't mind temporary code duplication here
 
