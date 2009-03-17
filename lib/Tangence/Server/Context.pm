@@ -32,12 +32,12 @@ sub connection
 sub respond
 {
    my $self = shift;
-   my ( $type, @args ) = @_;
+   my ( $message ) = @_;
 
    $self->{responded} and croak "$self has responded once already";
 
    my $conn = $self->{conn};
-   $conn->respond( $self->{token}, [ $type, @args ] );
+   $conn->respond( $self->{token}, $message );
 
    $self->{responded} = 1;
 
@@ -49,7 +49,9 @@ sub responderr
    my $self = shift;
    my ( $msg ) = @_;
 
-   $self->respond( MSG_ERROR, $msg );
+   $self->respond( Tangence::Message->new( $self->{conn}, MSG_ERROR )
+      ->pack_str( $msg )
+   );
 }
 
 1;

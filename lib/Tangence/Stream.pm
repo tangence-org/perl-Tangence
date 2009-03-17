@@ -28,29 +28,6 @@ my %REQ_METHOD = (
    MSG_GETREGISTRY, 'handle_request_GETREGISTRY',
 );
 
-# Signatures of each request and response type
-my %MSG_SIGS = (
-   MSG_CALL,        [ 'int', 'str', '*' ],
-   MSG_SUBSCRIBE,   [ 'int', 'str' ],
-   MSG_UNSUBSCRIBE, [ 'int', 'str', 'int' ],
-   MSG_EVENT,       [ 'int', 'str', '*' ],
-   MSG_GETPROP,     [ 'int', 'str' ],
-   MSG_SETPROP,     [ 'int', 'str', '?' ],
-   MSG_WATCH,       [ 'int', 'str', 'bool' ],
-   MSG_UNWATCH,     [ 'int', 'str', 'int' ],
-   MSG_UPDATE,      [ 'int', 'str', 'u8', '*' ],
-   MSG_DESTROY,     [ 'int' ],
-
-   MSG_GETROOT,     [ '?' ],
-   MSG_GETREGISTRY, [],
-
-   MSG_OK,          [],
-   MSG_ERROR,       [ 'str' ],
-   MSG_RESULT,      [ '*' ],
-   MSG_SUBSCRIBED,  [],
-   MSG_WATCHING,    [],
-);
-
 sub new
 {
    my $class = shift;
@@ -65,20 +42,20 @@ sub new
       marshall_response => \&marshall_response,
 
       on_request => sub {
-         my ( $self, $token, $req ) = @_;
+         my ( $self, $token, $message ) = @_;
 
-         my ( $type, @data ) = @$req;
+         my $type = $message->type;
 
          if( my $method = $REQ_METHOD{$type} ) {
             if( $self->can( $method ) ) {
-               $self->$method( $token, @data );
+               $self->$method( $token, $message );
             }
             else {
-               $self->respond( $token, [ MSG_ERROR, sprintf( "Cannot respond to request type 0x%02x", $type ) ] );
+               $self->respondERROR( $token, sprintf( "Cannot respond to request type 0x%02x", $type ) );
             }
          }
          else {
-            $self->respond( $token, [ MSG_ERROR, sprintf( "Unrecognised request type 0x%02x", $type ) ] );
+            $self->respondERROR( $token, sprintf( "Unrecognised request type 0x%02x", $type ) );
          }
       },
 
@@ -105,25 +82,9 @@ sub new
 sub marshall_message
 {
    my $self = shift;
-   my ( $req ) = @_;
+   my ( $message ) = @_;
 
-   my ( $type, @data ) = @$req;
-
-   my $message = Tangence::Message->new( $self, $type );
-
-   my $sig = $MSG_SIGS{$type} or croak "Cannot find a message signature for $type";
-
-   foreach my $s ( @$sig ) {
-      if( $s eq "*" ) {
-         $message->pack_all_data( @data );
-      }
-      elsif( $s eq "?" ) {
-         $message->pack_data( shift @data );
-      }
-      else {
-         $message->pack_typed( $s, shift @data );
-      }
-   }
+   croak "\$message is not a Tangence::Message" unless eval { $message->isa( "Tangence::Message" ) };
 
    return $message->bytes;
 }
@@ -144,31 +105,11 @@ sub on_read
    my $message = Tangence::Message->try_new_from_bytes( $self, $$buffref ) or return 0;
    my $type = $message->type;
 
-   my $sig = $MSG_SIGS{$type};
-   unless( $sig ) {
-      carp "Cannot find a message signature for $type";
-      return 1;
-   }
-
-   my @data;
-
-   foreach my $s ( @$sig ) {
-      if( $s eq "*" ) {
-         push @data, $message->unpack_all_data();
-      }
-      elsif( $s eq "?" ) {
-         push @data, $message->unpack_data();
-      }
-      else {
-         push @data, $message->unpack_typed( $s );
-      }
-   }
-
    if( $type < 0x80 ) {
-      $self->incoming_request( [ $type, @data ] );
+      $self->incoming_request( $message );
    }
    else {
-      $self->incoming_response( [ $type, @data ] );
+      $self->incoming_response( $message );
    }
 
    return 1;
@@ -186,20 +127,22 @@ sub object_destroyed
    delete $self->{peer_hasobj}->{$objid};
 
    $self->request(
-      request => [ MSG_DESTROY, $objid ],
+      request => Tangence::Message->new( $self, MSG_DESTROY )
+         ->pack_int( $objid ),
 
       on_response => sub {
-         my ( $response ) = @_;
-         my $code = $response->[0];
+         my ( $message ) = @_;
+         my $type = $message->type;
 
-         if( $code == MSG_OK ) {
+         if( $type == MSG_OK ) {
             $donesub->();
          }
-         elsif( $code == MSG_ERROR ) {
-            print STDERR "Cannot get connection $self to destroy object $objid - error $response->[1]\n";
+         elsif( $type == MSG_ERROR ) {
+            my $msg = $message->unpack_str();
+            print STDERR "Cannot get connection $self to destroy object $objid - error $msg\n";
          }
          else {
-            print STDERR "Cannot get connection $self to destroy object $objid - code $code\n";
+            print STDERR "Cannot get connection $self to destroy object $objid - code $type\n";
          }
       },
    );

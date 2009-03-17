@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 6;
+use Test::More tests => 8;
 use Test::HexString;
 use IO::Async::Test;
 use IO::Async::Loop;
@@ -24,9 +24,15 @@ isa_ok( $stream, "Tangence::Stream", '$stream isa Tangence::Stream' );
 
 $loop->add( $stream );
 
+my $message;
+
+$message = Tangence::Message->new( $stream, MSG_CALL );
+$message->pack_int( 1 );
+$message->pack_str( "method" );
+
 my $response;
 $stream->request(
-   request => [ MSG_CALL, 1, "method" ],
+   request => $message,
    on_response => sub { $response = $_[0] },
 );
 
@@ -49,7 +55,8 @@ $S2->syswrite( "\x82" . "\0\0\0\x09" .
 
 wait_for { defined $response };
 
-is_deeply( $response, [ MSG_RESULT, "response" ], '$response to initial call' );
+is( $response->type, MSG_RESULT, '$response->type to initial call' );
+is( $response->unpack_str, "response", '$response->unpack_str to initial call' );
 
 $S2->syswrite( "\x04" . "\0\0\0\x08" .
                "\x02" . "\x01" .
@@ -59,9 +66,11 @@ wait_for { @calls };
 
 my $c = shift @calls;
 
-is_deeply( $c->[2], [ "1", "event" ], '$call data after MSG_EVENT' );
+is( $c->[2]->unpack_int, 1, '$message->unpack_int after MSG_EVENT' );
+is( $c->[2]->unpack_str, "event", '$message->unpack_str after MSG_EVENT' );
 
-$c->[0]->respond( $c->[1], [ MSG_OK ] );
+$message = Tangence::Message->new( $stream, MSG_OK );
+$c->[0]->respond( $c->[1], $message );
 
 $expect = "\x80" . "\0\0\0\0";
 
@@ -80,9 +89,9 @@ use base qw( Tangence::Stream );
 sub handle_request_EVENT
 {
    my $self = shift;
-   my ( $token, @data ) = @_;
+   my ( $token, $message ) = @_;
 
-   push @calls, [ $self, $token, \@data ];
+   push @calls, [ $self, $token, $message ];
    return 1;
 }
 

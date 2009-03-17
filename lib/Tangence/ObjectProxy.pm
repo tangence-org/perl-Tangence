@@ -132,18 +132,25 @@ sub call_method
 
    my $conn = $self->{conn};
    $conn->request(
-      request => [ MSG_CALL, $self->id, $method, $args ? @$args : () ],
+      request => Tangence::Message->new( $conn, MSG_CALL )
+         ->pack_int( $self->id )
+         ->pack_str( $method )
+         ->pack_all_data( $args ? @$args : () ),
 
       on_response => sub {
-         my ( $code, @data ) = @{$_[0]};
-         if( $code == MSG_RESULT ) {
+         my ( $message ) = @_;
+         my $type = $message->type;
+
+         if( $type == MSG_RESULT ) {
+            my @data = $message->unpack_all_data();
             $on_result->( @data );
          }
-         elsif( $code == MSG_ERROR ) {
-            $on_error->( @data );
+         elsif( $type == MSG_ERROR ) {
+            my $msg = $message->unpack_str();
+            $on_error->( $msg );
          }
          else {
-            $on_error->( "Unexpected response code $code" );
+            $on_error->( "Unexpected response code $type" );
          }
       },
    );
@@ -198,18 +205,24 @@ sub get_property
 
    my $conn = $self->{conn};
    $conn->request(
-      request => [ MSG_GETPROP, $self->id, $property ],
+      request => Tangence::Message->new( $conn, MSG_GETPROP )
+         ->pack_int( $self->id )
+         ->pack_str( $property ),
 
       on_response => sub {
-         my ( $code, @data ) = @{$_[0]};
-         if( $code == MSG_RESULT ) {
+         my ( $message ) = @_;
+         my $type = $message->type;
+
+         if( $type == MSG_RESULT ) {
+            my @data = $message->unpack_all_data();
             $on_value->( @data );
          }
-         elsif( $code == MSG_ERROR ) {
-            $on_error->( @data );
+         elsif( $type == MSG_ERROR ) {
+            my $msg = $message->unpack_str();
+            $on_error->( $msg );
          }
          else {
-            $on_error->( "Unexpected response code $code" );
+            $on_error->( "Unexpected response code $type" );
          }
       },
    );
@@ -358,18 +371,24 @@ sub set_property
 
    my $conn = $self->{conn};
    $conn->request(
-      request => [ MSG_SETPROP, $self->id, $property, $value ],
+      request => Tangence::Message->new( $conn, MSG_SETPROP )
+         ->pack_int( $self->id )
+         ->pack_str( $property )
+         ->pack_data( $value ),
 
       on_response => sub {
-         my ( $code, @data ) = @{$_[0]};
-         if( $code == MSG_OK ) {
+         my ( $message ) = @_;
+         my $type = $message->type;
+
+         if( $type == MSG_OK ) {
             $on_done->() if $on_done;
          }
-         elsif( $code == MSG_ERROR ) {
-            $on_error->( @data );
+         elsif( $type == MSG_ERROR ) {
+            my $msg = $message->unpack_str();
+            $on_error->( $msg );
          }
          else {
-            $on_error->( "Unexpected response code $code" );
+            $on_error->( "Unexpected response code $type" );
          }
       },
    );

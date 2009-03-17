@@ -56,7 +56,11 @@ sub get_by_id
 sub handle_request_CALL
 {
    my $self = shift;
-   my ( $token, $objid, $method, @args ) = @_;
+   my ( $token, $message ) = @_;
+   
+   my $objid  = $message->unpack_int();
+   my $method = $message->unpack_str();
+   my @args   = $message->unpack_all_data();
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
@@ -77,13 +81,18 @@ sub handle_request_CALL
 
    $@ and return $ctx->responderr( $@ );
 
-   $ctx->respond( MSG_RESULT, $result );
+   $ctx->respond( Tangence::Message->new( $self, MSG_RESULT )
+      ->pack_data( $result )
+   );
 }
 
 sub handle_request_SUBSCRIBE
 {
    my $self = shift;
-   my ( $token, $objid, $event ) = @_;
+   my ( $token, $message ) = @_;
+   
+   my $objid = $message->unpack_int();
+   my $event = $message->unpack_str();
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
@@ -99,7 +108,10 @@ sub handle_request_SUBSCRIBE
       sub {
          my ( undef, $event, @args ) = @_;
          $self->request(
-            request => [ MSG_EVENT, $objid, $event, @args ],
+            request => Tangence::Message->new( $self, MSG_EVENT )
+               ->pack_int( $objid )
+               ->pack_str( $event )
+               ->pack_all_data( @args ),
 
             on_response => sub { "IGNORE" },
          );
@@ -108,13 +120,17 @@ sub handle_request_SUBSCRIBE
 
    push @{ $self->{subscriptions} }, [ $object, $event, $id ];
 
-   $ctx->respond( MSG_SUBSCRIBED );
+   $ctx->respond( Tangence::Message->new( $self, MSG_SUBSCRIBED ) );
 }
 
 sub handle_request_UNSUBSCRIBE
 {
    my $self = shift;
-   my ( $token, $objid, $event, $id ) = @_;
+   my ( $token, $message ) = @_;
+   
+   my $objid = $message->unpack_int();
+   my $event = $message->unpack_str();
+   my $id    = $message->unpack_int();
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
@@ -130,13 +146,16 @@ sub handle_request_UNSUBSCRIBE
 
    @{ $self->{subscriptions} } = grep { $_->[2] eq $id } @{ $self->{subscriptions} };
 
-   $ctx->respond( MSG_OK );
+   $ctx->respond( Tangence::Message->new( $self, MSG_OK ) );
 }
 
 sub handle_request_GETPROP
 {
    my $self = shift;
-   my ( $token, $objid, $prop ) = @_;
+   my ( $token, $message ) = @_;
+   
+   my $objid = $message->unpack_int();
+   my $prop  = $message->unpack_str();
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
@@ -157,13 +176,19 @@ sub handle_request_GETPROP
 
    $@ and return $ctx->responderr( $@ );
 
-   $ctx->respond( MSG_RESULT, $result );
+   $ctx->respond( Tangence::Message->new( $self, MSG_RESULT )
+      ->pack_data( $result )
+   );
 }
 
 sub handle_request_SETPROP
 {
    my $self = shift;
-   my ( $token, $objid, $prop, $value ) = @_;
+   my ( $token, $message ) = @_;
+   
+   my $objid = $message->unpack_int();
+   my $prop  = $message->unpack_str();
+   my $value = $message->unpack_data();
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
@@ -184,13 +209,17 @@ sub handle_request_SETPROP
 
    $@ and return $ctx->responderr( $@ );
 
-   $ctx->respond( MSG_OK );
+   $ctx->respond( Tangence::Message->new( $self, MSG_OK ) );
 }
 
 sub handle_request_WATCH
 {
    my $self = shift;
-   my ( $token, $objid, $prop, $want_initial ) = @_;
+   my ( $token, $message ) = @_;
+   
+   my $objid = $message->unpack_int();
+   my $prop  = $message->unpack_str();
+   my $want_initial = $message->unpack_bool();
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
@@ -204,7 +233,7 @@ sub handle_request_WATCH
 
    $self->_install_watch( $object, $prop );
 
-   $ctx->respond( MSG_WATCHING );
+   $ctx->respond( Tangence::Message->new( $self, MSG_WATCHING ) );
    undef $ctx;
 
    return unless $want_initial;
@@ -216,7 +245,11 @@ sub handle_request_WATCH
       my $result = $object->$m();
 
       $self->request(
-         request => [ MSG_UPDATE, $objid, $prop, CHANGE_SET, $result ],
+         request => Tangence::Message->new( $self, MSG_UPDATE )
+            ->pack_int( $objid )
+            ->pack_str( $prop )
+            ->pack_typed( "u8", CHANGE_SET )
+            ->pack_data( $result ),
 
          on_response => sub { "IGNORE" },
       );
@@ -227,7 +260,11 @@ sub handle_request_WATCH
 sub handle_request_UNWATCH
 {
    my $self = shift;
-   my ( $token, $objid, $prop, $id ) = @_;
+   my ( $token, $message ) = @_;
+   
+   my $objid = $message->unpack_int();
+   my $prop  = $message->unpack_str();
+   my $id    = $message->unpack_int();
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
@@ -243,13 +280,15 @@ sub handle_request_UNWATCH
 
    @{ $self->{watches} } = grep { $_->[2] eq $id } @{ $self->{watches} };
 
-   $ctx->respond( MSG_OK );
+   $ctx->respond( Tangence::Message->new( $self, MSG_OK ) );
 }
 
 sub handle_request_GETROOT
 {
    my $self = shift;
-   my ( $token, $identity ) = @_;
+   my ( $token, $message ) = @_;
+   
+   my $identity = $message->unpack_data();
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
@@ -257,19 +296,24 @@ sub handle_request_GETROOT
 
    $self->{identity} = $identity;
 
-   $ctx->respond( MSG_RESULT, $registry->get_by_id( 1 ) );
+   my $result = $registry->get_by_id( 1 );
+   $ctx->respond( Tangence::Message->new( $self, MSG_RESULT )
+      ->pack_data( $result )
+   );
 }
 
 sub handle_request_GETREGISTRY
 {
    my $self = shift;
-   my ( $token, $identity ) = @_;
+   my ( $token ) = @_;
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
    my $registry = $self->{registry};
 
-   $ctx->respond( MSG_RESULT, $registry );
+   $ctx->respond( Tangence::Message->new( $self, MSG_RESULT )
+      ->pack_data( $registry )
+   );
 }
 
 sub _install_watch
@@ -281,7 +325,11 @@ sub _install_watch
       sub {
          my ( undef, $prop, $how, @value ) = @_;
          $self->request(
-            request => [ MSG_UPDATE, $object->id, $prop, $how, @value ],
+            request => Tangence::Message->new( $self, MSG_UPDATE )
+               ->pack_int( $object->id )
+               ->pack_str( $prop )
+               ->pack_typed( "u8", $how )
+               ->pack_all_data( @value ),
 
             on_response => sub { "IGNORE" },
          );

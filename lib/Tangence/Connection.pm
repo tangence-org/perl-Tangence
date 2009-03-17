@@ -186,41 +186,44 @@ sub _do_initial
    my %args = @_;
 
    $self->request(
-      request => [ MSG_GETROOT, $self->{identity} ],
+      request => Tangence::Message->new( $self, MSG_GETROOT )
+         ->pack_data( $self->{identity} ),
 
       on_response => sub {
-         my ( $response ) = @_;
-         my $code = $response->[0];
+         my ( $message ) = @_;
+         my $type = $message->type;
 
-         if( $code == MSG_RESULT ) {
-            $self->{rootobj} = $response->[1];
+         if( $type == MSG_RESULT ) {
+            $self->{rootobj} = $message->unpack_data();
             $args{on_root}->( $self->{rootobj} ) if $args{on_root};
          }
-         elsif( $code == MSG_ERROR ) {
-            print STDERR "Cannot get root object - error $response->[1]";
+         elsif( $type == MSG_ERROR ) {
+            my $msg = $message->unpack_str();
+            print STDERR "Cannot get root object - error $msg";
          }
          else {
-            print STDERR "Cannot get root object - code $code\n";
+            print STDERR "Cannot get root object - code $type\n";
          }
       }
    );
 
    $self->request(
-      request => [ MSG_GETREGISTRY ],
+      request => Tangence::Message->new( $self, MSG_GETREGISTRY ),
 
       on_response => sub {
-         my ( $response ) = @_;
-         my $code = $response->[0];
+         my ( $message ) = @_;
+         my $type = $message->type;
 
-         if( $code == MSG_RESULT ) {
-            $self->{registry} = $response->[1];
+         if( $type == MSG_RESULT ) {
+            $self->{registry} = $message->unpack_data();
             $args{on_registry}->( $self->{registry} ) if $args{on_registry};
          }
-         elsif( $code == MSG_ERROR ) {
-            print STDERR "Cannot get registry - error $response->[1]";
+         elsif( $type == MSG_ERROR ) {
+            my $msg = $message->unpack_str();
+            print STDERR "Cannot get registry - error $msg";
          }
          else {
-            print STDERR "Cannot get registry - code $code\n";
+            print STDERR "Cannot get registry - code $type\n";
          }
       }
    );
@@ -248,21 +251,24 @@ sub subscribe
    $self->{subscriptions}->{$objid}->{$event} = undef;
 
    $self->request(
-      request => [ MSG_SUBSCRIBE, $objid, $event ],
+      request => Tangence::Message->new( $self, MSG_SUBSCRIBE )
+         ->pack_int( $objid )
+         ->pack_str( $event ),
 
       on_response => sub {
-         my ( $response ) = @_;
-         my $code = $response->[0];
+         my ( $message ) = @_;
+         my $type = $message->type;
 
-         if( $code == MSG_SUBSCRIBED ) {
+         if( $type == MSG_SUBSCRIBED ) {
             $self->{subscriptions}->{$objid}->{$event} = $callback;
             $on_subscribed->() if $on_subscribed;
          }
-         elsif( $code == MSG_ERROR ) {
-            print STDERR "Cannot subscribe to event '$event' on object $objid - error $response->[1]\n";
+         elsif( $type == MSG_ERROR ) {
+            my $msg = $message->unpack_str();
+            print STDERR "Cannot subscribe to event '$event' on object $objid - error $msg\n";
          }
          else {
-            print STDERR "Cannot subscribe to event '$event' on object $objid - code $code\n";
+            print STDERR "Cannot subscribe to event '$event' on object $objid - code $type\n";
          }
       },
    );
@@ -271,9 +277,13 @@ sub subscribe
 sub handle_request_EVENT
 {
    my $self = shift;
-   my ( $token, $objid, $event, @args ) = @_;
+   my ( $token, $message ) = @_;
 
-   $self->respond( $token, [ MSG_OK ] );
+   my $objid = $message->unpack_int();
+   my $event = $message->unpack_str();
+   my @args  = $message->unpack_all_data();
+
+   $self->respond( $token, Tangence::Message->new( $self, MSG_OK ) );
 
    my $callback = $self->{subscriptions}->{$objid}->{$event};
 
@@ -304,20 +314,24 @@ sub watch
    $self->{watches}->{$objid}->{$prop} = 1;
 
    $self->request(
-      request => [ MSG_WATCH, $objid, $prop, !!$args{want_initial} ],
+      request => Tangence::Message->new( $self, MSG_WATCH )
+         ->pack_int( $objid )
+         ->pack_str( $prop )
+         ->pack_bool( $args{want_initial} ),
 
       on_response => sub {
-         my ( $response ) = @_;
-         my $code = $response->[0];
+         my ( $message ) = @_;
+         my $type = $message->type;
 
-         if( $code == MSG_WATCHING ) {
+         if( $type == MSG_WATCHING ) {
             $on_watched->() if $on_watched;
          }
-         elsif( $code == MSG_ERROR ) {
-            print STDERR "Cannot watch property '$prop' on object $objid - error $response->[1]\n";
+         elsif( $type == MSG_ERROR ) {
+            my $msg = $message->unpack_str();
+            print STDERR "Cannot watch property '$prop' on object $objid - error $msg\n";
          }
          else {
-            print STDERR "Cannot watch property '$prop' on object $objid - code $code\n";
+            print STDERR "Cannot watch property '$prop' on object $objid - code $type\n";
          }
       },
    );
@@ -326,9 +340,14 @@ sub watch
 sub handle_request_UPDATE
 {
    my $self = shift;
-   my ( $token, $objid, $prop, $how, @value ) = @_;
+   my ( $token, $message ) = @_;
 
-   $self->respond( $token, [ MSG_OK ] );
+   my $objid = $message->unpack_int();
+   my $prop  = $message->unpack_str();
+   my $how   = $message->unpack_typed( "u8" );
+   my @value = $message->unpack_all_data();
+
+   $self->respond( $token, Tangence::Message->new( $self, MSG_OK ) );
 
    if( my $obj = $self->{objectproxies}->{$objid} ) {
       $obj->_update_property( $prop, $how, @value );
@@ -338,14 +357,16 @@ sub handle_request_UPDATE
 sub handle_request_DESTROY
 {
    my $self = shift;
-   my ( $token, $objid ) = @_;
+   my ( $token, $message ) = @_;
+
+   my $objid = $message->unpack_int();
 
    if( my $obj = $self->{objectproxies}->{$objid} ) {
       $obj->destroy;
       delete $self->{objectproxies}->{$objid};
    }
 
-   $self->respond( $token, [ MSG_OK ] );
+   $self->respond( $token, Tangence::Message->new( $self, MSG_OK ) );
 }
 
 sub get_root
