@@ -9,17 +9,17 @@ use Tangence::Constants;
 
 our %METHODS = (
    get_by_id => {
-      args => 'int',
+      args => [qw( int )],
       ret  => 'obj',
    },
 );
 
 our %EVENTS = (
    object_constructed => {
-      args => 'int',
+      args => [qw( int )],
    },
    object_destroyed => {
-      args => 'int',
+      args => [qw( int )],
    },
 );
 

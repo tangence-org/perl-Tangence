@@ -25,30 +25,30 @@ is( $ball->id, "1", '$ball->id' );
 is( $ball->describe, 't::Ball[colour="red"]', '$ball->describe' );
 
 is_deeply( $ball->can_method( "bounce" ),
-           { args => 'str', ret => '' }, '$ball->can_method "bounce"' );
+           { args => [qw( str )], ret => '' }, '$ball->can_method "bounce"' );
 
 is_deeply( $ball->can_method( "fly" ),
            undef, '$ball->can_method "fly" is undef' );
 
 is_deeply( $ball->can_method(),
            { 
-              bounce => { args => 'str', ret => '' },
+              bounce => { args => [qw( str )], ret => '' },
            },
            '$ball->can_method() yields all' );
 
 is_deeply( $ball->can_event( "bounced" ),
-           { args => 'str' }, '$ball->can_event "bounced"' );
+           { args => [qw( str )] }, '$ball->can_event "bounced"' );
 
 is_deeply( $ball->can_event( "destroy" ),
-           { args => '' }, '$ball->can_event "destroy"' );
+           { args => [] }, '$ball->can_event "destroy"' );
 
 is_deeply( $ball->can_event( "flew" ),
            undef, '$ball->can_event "flew" is undef' );
 
 is_deeply( $ball->can_event(),
            {
-              bounced => { args => 'str' },
-              destroy => { args => '' },
+              bounced => { args => [qw( str )] },
+              destroy => { args => [] },
            },
            '$ball->can_event() yields all' );
 
@@ -69,12 +69,12 @@ is_deeply( $ball->introspect,
            {
               isa => [qw( t::Ball Tangence::Object )],
               methods => {
-                 bounce     => { args => 'str',  ret => '' },
+                 bounce => { args => [qw( str )], ret => '' },
               },
               events => {
-                 bounced => { args => 'str' },
+                 bounced => { args => [qw( str )] },
 
-                 destroy => { args => '' },
+                 destroy => { args => [] },
               },
               properties => {
                  colour => { dim => DIM_SCALAR, type => 'int' },

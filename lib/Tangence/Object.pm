@@ -11,7 +11,7 @@ our %METHODS = (
 
 our %EVENTS = (
    destroy => {
-      args => '',
+      args => [],
    },
 );
 

@@ -46,16 +46,16 @@ my $expect;
 
 # This long string is massive and annoying. Sorry.
 
-$expect = "\x82" . "\0\0\0\xcc" .
+$expect = "\x82" . "\0\0\0\xcf" .
           "\xe2" . "t::Bag\0" .
-                   "\x64" . "events\0"     . "\x61" . "destroy\0" . "\x61" . "args\0" . "\x20" .
+                   "\x64" . "events\0"     . "\x61" . "destroy\0" . "\x61" . "args\0" . "\x40" .
                             "isa\0"        . "\x42" . "\x26" . "t::Bag" .
                                                       "\x30" . "Tangence::Object" .
-                            "methods\0"    . "\x63" . "add_ball\0"  . "\x62" . "args\0" . "\x23" . "obj" .
+                            "methods\0"    . "\x63" . "add_ball\0"  . "\x62" . "args\0" . "\x41" . "\x23" . "obj" .
                                                                                "ret\0"  . "\x20" .
-                                                      "get_ball\0"  . "\x62" . "args\0" . "\x23" . "str" .
+                                                      "get_ball\0"  . "\x62" . "args\0" . "\x41" . "\x23" . "str" .
                                                                                "ret\0"  . "\x23" . "obj" .
-                                                      "pull_ball\0" . "\x62" . "args\0" . "\x23" . "str" .
+                                                      "pull_ball\0" . "\x62" . "args\0" . "\x41" . "\x23" . "str" .
                                                                                "ret\0"  . "\x23" . "obj" .
                             "properties\0" . "\x61" . "colours\0" . "\x62" . "dim\0"  . "\x21" . "2" .
                                                                              "type\0" . "\x23" . "int" .
@@ -78,14 +78,14 @@ $S2->syswrite( "\x41" . "\0\0\0\0" );
 
 # This long string is massive and annoying. Sorry.
 
-$expect = "\x82" . "\0\0\0\xf5" .
+$expect = "\x82" . "\0\0\0\xf8" .
           "\xe2" . "Tangence::Registry\0" .
-                   "\x64" . "events\0"     . "\x63" . "destroy\0"            . "\x61" . "args\0" . "\x20" .
-                                                      "object_constructed\0" . "\x61" . "args\0" . "\x23" . "int" .
-                                                      "object_destroyed\0"   . "\x61" . "args\0" . "\x23" . "int" .
+                   "\x64" . "events\0"     . "\x63" . "destroy\0"            . "\x61" . "args\0" . "\x40" .
+                                                      "object_constructed\0" . "\x61" . "args\0" . "\x41" . "\x23" . "int" .
+                                                      "object_destroyed\0"   . "\x61" . "args\0" . "\x41" . "\x23" . "int" .
                             "isa\0"        . "\x42" . "\x32" . "Tangence::Registry" .
                                                       "\x30" . "Tangence::Object" .
-                            "methods\0"    . "\x61" . "get_by_id\0" . "\x62" . "args\0" . "\x23" . "int" .
+                            "methods\0"    . "\x61" . "get_by_id\0" . "\x62" . "args\0" . "\x41" . "\x23" . "int" .
                                                                                "ret\0"  . "\x23" . "obj" .
                             "properties\0" . "\x61" . "objects\0" . "\x62" . "dim\0"  . "\x21" . "2" .
                                                                              "type\0" . "\x23" . "str" .
@@ -107,13 +107,13 @@ $S2->syswrite( "\1" . "\0\0\0\x10" .
 
 # This long string is massive and annoying. Sorry.
 
-$expect = "\x82" . "\0\0\0\xcd" .
+$expect = "\x82" . "\0\0\0\xcf" .
           "\xe2" . "t::Ball\0" .
-                   "\x64" . "events\0"     . "\x62" . "bounced\0" . "\x61" . "args\0" . "\x23" . "str" .
-                                                      "destroy\0" . "\x61" . "args\0" . "\x20" .
+                   "\x64" . "events\0"     . "\x62" . "bounced\0" . "\x61" . "args\0" . "\x41" . "\x23" . "str" .
+                                                      "destroy\0" . "\x61" . "args\0" . "\x40" .
                             "isa\0"        . "\x42" . "\x27" . "t::Ball" .
                                                       "\x30" . "Tangence::Object" .
-                            "methods\0"    . "\x61" . "bounce\0" . "\x62" . "args\0" . "\x23" . "str" .
+                            "methods\0"    . "\x61" . "bounce\0" . "\x62" . "args\0" . "\x41" . "\x23" . "str" .
                                                                             "ret\0" . "\x20" .
                             "properties\0" . "\x62" . "colour\0" . "\x62" . "dim\0" . "\x21" . "1" .
                                                                             "type\0" . "\x23" . "int" .

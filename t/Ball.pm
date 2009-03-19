@@ -8,14 +8,14 @@ use Tangence::Constants;
 
 our %METHODS = (
    bounce => {
-      args => 'str',
+      args => [qw( str )],
       ret  => '',
    },
 );
 
 our %EVENTS = (
    bounced => {
-      args => 'str',
+      args => [qw( str )],
    },
 );
 

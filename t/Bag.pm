@@ -8,17 +8,17 @@ use Tangence::Constants;
 
 our %METHODS = (
    get_ball => {
-      args => 'str',
+      args => [qw( str )],
       ret  => 'obj',
    },
 
    pull_ball => {
-      args => 'str',
+      args => [qw( str )],
       ret  => 'obj',
    },
 
    add_ball => {
-      args => 'obj',
+      args => [qw( obj )],
       ret  => '',
    },
 );
