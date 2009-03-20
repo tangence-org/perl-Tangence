@@ -7,14 +7,13 @@ is. Tangence is all of the following:
  1. A single server/multiple client protocol for sharing information
     about objects.
 
- 2. An object model - it defines the abstract look-and-feel of objects 
+ 2. A data model - it defines the types of values that are transmitted
+    between the server and clients.
+
+ 3. An object model - it defines the abstract look-and-feel of objects 
     that are visible in the server end, and the proxies to them that
     exist in the client ends.
-   
- 3. A data model - it defines the types of data that objects can take as
-    arguments to and results from methods, arguments to events, and
-    values of properties.
- 
+
  4. A wire protocol - it defines the bits down the wire of some stream.
 
  5. A collection of Perl modules (a Perl distribution) which implements
@@ -45,7 +44,44 @@ every server object needs to have a corresponding proxy in every client -
 proxies are created lazily when they are required.
 
 
-2. Object Model
+2. Data Model
+-------------
+
+Whenever a value is sent across the connection between the server and a
+client, that value has a fixed type. The underlying streaming layer
+recognises the following fundamental types of values:
+
+ * Booleans
+
+ * Integers, both signed and unsigned, in 8, 16, 32 and 64bit lengths
+
+ * Unicode strings
+
+ * References to Tangence objects
+
+ * Lists of values
+
+ * Dictionaries of (string) named keys to values
+
+As Tangence is primarily an interprocess-communication layer, its main
+focus is that of communication. The Data Model applies transiently, to
+data as it is in transit between the server and a client. A consequence
+here is that it only considers the surface value of the types of data,
+rather than any deeper significance. It does not preserve self-referential
+data, nor can it cope with cyclic structures. More complex shaped data
+should be represented by real Tangence objects.
+
+[
+ There are also a number of unresolved issues here to deal with export to
+ other languages. Primarily, those are 
+  * how deeply typing information should be applied to collections
+  * whether a new type of "structure" should be created, which allows for
+    a hetrogenous collection, if typing is applied deeply to arrays and
+    hashes
+]
+
+
+3. Object Model
 ---------------
 
 In Tangence, the primary item of interaction is an object. Tangence
@@ -79,7 +115,7 @@ themselves are actually implemented. The class inheritance therefore only
 applies to the interface, and does not directly relate to any
 implementation behaviour the server might implement.
 
-2.1. Methods
+3.1. Methods
 
 Each object class may define named methods that clients can invoke on
 objects in the server. Each method has:
@@ -95,7 +131,7 @@ Methods on objects in the server may be invoked by clients. Once a
 method is invoked by a client, the client must wait until it returns
 before it can send any other request to the server.
 
-2.2 Events
+3.2 Events
 
 Each object class may define named events that objects may emit. Each
 method has:
@@ -111,7 +147,7 @@ not automatically informed of every event on every object. Instead, the
 client must specifically register interest in specific events on specific
 objects.
 
-2.3 Properties
+3.3 Properties
 
 Each object class may define named properties that the object has. Each
 object in the class will have a value for the property. Each property has:
@@ -129,25 +165,25 @@ changes to the value.
 Each property has a dimension; one of scalar, array, hash, or object set.
 The behaviour of each type of property is:
 
-2.3.1 Scalar Properties
+3.3.1 Scalar Properties
 
 The property is a single atomic scalar. It is set atomically by the
 server, and may be queried.
 
-2.3.2 Array Properties
+3.3.2 Array Properties
 
 The property is a contiguous array of individual elements. Each element is
 indexed by a non-negative integer. The property type gives the type of
 each element in the array.
 
-2.3.3 Hash Properties
+3.3.3 Hash Properties
 
 The property is an association between string and values. Each element is
 uniquely indexed by a null-terminated string. The property type gives the
 type of each element in the hash.  The elements do not have an inherent
 ordering and are indexed by unique strings.
 
-2.3.4 Object Set Properties
+3.3.4 Object Set Properties
 
 The property is an unordered collection of Tangence objects.
 
@@ -172,50 +208,6 @@ called "smash values".
 [There are issues here that need resolving to move Tangence out from
 being Perl-specific into a more general-purpose layer - more on this in
 a later email].
-
-
-3. Data Model
--------------
-
-When executing a method, firing an event, or getting, setting, or updating
-the value of a property, the data involved has a type. The underlying
-streaming layer recognises the following fundamental types of values:
-
- * Booleans
-
- * Integers, both signed and unsigned, in 8, 16, 32 and 64bit lengths
-
- * Unicode strings
-
- * References to Tangence objects
-
- * Lists of values
-
- * Dictionaries of (string) named keys to values
-
-These map closely to the fundamental types in Perl. The data model is
-applied to each argument to a method or event, the return value of a
-method, and the type of a property. In the case of a property, the type
-applies to the whole scalar, or to the individual elements in an array
-or hash, depending on the dimension of the property. Object set properties
-always contain objects.
-
-As Tangence is primarily an interprocess-communication layer, its main
-focus is that of communication. The Data Model applies transiently, to
-data as it is in transit between the server and a client. A consequence
-here is that it only considers the surface value of the types of data,
-rather than any deeper significance. It does not preserve self-referential
-data, nor can it cope with cyclic structures. More complex shaped data
-should be represented by real Tangence objects.
-
-[
- There are also a number of unresolved issues here to deal with export to
- other languages. Primarily, those are 
-  * how deeply typing information should be applied to collections
-  * whether a new type of "structure" should be created, which allows for
-    a hetrogenous collection, if typing is applied deeply to arrays and
-    hashes
-]
 
 
 4. Wire Protocol
