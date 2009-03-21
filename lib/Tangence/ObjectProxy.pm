@@ -165,6 +165,9 @@ sub subscribe_event
    ref( my $callback = delete $args{on_fire} ) eq "CODE"
       or croak "Expected 'on_fire' as a CODE ref";
 
+   my $on_error = delete $args{on_error} || $self->{on_error};
+   ref $on_error eq "CODE" or croak "Expected 'on_error' as a CODE ref";
+
    my $edef = $self->can_event( $event );
    croak "Class ".$self->class." does not have an event $event" unless $edef;
 
@@ -178,13 +181,41 @@ sub subscribe_event
 
    return if $event eq "destroy"; # This is automatically handled
 
+   my $on_subscribed = $args{on_subscribed};
+
    my $conn = $self->{conn};
-   $conn->subscribe( 
-      objid    => $self->{id},
-      event    => $event,
-      callback => sub { foreach my $cb ( @cbs ) { $cb->( @_ ) } },
-      on_subscribed => $args{on_subscribed},
+   $conn->request(
+      request => Tangence::Message->new( $conn, MSG_SUBSCRIBE )
+         ->pack_int( $self->id )
+         ->pack_str( $event ),
+
+      on_response => sub {
+         my ( $message ) = @_;
+         my $type = $message->type;
+
+         if( $type == MSG_SUBSCRIBED ) {
+            $on_subscribed->() if $on_subscribed;
+         }
+         elsif( $type == MSG_ERROR ) {
+            my $msg = $message->unpack_str();
+            $on_error->( $msg );
+         }
+         else {
+            $on_error->( "Unexpected response code $type" );
+         }
+      },
    );
+
+}
+
+sub _event_fired
+{
+   my $self = shift;
+   my ( $event, @args ) = @_;
+
+   if( my $cbs = $self->{subscriptions}->{$event} ) {
+      foreach my $cb ( @$cbs ) { $cb->( $self, $event, @args ) }
+   }
 }
 
 sub get_property

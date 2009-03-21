@@ -229,51 +229,6 @@ sub _do_initial
    );
 }
 
-sub subscribe
-{
-   my $self = shift;
-   my %args =  @_;
-
-   my $objid = delete $args{objid}; # might be 0
-   defined $objid or croak "Need an objid";
-
-   my $event = delete $args{event} or croak "Need a event";
-
-   my $callback = delete $args{callback};
-   ref $callback eq "CODE" or croak "Need a callback as CODE ref";
-
-   my $on_subscribed = delete $args{on_subscribed};
-
-   if( exists $self->{subscriptions}->{$objid}->{$event} ) {
-      croak "Cannot subscribe to event $event on object $objid - already subscribed";
-   }
-
-   $self->{subscriptions}->{$objid}->{$event} = undef;
-
-   $self->request(
-      request => Tangence::Message->new( $self, MSG_SUBSCRIBE )
-         ->pack_int( $objid )
-         ->pack_str( $event ),
-
-      on_response => sub {
-         my ( $message ) = @_;
-         my $type = $message->type;
-
-         if( $type == MSG_SUBSCRIBED ) {
-            $self->{subscriptions}->{$objid}->{$event} = $callback;
-            $on_subscribed->() if $on_subscribed;
-         }
-         elsif( $type == MSG_ERROR ) {
-            my $msg = $message->unpack_str();
-            print STDERR "Cannot subscribe to event '$event' on object $objid - error $msg\n";
-         }
-         else {
-            print STDERR "Cannot subscribe to event '$event' on object $objid - code $type\n";
-         }
-      },
-   );
-}
-
 sub handle_request_EVENT
 {
    my $self = shift;
@@ -285,10 +240,8 @@ sub handle_request_EVENT
 
    $self->respond( $token, Tangence::Message->new( $self, MSG_OK ) );
 
-   my $callback = $self->{subscriptions}->{$objid}->{$event};
-
-   if( $callback ) {
-      $callback->( $objid, $event, @args );
+   if( my $obj = $self->{objectproxies}->{$objid} ) {
+      $obj->_event_fired( $event, @args );
    }
    else {
       print STDERR "Got spurious EVENT $event on object $objid: " . join( ", ", @args ) . "\n";
@@ -426,7 +379,6 @@ sub make_proxy
          my $objid = $obj->id;
          delete $self->{objectproxies}->{$objid};
          delete $self->{watches}->{$objid};
-         delete $self->{subscriptions}->{$objid};
       },
    );
 
