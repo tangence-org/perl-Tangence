@@ -2,7 +2,8 @@
 
 use strict;
 
-use Test::More tests => 120;
+use Test::More tests => 132;
+use Test::Exception;
 use Test::HexString;
 
 use Tangence::Message;
@@ -24,6 +25,26 @@ sub test_specific
    is( length $m->{record}, 0, "eats all stream for $name" );
 }
 
+sub test_specific_dies
+{
+   my $name = shift;
+   my %args = @_;
+
+   dies_ok( sub {
+      my $m = Tangence::Message->new( 0 );
+      my $pack_method = "pack_$args{type}";
+
+      $m->$pack_method( $args{data} );
+   }, "pack $name dies" ) if exists $args{data};
+
+   dies_ok( sub {
+      my $m = Tangence::Message->new( 0, undef, $args{stream} );
+      my $unpack_method = "unpack_$args{type}";
+
+      $m->$unpack_method()
+   }, "unpack $name dies" ) if exists $args{stream};
+}
+
 test_specific "bool f",
    type   => "bool",
    data   => 0,
@@ -33,6 +54,10 @@ test_specific "bool t",
    type   => "bool",
    data   => 1,
    stream => "\x01";
+
+test_specific_dies "bool from str",
+   type   => "bool",
+   stream => "\x20";
 
 test_specific "int tiny",
    type   => "int",
@@ -54,6 +79,15 @@ test_specific "int -ve",
    data   => -0x07654321,
    stream => "\x07\xf8\x9a\xbc\xdf";
 
+test_specific_dies "int from str",
+   type   => "int",
+   stream => "\x20";
+
+test_specific_dies "int from array",
+   type   => "int",
+   data   => [],
+   stream => "\x40";
+
 test_specific "string",
    type   => "str",
    data   => "hello",
@@ -69,18 +103,45 @@ test_specific "marginal string",
    data   => "x" x 0x1f,
    stream => "\x3f\x1f" . ( "x" x 0x1f );
 
+test_specific_dies "string from array",
+   type   => "str",
+   data   => [],
+   stream => "\x40";
+
 sub test_typed
 {
    my $name = shift;
    my %args = @_;
 
+   my $sig = $args{sig};
+
    my $m = Tangence::Message->new( 0 );
-   is( $m->pack_typed( $args{sig}, $args{data} ), $m, "pack_typed returns \$m for $name" );
+   is( $m->pack_typed( $sig, $args{data} ), $m, "pack_typed returns \$m for $name" );
 
    is_hexstr( $m->{record}, $args{stream}, "pack_typed $name" );
 
-   is_deeply( $m->unpack_typed( $args{sig} ), $args{data}, "unpack_typed $name" );
+   is_deeply( $m->unpack_typed( $sig ), $args{data}, "unpack_typed $name" );
    is( length $m->{record}, 0, "eats all stream for $name" );
+}
+
+sub test_typed_dies
+{
+   my $name = shift;
+   my %args = @_;
+
+   my $sig = $args{sig};
+
+   dies_ok( sub {
+      my $m = Tangence::Message->new( 0 );
+
+      $m->pack_typed( $sig, $args{data} );
+   }, "pack_typed($sig) $name dies" ) if exists $args{data};
+
+   dies_ok( sub {
+      my $m = Tangence::Message->new( 0, undef, $args{stream} );
+
+      $m->unpack_typed( $sig )
+   }, "unpack_typed($sig) $name dies" ) if exists $args{stream};
 }
 
 test_typed "bool f",
@@ -92,6 +153,10 @@ test_typed "bool t",
    sig    => "bool",
    data   => 1,
    stream => "\x01";
+
+test_typed_dies "bool from str",
+   sig    => "bool",
+   stream => "\x20";
 
 test_typed "num u8",
    sig    => "u8",
@@ -133,10 +198,24 @@ test_typed "int -ve",
    data   => -0x07654321,
    stream => "\x07\xf8\x9a\xbc\xdf";
 
+test_typed_dies "int from str",
+   sig    => "int",
+   stream => "\x20";
+
+test_typed_dies "int from array",
+   sig    => "int",
+   data   => [],
+   stream => "\x40";
+
 test_typed "string",
    sig    => "str",
    data   => "hello",
    stream => "\x25hello";
+
+test_typed_dies "string from array",
+   sig    => "str",
+   data   => [],
+   stream => "\x40";
 
 test_typed "any (undef)",
    sig    => "any",
