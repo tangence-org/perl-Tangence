@@ -9,7 +9,7 @@ use Tangence::Constants;
 our %METHODS = (
    bounce => {
       args => [qw( str )],
-      ret  => '',
+      ret  => 'str',
    },
 );
 

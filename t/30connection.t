@@ -103,14 +103,14 @@ is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL' );
 
 # This long string is massive and annoying. Sorry.
 
-$S2->syswrite( "\x82" . "\0\0\0\xcf" .
+$S2->syswrite( "\x82" . "\0\0\0\xd2" .
                "\xe2" . "t::Ball\0" .
                         "\x64" . "events\0"     . "\x62" . "bounced\0" . "\x61" . "args\0" . "\x41" . "\x23" . "str" .
                                                            "destroy\0" . "\x61" . "args\0" . "\x40" .
                                  "isa\0"        . "\x42" . "\x27" . "t::Ball" .
                                                            "\x30" . "Tangence::Object" .
                                  "methods\0"    . "\x61" . "bounce\0" . "\x62" . "args\0" . "\x41" . "\x23" . "str" .
-                                                                                 "ret\0" . "\x20" .
+                                                                                 "ret\0" . "\x23" . "str" .
                                  "properties\0" . "\x62" . "colour\0" . "\x62" . "dim\0" . "\x21" . "1" .
                                                                                  "type\0" . "\x23" . "int" .
                                                            "size\0"   . "\x63" . "dim\0" . "\x21" . "1" .
@@ -129,7 +129,7 @@ my $ballproxy = $result[0];
 ok( $ballproxy->proxy_isa( "t::Ball" ), 'proxy for isa t::Ball' );
 
 is_deeply( $ballproxy->can_method( "bounce" ),
-           { args => [qw( str )], ret => "" },
+           { args => [qw( str )], ret => "str" },
            'proxy can_method bounce' );
 
 my $result;
