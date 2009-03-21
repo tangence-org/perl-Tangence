@@ -49,19 +49,38 @@ proxies are created lazily when they are required.
 
 Whenever a value is sent across the connection between the server and a
 client, that value has a fixed type. The underlying streaming layer
-recognises the following fundamental types of values:
+recognises the following fundamental types of values. Each type has a
+string to identify call it, called the signature. These are used by
+introspection data; see later.
 
  * Booleans
 
+   Uses the type signature "bool".
+
  * Integers, both signed and unsigned, in 8, 16, 32 and 64bit lengths
+
+   An integer of unspecified size uses the type signature "int".
+   Specific sized integers use the type signatures
+     "s8", "s16", "s32", "s64", "u8", "u16", "u32", "u64"
 
  * Unicode strings
 
+   Uses the type signature "str".
+
  * References to Tangence objects
+
+   Uses the type signature "obj".
 
  * Lists of values
 
+   Uses the prefix "[" in front of the type signature of its element type.
+
  * Dictionaries of (string) named keys to values
+
+   Uses the prefix "{" in front of the type signature of its element type.
+
+ * For type signatures, there is also the type of "any", which allows any
+   type.
 
 As Tangence is primarily an interprocess-communication layer, its main
 focus is that of communication. The Data Model applies transiently, to
@@ -72,12 +91,9 @@ data, nor can it cope with cyclic structures. More complex shaped data
 should be represented by real Tangence objects.
 
 [
- There are also a number of unresolved issues here to deal with export to
- other languages. Primarily, those are 
-  * how deeply typing information should be applied to collections
-  * whether a new type of "structure" should be created, which allows for
-    a hetrogenous collection, if typing is applied deeply to arrays and
-    hashes
+ There is an unresolved issue here to deal with export to other languages.
+ This is whether a new type of "structure" should be created, which allows
+ for a hetrogenous collection.
 ]
 
 
