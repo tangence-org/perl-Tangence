@@ -298,7 +298,6 @@ sub pack_obj
             $smashkeys = [ keys %{ $class->smashkeys } ];
 
             @$smashkeys = sort @$smashkeys if $SORT_HASH_KEYS;
-            $smashkeys = undef unless @$smashkeys;
 
             $self->pack_any( $smashkeys );
 
@@ -311,9 +310,9 @@ sub pack_obj
          $self->_pack_leader( DATA_META, DATAMETA_CONSTRUCT );
          $self->{record} .= pack( "NZ*", $id, $class );
 
-         my $smasharr;
+         my $smasharr = [];
 
-         if( $smashkeys ) {
+         if( @$smashkeys ) {
             my $smashdata = $d->smash( $smashkeys );
             $smasharr = [ map { $smashdata->{$_} } @$smashkeys ];
 

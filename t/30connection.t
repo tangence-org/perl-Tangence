@@ -52,8 +52,8 @@ $S2->syswrite( "\x82" . "\0\0\0\xcf" .
                                                                                     "ret\0"  . "\x23" . "obj" .
                                  "properties\0" . "\x61" . "colours\0" . "\x62" . "dim\0"  . "\x21" . "2" .
                                                                                   "type\0" . "\x23" . "int" .
-                        "\x80" .
-               "\xe1" . "\0\0\0\1" . "t::Bag\0" . "\x80" .
+                        "\x40" .
+               "\xe1" . "\0\0\0\1" . "t::Bag\0" . "\x40" .
                "\x84" . "\0\0\0\1" );
 
 wait_for { defined $conn->get_root };
@@ -69,8 +69,8 @@ $S2->syswrite( "\x82" . "\0\0\0\xf8" .
                                                                                     "ret\0"  . "\x23" . "obj" .
                                  "properties\0" . "\x61" . "objects\0" . "\x62" . "dim\0"  . "\x21" . "2" .
                                                                                   "type\0" . "\x23" . "str" .
-                        "\x80" .
-               "\xe1" . "\0\0\0\0" . "Tangence::Registry\0" . "\x80" .
+                        "\x40" .
+               "\xe1" . "\0\0\0\0" . "Tangence::Registry\0" . "\x40" .
                "\x84" . "\0\0\0\0" );
 
 wait_for { defined $conn->get_registry };
