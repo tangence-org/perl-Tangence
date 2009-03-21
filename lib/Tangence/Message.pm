@@ -438,9 +438,21 @@ sub pack_typed
       $self->_pack_leader( DATA_NUMBER, $subtype );
       $self->{record} .= pack( $pack_int_format{$subtype}, $d );
    }
+   elsif( $sig =~ s/^\[// ) {
+      ref $d eq "ARRAY" or croak "Cannot pack a list from non-ARRAY reference";
+      $self->_pack_leader( DATA_LIST, scalar @$d );
+      $self->pack_typed( $sig, $_ ) for @$d;
+   }
+   elsif( $sig =~ s/^\{// ) {
+      ref $d eq "HASH" or croak "Cannot pack a dict from non-HASH reference";
+      my @keys = keys %$d;
+      @keys = sort @keys if $SORT_HASH_KEYS;
+      $self->_pack_leader( DATA_DICT, scalar @keys );
+      $self->{record} .= pack( "Z*", $_ ) and $self->pack_typed( $sig, $d->{$_} ) for @keys;
+   }
    else {
       print STDERR "TODO: Pack as $sig from $d\n";
-      die;
+      die "TODO";
    }
 
    return $self;
@@ -463,9 +475,30 @@ sub unpack_typed
       substr( $self->{record}, 0, length pack( $pack_int_format{$num}, 0 ), "" ); # TODO: Do this more efficiently
       return $n;
    }
+   elsif( $sig =~ s/^\[// ) {
+      my ( $type, $num ) = $self->_unpack_leader_dometa();
+
+      $type == DATA_LIST or croak "Expected to unpack a list but did not find one";
+      my @a;
+      foreach ( 1 .. $num ) {
+         push @a, $self->unpack_typed( $sig );
+      }
+      return \@a;
+   }
+   elsif( $sig =~ s/^\{// ) {
+      my ( $type, $num ) = $self->_unpack_leader_dometa();
+
+      $type == DATA_DICT or croak "Expected to unpack a dict but did not find one";
+      my %h;
+      foreach ( 1 .. $num ) {
+         my ( $key ) = unpack( "Z*", $self->{record} ); substr( $self->{record}, 0, 1 + length $key, "" );
+         $h{$key} = $self->unpack_typed( $sig );
+      }
+      return \%h;
+   }
    else {
       print STDERR "TODO: Unpack as $sig\n";
-      die;
+      die "TODO";
    }
 }
 

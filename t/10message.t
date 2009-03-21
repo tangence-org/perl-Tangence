@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 132;
+use Test::More tests => 148;
 use Test::Exception;
 use Test::HexString;
 
@@ -83,7 +83,7 @@ test_specific_dies "int from str",
    type   => "int",
    stream => "\x20";
 
-test_specific_dies "int from array",
+test_specific_dies "int from ARRAY",
    type   => "int",
    data   => [],
    stream => "\x40";
@@ -103,7 +103,7 @@ test_specific "marginal string",
    data   => "x" x 0x1f,
    stream => "\x3f\x1f" . ( "x" x 0x1f );
 
-test_specific_dies "string from array",
+test_specific_dies "string from ARRAY",
    type   => "str",
    data   => [],
    stream => "\x40";
@@ -202,7 +202,7 @@ test_typed_dies "int from str",
    sig    => "int",
    stream => "\x20";
 
-test_typed_dies "int from array",
+test_typed_dies "int from ARRAY",
    sig    => "int",
    data   => [],
    stream => "\x40";
@@ -212,10 +212,40 @@ test_typed "string",
    data   => "hello",
    stream => "\x25hello";
 
-test_typed_dies "string from array",
+test_typed_dies "string from ARRAY",
    sig    => "str",
    data   => [],
    stream => "\x40";
+
+test_typed "list(string)",
+   sig    => '[str',
+   data   => [ "a", "b", "c" ],
+   stream => "\x43\x21a\x21b\x21c";
+
+test_typed_dies "list(string) from string",
+   sig    => '[str',
+   data   => "hello",
+   stream => "\x25hello";
+
+test_typed_dies "list(string) from ARRAY(ARRAY)",
+   sig    => '[str',
+   data   => [ [] ],
+   stream => "\x41\x40";
+
+test_typed "dict(string)",
+   sig    => '{str',
+   data   => { one => "one", },
+   stream => "\x61one\0\x23one";
+
+test_typed_dies "dict(string) from string",
+   sig    => '{str',
+   data   => "hello",
+   stream => "\x25hello";
+
+test_typed_dies "dict(string) from HASH(ARRAY)",
+   sig    => '{str',
+   data   => { splot => [] },
+   stream => "\x61splot\0\x40";
 
 test_typed "any (undef)",
    sig    => "any",
