@@ -142,8 +142,8 @@ sub call_method
          my $type = $message->type;
 
          if( $type == MSG_RESULT ) {
-            my @data = $message->unpack_all_data();
-            $on_result->( @data );
+            my $result = $message->unpack_any();
+            $on_result->( $result );
          }
          elsif( $type == MSG_ERROR ) {
             my $msg = $message->unpack_str();
