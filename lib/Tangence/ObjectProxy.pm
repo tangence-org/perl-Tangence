@@ -168,6 +168,8 @@ sub subscribe_event
    my $on_error = delete $args{on_error} || $self->{on_error};
    ref $on_error eq "CODE" or croak "Expected 'on_error' as a CODE ref";
 
+   my $on_subscribed = $args{on_subscribed};
+
    my $edef = $self->can_event( $event );
    croak "Class ".$self->class." does not have an event $event" unless $edef;
 
@@ -180,8 +182,6 @@ sub subscribe_event
    $self->{subscriptions}->{$event} = \@cbs;
 
    return if $event eq "destroy"; # This is automatically handled
-
-   my $on_subscribed = $args{on_subscribed};
 
    my $conn = $self->{conn};
    $conn->request(
@@ -205,7 +205,6 @@ sub subscribe_event
          }
       },
    );
-
 }
 
 sub _event_fired
@@ -433,7 +432,13 @@ sub watch_property
    my $property = delete $args{property} or croak "Need a property";
    ref( my $callback = delete $args{on_change} ) eq "CODE"
       or croak "Expected 'on_change' as a CODE ref";
+
+   my $on_error = delete $args{on_error} || $self->{on_error};
+   ref $on_error eq "CODE" or croak "Expected 'on_error' as a CODE ref";
+
    my $want_initial = delete $args{want_initial};
+
+   my $on_watched = $args{on_watched};
 
    my $pdef = $self->can_property( $property );
    croak "Class ".$self->class." does not have a property $property" unless $pdef;
@@ -468,17 +473,33 @@ sub watch_property
       if( $want_initial ) {
          $callback->( $self, $property, CHANGE_SET, $self->{props}->{$property}->{cache} );
       }
-      $args{on_watched}->() if $args{on_watched};
+      $on_watched->() if $on_watched;
+      return;
    }
-   else {
-      my $conn = $self->{conn};
-      $conn->watch(
-         objid    => $self->{id},
-         property => $property, 
-         on_watched => $args{on_watched},
-         want_initial => $want_initial,
-      );
-   }
+
+   my $conn = $self->{conn};
+   $conn->request(
+      request => Tangence::Message->new( $conn, MSG_WATCH )
+         ->pack_int( $self->id )
+         ->pack_str( $property )
+         ->pack_bool( $want_initial ),
+
+      on_response => sub {
+         my ( $message ) = @_;
+         my $type = $message->type;
+
+         if( $type == MSG_WATCHING ) {
+            $on_watched->() if $on_watched;
+         }
+         elsif( $type == MSG_ERROR ) {
+            my $msg = $message->unpack_str();
+            $on_error->( $msg );
+         }
+         else {
+            $on_error->( "Unexpected response code $type" );
+         }
+      },
+   );
 }
 
 1;

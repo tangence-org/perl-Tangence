@@ -248,48 +248,6 @@ sub handle_request_EVENT
    }
 }
 
-sub watch
-{
-   my $self = shift;
-   my %args = @_;
-
-   my $objid = delete $args{objid}; # might be 0
-   defined $objid or croak "Need an objid";
-
-   my $prop = delete $args{property} or croak "Need a property";
-
-   my $on_watched = delete $args{on_watched}; # optional
-
-   if( $self->{watches}->{$objid}->{$prop} ) {
-      croak "Cannot watch property $prop on object $objid - already watching";
-   }
-
-   $self->{watches}->{$objid}->{$prop} = 1;
-
-   $self->request(
-      request => Tangence::Message->new( $self, MSG_WATCH )
-         ->pack_int( $objid )
-         ->pack_str( $prop )
-         ->pack_bool( $args{want_initial} ),
-
-      on_response => sub {
-         my ( $message ) = @_;
-         my $type = $message->type;
-
-         if( $type == MSG_WATCHING ) {
-            $on_watched->() if $on_watched;
-         }
-         elsif( $type == MSG_ERROR ) {
-            my $msg = $message->unpack_str();
-            print STDERR "Cannot watch property '$prop' on object $objid - error $msg\n";
-         }
-         else {
-            print STDERR "Cannot watch property '$prop' on object $objid - code $type\n";
-         }
-      },
-   );
-}
-
 sub handle_request_UPDATE
 {
    my $self = shift;
