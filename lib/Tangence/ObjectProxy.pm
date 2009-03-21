@@ -207,10 +207,13 @@ sub subscribe_event
    );
 }
 
-sub _event_fired
+sub handle_request_EVENT
 {
    my $self = shift;
-   my ( $event, @args ) = @_;
+   my ( $message ) = @_;
+
+   my $event = $message->unpack_str();
+   my @args  = $message->unpack_all_data();
 
    if( my $cbs = $self->{subscriptions}->{$event} ) {
       foreach my $cb ( @$cbs ) { $cb->( $self, $event, @args ) }
@@ -500,6 +503,18 @@ sub watch_property
          }
       },
    );
+}
+
+sub handle_request_UPDATE
+{
+   my $self = shift;
+   my ( $message ) = @_;
+
+   my $prop  = $message->unpack_str();
+   my $how   = $message->unpack_typed( "u8" );
+   my @value = $message->unpack_all_data();
+
+   $self->_update_property( $prop, $how, @value );
 }
 
 1;

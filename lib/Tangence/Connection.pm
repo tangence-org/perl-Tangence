@@ -235,16 +235,11 @@ sub handle_request_EVENT
    my ( $token, $message ) = @_;
 
    my $objid = $message->unpack_int();
-   my $event = $message->unpack_str();
-   my @args  = $message->unpack_all_data();
 
    $self->respond( $token, Tangence::Message->new( $self, MSG_OK ) );
 
    if( my $obj = $self->{objectproxies}->{$objid} ) {
-      $obj->_event_fired( $event, @args );
-   }
-   else {
-      print STDERR "Got spurious EVENT $event on object $objid: " . join( ", ", @args ) . "\n";
+      $obj->handle_request_EVENT( $message );
    }
 }
 
@@ -254,14 +249,11 @@ sub handle_request_UPDATE
    my ( $token, $message ) = @_;
 
    my $objid = $message->unpack_int();
-   my $prop  = $message->unpack_str();
-   my $how   = $message->unpack_typed( "u8" );
-   my @value = $message->unpack_all_data();
 
    $self->respond( $token, Tangence::Message->new( $self, MSG_OK ) );
 
    if( my $obj = $self->{objectproxies}->{$objid} ) {
-      $obj->_update_property( $prop, $how, @value );
+      $obj->handle_request_UPDATE( $message );
    }
 }
 
