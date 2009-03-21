@@ -322,16 +322,6 @@ sub make_proxy
 
    $obj->grab( $smashdata ) if defined $smashdata;
 
-   $obj->subscribe_event(
-      event => "destroy",
-      on_fire => $self->{conn_destroy_cb} ||= sub {
-         my ( $obj ) = @_;
-         my $objid = $obj->id;
-         delete $self->{objectproxies}->{$objid};
-         delete $self->{watches}->{$objid};
-      },
-   );
-
    return $obj;
 }
 
