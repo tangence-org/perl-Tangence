@@ -109,7 +109,7 @@ sub _unpack_meta
 
    if( $num == DATAMETA_CONSTRUCT ) {
       my ( $id, $class ) = unpack( "NZ*", $self->{record} ); substr( $self->{record}, 0, 5 + length $class, "" );
-      my $smasharr = $self->unpack_any();
+      my $smasharr = $self->unpack_typed( '[any' );
 
       my $smashkeys = $stream->{peer_hasclass}->{$class}->[0];
 
@@ -120,11 +120,11 @@ sub _unpack_meta
    }
    elsif( $num == DATAMETA_CLASS ) {
       my ( $class ) = unpack( "Z*", $self->{record} ); substr( $self->{record}, 0, 1 + length $class, "" );
-      my $schema = $self->unpack_any();
+      my $schema = $self->unpack_typed( '{any' );
 
       $stream->make_schema( $class, $schema );
 
-      my $smashkeys = $self->unpack_any();
+      my $smashkeys = $self->unpack_typed( '[str' );
       $stream->{peer_hasclass}->{$class} = [ $smashkeys ];
    }
    else {
@@ -293,13 +293,13 @@ sub pack_obj
 
             $self->_pack_leader( DATA_META, DATAMETA_CLASS );
             $self->{record} .= pack( "Z*", $class );
-            $self->pack_any( $schema );
+            $self->pack_typed( '{any', $schema );
 
             $smashkeys = [ keys %{ $class->smashkeys } ];
 
             @$smashkeys = sort @$smashkeys if $SORT_HASH_KEYS;
 
-            $self->pack_any( $smashkeys );
+            $self->pack_typed( '[str', $smashkeys );
 
             $stream->{peer_hasclass}->{$class} = [ $smashkeys ];
          }
@@ -321,7 +321,7 @@ sub pack_obj
             }
          }
 
-         $self->pack_any( $smasharr );
+         $self->pack_typed( '[any', $smasharr );
 
          $stream->{peer_hasobj}->{$id} = $d->subscribe_event( "destroy", $stream->{destroy_cb} );
       }
