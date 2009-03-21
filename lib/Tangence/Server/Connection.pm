@@ -293,12 +293,12 @@ sub handle_request_GETROOT
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
    my $registry = $self->{registry};
+   my $root = $registry->get_by_id( 1 );
 
    $self->{identity} = $identity;
 
-   my $result = $registry->get_by_id( 1 );
    $ctx->respond( Tangence::Message->new( $self, MSG_RESULT )
-      ->pack_any( $result )
+      ->pack_obj( $root )
    );
 }
 
@@ -312,7 +312,7 @@ sub handle_request_GETREGISTRY
    my $registry = $self->{registry};
 
    $ctx->respond( Tangence::Message->new( $self, MSG_RESULT )
-      ->pack_any( $registry )
+      ->pack_obj( $registry )
    );
 }
 

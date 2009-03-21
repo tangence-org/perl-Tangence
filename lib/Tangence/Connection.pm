@@ -194,7 +194,7 @@ sub _do_initial
          my $type = $message->type;
 
          if( $type == MSG_RESULT ) {
-            $self->{rootobj} = $message->unpack_any();
+            $self->{rootobj} = $message->unpack_obj();
             $args{on_root}->( $self->{rootobj} ) if $args{on_root};
          }
          elsif( $type == MSG_ERROR ) {
@@ -215,7 +215,7 @@ sub _do_initial
          my $type = $message->type;
 
          if( $type == MSG_RESULT ) {
-            $self->{registry} = $message->unpack_any();
+            $self->{registry} = $message->unpack_obj();
             $args{on_registry}->( $self->{registry} ) if $args{on_registry};
          }
          elsif( $type == MSG_ERROR ) {
