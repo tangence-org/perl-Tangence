@@ -82,7 +82,7 @@ sub handle_request_CALL
    $@ and return $ctx->responderr( $@ );
 
    $ctx->respond( Tangence::Message->new( $self, MSG_RESULT )
-      ->pack_data( $result )
+      ->pack_any( $result )
    );
 }
 
@@ -177,7 +177,7 @@ sub handle_request_GETPROP
    $@ and return $ctx->responderr( $@ );
 
    $ctx->respond( Tangence::Message->new( $self, MSG_RESULT )
-      ->pack_data( $result )
+      ->pack_any( $result )
    );
 }
 
@@ -188,7 +188,7 @@ sub handle_request_SETPROP
    
    my $objid = $message->unpack_int();
    my $prop  = $message->unpack_str();
-   my $value = $message->unpack_data();
+   my $value = $message->unpack_any();
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
@@ -249,7 +249,7 @@ sub handle_request_WATCH
             ->pack_int( $objid )
             ->pack_str( $prop )
             ->pack_typed( "u8", CHANGE_SET )
-            ->pack_data( $result ),
+            ->pack_any( $result ),
 
          on_response => sub { "IGNORE" },
       );
@@ -288,7 +288,7 @@ sub handle_request_GETROOT
    my $self = shift;
    my ( $token, $message ) = @_;
    
-   my $identity = $message->unpack_data();
+   my $identity = $message->unpack_any();
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
@@ -298,7 +298,7 @@ sub handle_request_GETROOT
 
    my $result = $registry->get_by_id( 1 );
    $ctx->respond( Tangence::Message->new( $self, MSG_RESULT )
-      ->pack_data( $result )
+      ->pack_any( $result )
    );
 }
 
@@ -312,7 +312,7 @@ sub handle_request_GETREGISTRY
    my $registry = $self->{registry};
 
    $ctx->respond( Tangence::Message->new( $self, MSG_RESULT )
-      ->pack_data( $registry )
+      ->pack_any( $registry )
    );
 }
 

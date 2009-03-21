@@ -187,14 +187,14 @@ sub _do_initial
 
    $self->request(
       request => Tangence::Message->new( $self, MSG_GETROOT )
-         ->pack_data( $self->{identity} ),
+         ->pack_any( $self->{identity} ),
 
       on_response => sub {
          my ( $message ) = @_;
          my $type = $message->type;
 
          if( $type == MSG_RESULT ) {
-            $self->{rootobj} = $message->unpack_data();
+            $self->{rootobj} = $message->unpack_any();
             $args{on_root}->( $self->{rootobj} ) if $args{on_root};
          }
          elsif( $type == MSG_ERROR ) {
@@ -215,7 +215,7 @@ sub _do_initial
          my $type = $message->type;
 
          if( $type == MSG_RESULT ) {
-            $self->{registry} = $message->unpack_data();
+            $self->{registry} = $message->unpack_any();
             $args{on_registry}->( $self->{registry} ) if $args{on_registry};
          }
          elsif( $type == MSG_ERROR ) {

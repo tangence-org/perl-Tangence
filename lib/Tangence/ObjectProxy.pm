@@ -374,7 +374,7 @@ sub set_property
       request => Tangence::Message->new( $conn, MSG_SETPROP )
          ->pack_int( $self->id )
          ->pack_str( $property )
-         ->pack_data( $value ),
+         ->pack_any( $value ),
 
       on_response => sub {
          my ( $message ) = @_;

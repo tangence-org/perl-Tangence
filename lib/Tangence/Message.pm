@@ -109,7 +109,7 @@ sub _unpack_meta
 
    if( $num == DATAMETA_CONSTRUCT ) {
       my ( $id, $class ) = unpack( "NZ*", $self->{record} ); substr( $self->{record}, 0, 5 + length $class, "" );
-      my $smasharr = $self->unpack_data();
+      my $smasharr = $self->unpack_any();
 
       my $smashkeys = $stream->{peer_hasclass}->{$class}->[0];
 
@@ -120,11 +120,11 @@ sub _unpack_meta
    }
    elsif( $num == DATAMETA_CLASS ) {
       my ( $class ) = unpack( "Z*", $self->{record} ); substr( $self->{record}, 0, 1 + length $class, "" );
-      my $schema = $self->unpack_data();
+      my $schema = $self->unpack_any();
 
       $stream->make_schema( $class, $schema );
 
-      my $smashkeys = $self->unpack_data();
+      my $smashkeys = $self->unpack_any();
       $stream->{peer_hasclass}->{$class} = [ $smashkeys ];
    }
    else {
@@ -145,73 +145,10 @@ sub _unpack_leader_dometa
    }
 }
 
-sub pack_data
-{
-   my $self = shift;
-   my ( $d ) = @_;
-
-   if( !defined $d ) {
-      $self->pack_obj( undef );
-   }
-   elsif( !ref $d ) {
-      $self->pack_str( $d );
-   }
-   elsif( ref $d eq "ARRAY" ) {
-      $self->_pack_leader( DATA_LIST, scalar @$d );
-      $self->pack_data( $_ ) for @$d;
-   }
-   elsif( ref $d eq "HASH" ) {
-      my @keys = keys %$d;
-      @keys = sort @keys if $SORT_HASH_KEYS;
-      $self->_pack_leader( DATA_DICT, scalar @keys );
-      $self->{record} .= pack( "Z*", $_ ) and $self->pack_data( $d->{$_} ) for @keys;
-   }
-   elsif( eval { $d->isa( "Tangence::Object" ) or $d->isa( "Tangence::ObjectProxy" ) } ) {
-      $self->pack_obj( $d );
-   }
-   else {
-      croak "Do not know how to pack a " . ref($d);
-   }
-
-   return $self;
-}
-
-sub unpack_data
-{
-   my $self = shift;
-
-   my ( $type, $num ) = $self->_unpack_leader_dometa();
-
-   if( $type == DATA_STRING ) {
-      return $self->unpack_str( $type, $num );
-   }
-   elsif( $type == DATA_LIST ) {
-      my @a;
-      foreach ( 1 .. $num ) {
-         push @a, $self->unpack_data();
-      }
-      return \@a;
-   }
-   elsif( $type == DATA_DICT ) {
-      my %h;
-      foreach ( 1 .. $num ) {
-         my ( $key ) = unpack( "Z*", $self->{record} ); substr( $self->{record}, 0, 1 + length $key, "" );
-         $h{$key} = $self->unpack_data();
-      }
-      return \%h;
-   }
-   elsif( $type == DATA_OBJECT ) {
-      return $self->unpack_obj( $type, $num );
-   }
-   else {
-      croak "Do not know how to unpack record of type $type";
-   }
-}
-
 sub pack_all_data
 {
    my $self = shift;
-   $self->pack_data( $_ ) for @_;
+   $self->pack_any( $_ ) for @_;
 
    return $self;
 }
@@ -220,13 +157,10 @@ sub unpack_all_data
 {
    my $self = shift;
    my @data;
-   push @data, $self->unpack_data while length $self->{record};
+   push @data, $self->unpack_any while length $self->{record};
 
    return @data;
 }
-
-### New deep-typed interface. Will slowly replace the untyped 'pack_data'
-### system so we don't mind temporary code duplication here
 
 sub pack_bool
 {
@@ -359,14 +293,14 @@ sub pack_obj
 
             $self->_pack_leader( DATA_META, DATAMETA_CLASS );
             $self->{record} .= pack( "Z*", $class );
-            $self->pack_data( $schema );
+            $self->pack_any( $schema );
 
             $smashkeys = [ keys %{ $class->smashkeys } ];
 
             @$smashkeys = sort @$smashkeys if $SORT_HASH_KEYS;
             $smashkeys = undef unless @$smashkeys;
 
-            $self->pack_data( $smashkeys );
+            $self->pack_any( $smashkeys );
 
             $stream->{peer_hasclass}->{$class} = [ $smashkeys ];
          }
@@ -388,7 +322,7 @@ sub pack_obj
             }
          }
 
-         $self->pack_data( $smasharr );
+         $self->pack_any( $smasharr );
 
          $stream->{peer_hasobj}->{$id} = $d->subscribe_event( "destroy", $stream->{destroy_cb} );
       }
@@ -420,6 +354,73 @@ sub unpack_obj
    }
    else {
       croak "Unexpected number of bits to encode an OBJECT";
+   }
+}
+
+sub pack_any
+{
+   my $self = shift;
+   my ( $d ) = @_;
+
+   if( !defined $d ) {
+      $self->pack_obj( undef );
+   }
+   elsif( !ref $d ) {
+      # TODO: We'd never choose to pack a number
+      $self->pack_str( $d );
+   }
+   elsif( eval { $d->isa( "Tangence::Object" ) or $d->isa( "Tangence::ObjectProxy" ) } ) {
+      $self->pack_obj( $d );
+   }
+   elsif( ref $d eq "ARRAY" ) {
+      $self->_pack_leader( DATA_LIST, scalar @$d );
+      $self->pack_any( $_ ) for @$d;
+   }
+   elsif( ref $d eq "HASH" ) {
+      my @keys = keys %$d;
+      @keys = sort @keys if $SORT_HASH_KEYS;
+      $self->_pack_leader( DATA_DICT, scalar @keys );
+      $self->{record} .= pack( "Z*", $_ ) and $self->pack_any( $d->{$_} ) for @keys;
+   }
+   else {
+      croak "Do not know how to pack a " . ref($d);
+   }
+
+   return $self;
+}
+
+sub unpack_any
+{
+   my $self = shift;
+
+   my ( $type, $num ) = $self->_unpack_leader_dometa();
+
+   if( $type == DATA_NUMBER ) {
+      return $self->unpack_int( $type, $num );
+   }
+   if( $type == DATA_STRING ) {
+      return $self->unpack_str( $type, $num );
+   }
+   elsif( $type == DATA_OBJECT ) {
+      return $self->unpack_obj( $type, $num );
+   }
+   elsif( $type == DATA_LIST ) {
+      my @a;
+      foreach ( 1 .. $num ) {
+         push @a, $self->unpack_any();
+      }
+      return \@a;
+   }
+   elsif( $type == DATA_DICT ) {
+      my %h;
+      foreach ( 1 .. $num ) {
+         my ( $key ) = unpack( "Z*", $self->{record} ); substr( $self->{record}, 0, 1 + length $key, "" );
+         $h{$key} = $self->unpack_any();
+      }
+      return \%h;
+   }
+   else {
+      croak "Do not know how to unpack record of type $type";
    }
 }
 
