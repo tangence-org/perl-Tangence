@@ -51,7 +51,31 @@ sub _new_property
    my $self = shift;
    my ( $prop, $pdef ) = @_;
 
-   $self->{properties}->{$prop} = [ undef, [] ];
+   my $dim = $pdef->{dim};
+
+   my $initial;
+
+   if( my $code = $self->can( "init_prop_$prop" ) ) {
+      $initial = $code->( $self );
+   }
+ 
+   elsif( $dim == DIM_SCALAR ) {
+      $initial = undef;
+   }
+   elsif( $dim == DIM_HASH ) {
+      $initial = {};
+   }
+   elsif( $dim == DIM_ARRAY ) {
+      $initial = [];
+   }
+   elsif( $dim == DIM_OBJSET ) {
+      $initial = {}; # these have hashes internally
+   }
+   else {
+      croak "Unrecognised dimension $dim for property $prop";
+   }
+
+   $self->{properties}->{$prop} = [ $initial, [] ];
 }
 
 sub destroy

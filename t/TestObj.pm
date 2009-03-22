@@ -29,12 +29,13 @@ sub new
 
    my $self = $class->SUPER::new( @_ );
 
-   $self->set_prop_scalar( "123" );
-   $self->set_prop_hash( { one => 1, two => 2, three => 3 } );
-   $self->set_prop_array( [ 1, 2, 3 ] );
 
    return $self;
 }
+
+sub init_prop_scalar { 123 }
+sub init_prop_hash   { { one => 1, two => 2, three => 3 } }
+sub init_prop_array  { [ 1, 2, 3 ] }
 
 sub add_number
 {
