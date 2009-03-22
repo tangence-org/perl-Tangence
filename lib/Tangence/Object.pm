@@ -351,7 +351,8 @@ sub _init_class
    no strict 'refs';
 
    foreach my $superclass ( @{$class."::ISA"} ) {
-      $superclass->_init_class unless defined &{"${superclass}::_has_Tangence"};
+      # Not every superclass might be a Tangence::Object
+      _init_class( $superclass ) unless defined &{"${superclass}::_has_Tangence"};
    }
 
    my %subs = (
@@ -363,7 +364,7 @@ sub _init_class
    foreach my $prop ( keys %props ) {
       my $pdef = $props{$prop};
 
-      $class->_init_class_property( $prop, $pdef, \%subs );
+      _init_class_property( $class, $prop, $pdef, \%subs );
    }
 
    foreach my $name ( keys %subs ) {
@@ -374,8 +375,7 @@ sub _init_class
 
 sub _init_class_property
 {
-   my $class = shift;
-   my ( $prop, $pdef, $subs ) = @_;
+   my ( $class, $prop, $pdef, $subs ) = @_;
 
    $subs->{"get_prop_$prop"} = sub {
       my $self = shift;
@@ -392,16 +392,16 @@ sub _init_class_property
    my $dim = $pdef->{dim};
 
    if( $dim == DIM_SCALAR ) {
-      $class->_init_class_property_scalar( $prop, $pdef, $subs );
+      _init_class_property_scalar( $class, $prop, $pdef, $subs );
    }
    elsif( $dim == DIM_HASH ) {
-      $class->_init_class_property_hash( $prop, $pdef, $subs );
+      _init_class_property_hash( $class, $prop, $pdef, $subs );
    }
    elsif( $dim == DIM_ARRAY ) {
-      $class->_init_class_property_array( $prop, $pdef, $subs );
+      _init_class_property_array( $class, $prop, $pdef, $subs );
    }
    elsif( $dim == DIM_OBJSET ) {
-      $class->_init_class_property_objset( $prop, $pdef, $subs );
+      _init_class_property_objset( $class, $prop, $pdef, $subs );
    }
    else {
       croak "Unrecognised property dimension $dim for $class :: $prop";
@@ -410,16 +410,14 @@ sub _init_class_property
 
 sub _init_class_property_scalar
 {
-   my $class = shift;
-   my ( $prop, $pdef, $subs ) = @_;
+   my ( $class, $prop, $pdef, $subs ) = @_;
 
    # Nothing needed
 }
 
 sub _init_class_property_hash
 {
-   my $class = shift;
-   my ( $prop, $pdef, $subs ) = @_;
+   my ( $class, $prop, $pdef, $subs ) = @_;
 
    $subs->{"add_prop_$prop"} = sub {
       my $self = shift;
@@ -438,8 +436,7 @@ sub _init_class_property_hash
 
 sub _init_class_property_array
 {
-   my $class = shift;
-   my ( $prop, $pdef, $subs ) = @_;
+   my ( $class, $prop, $pdef, $subs ) = @_;
 
    $subs->{"push_prop_$prop"} = sub {
       my $self = shift;
@@ -466,8 +463,7 @@ sub _init_class_property_array
 
 sub _init_class_property_objset
 {
-   my $class = shift;
-   my ( $prop, $pdef, $subs ) = @_;
+   my ( $class, $prop, $pdef, $subs ) = @_;
 
    # Different set method
    $subs->{"set_prop_$prop"} = sub {
