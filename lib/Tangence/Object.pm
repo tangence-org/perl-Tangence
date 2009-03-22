@@ -26,16 +26,31 @@ sub new
    defined( my $id = delete $args{id} ) or croak "Need a id";
    my $registry = delete $args{registry} or croak "Need a registry";
 
+   $class->_init_class unless do { no strict 'refs'; defined &{"${class}::_has_Tangence"} };
+
    my $self = bless {
       id => $id,
       registry => $registry,
 
       event_subs => {},   # {$event} => [ @cbs ]
 
-      prop_watches => {}, # {$prop} => [ @cbs ]
+      properties => {}, # {$prop} => [ $value, \@callbacks ]
    }, $class;
 
+   my $properties = $self->can_property();
+   foreach my $prop ( keys %$properties ) {
+      $self->_new_property( $prop, $properties->{$prop} );
+   }
+
    return $self;
+}
+
+sub _new_property
+{
+   my $self = shift;
+   my ( $prop, $pdef ) = @_;
+
+   $self->{properties}->{$prop} = [ undef, [] ];
 }
 
 sub destroy
@@ -288,7 +303,7 @@ sub update_property
 
    my $pdef = $self->can_property( $prop ) or croak "$self has no property $prop";
 
-   foreach my $cb ( @{ $self->{prop_watches}->{$prop} } ) {
+   foreach my $cb ( @{ $self->{properties}->{$prop}->[1] } ) {
       $cb->( $self, $prop, $how, @value );
    }
 }
@@ -300,7 +315,7 @@ sub watch_property
 
    $self->can_property( $prop ) or croak "$self has no property $prop";
 
-   my $watchlist = ( $self->{prop_watches}->{$prop} ||= [] );
+   my $watchlist = $self->{properties}->{$prop}->[1];
 
    push @$watchlist, $callback;
 
@@ -313,7 +328,7 @@ sub unwatch_property
    my $self = shift;
    my ( $prop, $id ) = @_;
 
-   my $watchlist = $self->{prop_watches}->{$prop};
+   my $watchlist = $self->{properties}->{$prop}->[1];
 
    my $index;
    for( $index = 0; $index < @$watchlist; $index++ ) {
@@ -321,6 +336,161 @@ sub unwatch_property
    }
 
    splice @$watchlist, $index, 1, ();
+}
+
+####
+# META code
+####
+
+sub _init_class
+{
+   my $class = shift;
+
+   # This method does lots of evilness. But we'll try to keep it brief, and
+   # all in one place
+   no strict 'refs';
+
+   foreach my $superclass ( @{$class."::ISA"} ) {
+      $superclass->_init_class unless defined &{"${superclass}::_has_Tangence"};
+   }
+
+   my %subs = (
+      _has_Tangence => sub() { 1 },
+   );
+
+   my %props = %{$class."::PROPS"};
+
+   foreach my $prop ( keys %props ) {
+      my $pdef = $props{$prop};
+
+      $class->_init_class_property( $prop, $pdef, \%subs );
+   }
+
+   foreach my $name ( keys %subs ) {
+      next if defined &{"${class}::${name}"};
+      *{"${class}::${name}"} = $subs{$name};
+   }
+}
+
+sub _init_class_property
+{
+   my $class = shift;
+   my ( $prop, $pdef, $subs ) = @_;
+
+   $subs->{"get_prop_$prop"} = sub {
+      my $self = shift;
+      return $self->{properties}->{$prop}->[0]
+   };
+
+   $subs->{"set_prop_$prop"} = sub {
+      my $self = shift;
+      my ( $newval ) = @_;
+      $self->{properties}->{$prop}->[0] = $newval;
+      $self->update_property( $prop, CHANGE_SET, $newval );
+   };
+
+   my $dim = $pdef->{dim};
+
+   if( $dim == DIM_SCALAR ) {
+      $class->_init_class_property_scalar( $prop, $pdef, $subs );
+   }
+   elsif( $dim == DIM_HASH ) {
+      $class->_init_class_property_hash( $prop, $pdef, $subs );
+   }
+   elsif( $dim == DIM_ARRAY ) {
+      $class->_init_class_property_array( $prop, $pdef, $subs );
+   }
+   elsif( $dim == DIM_OBJSET ) {
+      $class->_init_class_property_objset( $prop, $pdef, $subs );
+   }
+   else {
+      croak "Unrecognised property dimension $dim for $class :: $prop";
+   }
+}
+
+sub _init_class_property_scalar
+{
+   my $class = shift;
+   my ( $prop, $pdef, $subs ) = @_;
+
+   # Nothing needed
+}
+
+sub _init_class_property_hash
+{
+   my $class = shift;
+   my ( $prop, $pdef, $subs ) = @_;
+
+   $subs->{"add_prop_$prop"} = sub {
+      my $self = shift;
+      my ( $key, $value ) = @_;
+      $self->{properties}->{$prop}->[0]->{$key} = $value;
+      $self->update_property( $prop, CHANGE_ADD, $key, $value );
+   };
+
+   $subs->{"del_prop_$prop"} = sub {
+      my $self = shift;
+      my ( $key ) = @_;
+      delete $self->{properties}->{$prop}->[0]->{$key};
+      $self->update_property( $prop, CHANGE_DEL, $key );
+   };
+}
+
+sub _init_class_property_array
+{
+   my $class = shift;
+   my ( $prop, $pdef, $subs ) = @_;
+
+   $subs->{"push_prop_$prop"} = sub {
+      my $self = shift;
+      my @values = @_;
+      push @{ $self->{properties}->{$prop}->[0] }, @values;
+      $self->update_property( $prop, CHANGE_PUSH, @values );
+   };
+
+   $subs->{"shift_prop_$prop"} = sub {
+      my $self = shift;
+      my ( $count ) = @_;
+      $count = 1 unless @_;
+      splice @{ $self->{properties}->{$prop}->[0] }, 0, $count, ();
+      $self->update_property( $prop, CHANGE_SHIFT, $count );
+   };
+
+   $subs->{"splice_prop_$prop"} = sub {
+      my $self = shift;
+      my ( $index, $count, @values ) = @_;
+      splice @{ $self->{properties}->{$prop}->[0] }, $index, $count, @values;
+      $self->update_property( $prop, CHANGE_SPLICE, $index, $count, @values );
+   };
+}
+
+sub _init_class_property_objset
+{
+   my $class = shift;
+   my ( $prop, $pdef, $subs ) = @_;
+
+   # Different set method
+   $subs->{"set_prop_$prop"} = sub {
+      my $self = shift;
+      my ( $newval ) = @_;
+      $self->{properties}->{$prop}->[0] = $newval;
+      $self->update_property( $prop, CHANGE_SET, [ values %$newval ] );
+   };
+
+   $subs->{"add_prop_$prop"} = sub {
+      my $self = shift;
+      my ( $obj ) = @_;
+      $self->{properties}->{$prop}->[0]->{$obj->id} = $obj;
+      $self->update_property( $prop, CHANGE_ADD, $obj );
+   };
+
+   $subs->{"del_prop_$prop"} = sub {
+      my $self = shift;
+      my ( $obj_or_id ) = @_;
+      my $id = ref $obj_or_id ? $obj_or_id->id : $obj_or_id;
+      delete $self->{properties}->{$prop}->[0]->{$id};
+      $self->update_property( $prop, CHANGE_DEL, $id );
+   };
 }
 
 1;
