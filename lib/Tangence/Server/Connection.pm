@@ -130,7 +130,6 @@ sub handle_request_UNSUBSCRIBE
    
    my $objid = $message->unpack_int();
    my $event = $message->unpack_str();
-   my $id    = $message->unpack_int();
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
@@ -142,9 +141,14 @@ sub handle_request_UNSUBSCRIBE
    my $edef = $object->can_event( $event ) or
       return $ctx->responderr( "Object cannot respond to event $event" );
 
-   $object->unsubscribe_event( $event, $id );
+   # Delete from subscriptions and obtain id
+   my $id;
+   @{ $self->{subscriptions} } = grep { $_->[0] == $object and $_->[1] eq $event and ( $id = $_->[2], 0 ) or 1 }
+                                 @{ $self->{subscriptions} };
+   defined $id or
+      return $ctx->responderr( "Not subscribed to $event" );
 
-   @{ $self->{subscriptions} } = grep { $_->[2] eq $id } @{ $self->{subscriptions} };
+   $object->unsubscribe_event( $event, $id );
 
    $ctx->respond( Tangence::Message->new( $self, MSG_OK ) );
 }
@@ -264,7 +268,6 @@ sub handle_request_UNWATCH
    
    my $objid = $message->unpack_int();
    my $prop  = $message->unpack_str();
-   my $id    = $message->unpack_int();
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
@@ -276,9 +279,14 @@ sub handle_request_UNWATCH
    my $pdef = $object->can_property( $prop ) or
       return $ctx->responderr( "Object does not have property $prop" );
 
-   $object->unwatch_property( $prop, $id );
+   # Delete from watches and obtain id
+   my $id;
+   @{ $self->{watches} } = grep { $_->[0] == $object and $_->[1] eq $prop and ( $id = $_->[2], 0 ) or 1 }
+                           @{ $self->{watches} };
+   defined $id or
+      return $ctx->responderr( "Not watching $prop" );
 
-   @{ $self->{watches} } = grep { $_->[2] eq $id } @{ $self->{watches} };
+   $object->unwatch_property( $prop, $id );
 
    $ctx->respond( Tangence::Message->new( $self, MSG_OK ) );
 }

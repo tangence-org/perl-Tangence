@@ -436,7 +436,6 @@ MSG_SUBSCRIBE (C->S)
 MSG_UNSUBSCRIBE (C->S)
   INT           object ID
   STRING        event name
-  INT           subscription ID
 
   Responses: MSG_OK
 
@@ -482,7 +481,6 @@ MSG_WATCH (C->S)
 MSG_UNWATCH (C->S)
   INT           object ID
   STRING        property name
-  INT           watch ID
 
   Responses: MSG_OK
 
