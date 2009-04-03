@@ -363,4 +363,88 @@ sub unwatch_property
    splice @$watchlist, $index, 1, ();
 }
 
+### Message handling
+
+sub handle_request_CALL
+{
+   my $self = shift;
+   my ( $ctx, $message ) = @_;
+
+   my $method = $message->unpack_str();
+   my @args   = $message->unpack_all_data();
+
+   my $mdef = $self->can_method( $method ) or die "Object cannot respond to method $method\n";
+
+   my $m = "method_$method";
+   $self->can( $m ) or die "Object cannot run method $method\n";
+
+   my $result = $self->$m( $ctx, @args );
+
+   return Tangence::Message->new( $ctx->connection, MSG_RESULT )
+      ->pack_any( $result );
+}
+
+sub generate_message_EVENT
+{
+   my $self = shift;
+   my ( $conn, $event, @args ) = @_;
+
+   my $edef = $self->can_event( $event ) or die "Object cannot respond to event $event";
+
+   return Tangence::Message->new( $conn, MSG_EVENT )
+      ->pack_int( $self->id )
+      ->pack_str( $event )
+      ->pack_all_data( @args );
+}
+
+sub handle_request_GETPROP
+{
+   my $self = shift;
+   my ( $ctx, $message ) = @_;
+
+   my $prop = $message->unpack_str();
+
+   my $pdef = $self->can_property( $prop ) or die "Object does not have property $prop";
+
+   my $m = "get_prop_$prop";
+   $self->can( $m ) or die "Object cannot get property $prop\n";
+
+   my $result = $self->$m();
+
+   return Tangence::Message->new( $ctx->connection, MSG_RESULT )
+      ->pack_any( $result );
+}
+
+sub handle_request_SETPROP
+{
+   my $self = shift;
+   my ( $ctx, $message ) = @_;
+
+   my $prop  = $message->unpack_str();
+   my $value = $message->unpack_any();
+
+   my $pdef = $self->can_property( $prop ) or die "Object does not have property $prop\n";
+
+   my $m = "set_prop_$prop";
+   $self->can( $m ) or die "Object cannot set property $prop\n";
+
+   $self->$m( $value );
+
+   return Tangence::Message->new( $self, MSG_OK );
+}
+
+sub generate_message_UPDATE
+{
+   my $self = shift;
+   my ( $conn, $prop, $how, @args ) = @_;
+
+   my $pdef = $self->can_property( $prop ) or die "Object does not have property $prop\n";
+
+   return Tangence::Message->new( $conn, MSG_UPDATE )
+      ->pack_int( $self->id )
+      ->pack_str( $prop )
+      ->pack_typed( "u8", $how )
+      ->pack_all_data( @args );
+}
+
 1;

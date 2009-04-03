@@ -58,9 +58,7 @@ sub handle_request_CALL
    my $self = shift;
    my ( $token, $message ) = @_;
    
-   my $objid  = $message->unpack_int();
-   my $method = $message->unpack_str();
-   my @args   = $message->unpack_all_data();
+   my $objid = $message->unpack_int();
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
@@ -69,21 +67,10 @@ sub handle_request_CALL
    my $object = $registry->get_by_id( $objid ) or
       return $ctx->responderr( "No such object with id $objid" );
 
-   my $mdef = $object->can_method( $method ) or
-      return $ctx->responderr( "Object cannot respond to method $method" );
-
-   my $m = "method_$method";
-
-   $object->can( $m ) or
-      return $ctx->responderr( "Object cannot run method $method" );
-
-   my $result = eval { $object->$m( $ctx, @args ) };
-
+   my $response = eval { $object->handle_request_CALL( $ctx, $message ) };
    $@ and return $ctx->responderr( $@ );
 
-   $ctx->respond( Tangence::Message->new( $self, MSG_RESULT )
-      ->pack_any( $result )
-   );
+   $ctx->respond( $response );
 }
 
 sub handle_request_SUBSCRIBE
@@ -101,18 +88,12 @@ sub handle_request_SUBSCRIBE
    my $object = $registry->get_by_id( $objid ) or
       return $ctx->responderr( "No such object with id $objid" );
 
-   my $edef = $object->can_event( $event ) or
-      return $ctx->responderr( "Object cannot respond to event $event" );
-
    my $id = $object->subscribe_event( $event,
       sub {
          my ( undef, $event, @args ) = @_;
+         my $message = $object->generate_message_EVENT( $self, $event, @args );
          $self->request(
-            request => Tangence::Message->new( $self, MSG_EVENT )
-               ->pack_int( $objid )
-               ->pack_str( $event )
-               ->pack_all_data( @args ),
-
+            request     => $message,
             on_response => sub { "IGNORE" },
          );
       }
@@ -159,7 +140,6 @@ sub handle_request_GETPROP
    my ( $token, $message ) = @_;
    
    my $objid = $message->unpack_int();
-   my $prop  = $message->unpack_str();
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
@@ -168,21 +148,10 @@ sub handle_request_GETPROP
    my $object = $registry->get_by_id( $objid ) or
       return $ctx->responderr( "No such object with id $objid" );
 
-   my $pdef = $object->can_property( $prop ) or
-      return $ctx->responderr( "Object does not have property $prop" );
-
-   my $m = "get_prop_$prop";
-
-   $object->can( $m ) or
-      return $ctx->responderr( "Object cannot get property $prop" );
-
-   my $result = eval { $object->$m() };
-
+   my $response = eval { $object->handle_request_GETPROP( $ctx, $message ) };
    $@ and return $ctx->responderr( $@ );
 
-   $ctx->respond( Tangence::Message->new( $self, MSG_RESULT )
-      ->pack_any( $result )
-   );
+   $ctx->respond( $response );
 }
 
 sub handle_request_SETPROP
@@ -191,8 +160,6 @@ sub handle_request_SETPROP
    my ( $token, $message ) = @_;
    
    my $objid = $message->unpack_int();
-   my $prop  = $message->unpack_str();
-   my $value = $message->unpack_any();
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
@@ -201,19 +168,10 @@ sub handle_request_SETPROP
    my $object = $registry->get_by_id( $objid ) or
       return $ctx->responderr( "No such object with id $objid" );
 
-   my $pdef = $object->can_property( $prop ) or
-      return $ctx->responderr( "Object does not have property $prop" );
-
-   my $m = "set_prop_$prop";
-
-   $object->can( $m ) or
-      return $ctx->responderr( "Object cannot set property $prop" );
-
-   eval { $object->$m( $value ) };
-
+   my $response = eval { $object->handle_request_SETPROP( $ctx, $message ) };
    $@ and return $ctx->responderr( $@ );
 
-   $ctx->respond( Tangence::Message->new( $self, MSG_OK ) );
+   $ctx->respond( $response );
 }
 
 sub handle_request_WATCH
@@ -246,15 +204,10 @@ sub handle_request_WATCH
    return unless( $object->can( $m ) );
 
    eval {
-      my $result = $object->$m();
-
+      my $value = $object->$m();
+      my $message = $object->generate_message_UPDATE( $self, $prop, CHANGE_SET, $value );
       $self->request(
-         request => Tangence::Message->new( $self, MSG_UPDATE )
-            ->pack_int( $objid )
-            ->pack_str( $prop )
-            ->pack_typed( "u8", CHANGE_SET )
-            ->pack_any( $result ),
-
+         request     => $message,
          on_response => sub { "IGNORE" },
       );
    }
@@ -331,14 +284,10 @@ sub _install_watch
 
    my $id = $object->watch_property( $prop,
       sub {
-         my ( undef, $prop, $how, @value ) = @_;
+         my ( undef, $prop, $how, @args ) = @_;
+         my $message = $object->generate_message_UPDATE( $self, $prop, $how, @args );
          $self->request(
-            request => Tangence::Message->new( $self, MSG_UPDATE )
-               ->pack_int( $object->id )
-               ->pack_str( $prop )
-               ->pack_typed( "u8", $how )
-               ->pack_all_data( @value ),
-
+            request     => $message,
             on_response => sub { "IGNORE" },
          );
       }
