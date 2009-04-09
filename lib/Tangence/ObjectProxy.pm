@@ -108,8 +108,17 @@ sub grab
    my $self = shift;
    my ( $smashdata ) = @_;
 
-   foreach my $prop ( keys %{ $smashdata } ) {
-      $self->_update_property( $prop, CHANGE_SET, $smashdata->{$prop} );
+   foreach my $property ( keys %{ $smashdata } ) {
+      my $value = $smashdata->{$property};
+      my $dim = $self->{schema}->{properties}->{$property}->{dim};
+
+      if( $dim == DIM_OBJSET ) {
+         # Comes across in a LIST. We need to map id => obj
+         $value = { map { $_->id => $_ } @$value };
+      }
+
+      my $prop = $self->{props}->{$property} ||= {};
+      $prop->{cache} = $value;
    }
 }
 
