@@ -43,7 +43,7 @@ my $scalar_changed = 0;
 $proxy->watch_property(
    property => "scalar",
    on_change => sub { 
-      $scalar = $_[3];
+      ( undef, $scalar ) = @_;
       $scalar_changed = 1
    },
    on_watched => sub { $result = 1 },

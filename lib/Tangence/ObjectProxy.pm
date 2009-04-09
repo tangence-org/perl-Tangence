@@ -30,7 +30,7 @@ sub destroy
    $self->{destroyed} = 1;
 
    foreach my $cb ( @{ $self->{subscriptions}->{destroy} } ) {
-      $cb->( $self, "destroy" );
+      $cb->();
    }
 
    undef %$self;
@@ -225,7 +225,7 @@ sub handle_request_EVENT
    my @args  = $message->unpack_all_data();
 
    if( my $cbs = $self->{subscriptions}->{$event} ) {
-      foreach my $cb ( @$cbs ) { $cb->( $self, $event, @args ) }
+      foreach my $cb ( @$cbs ) { $cb->( @args ) }
    }
 }
 
@@ -296,7 +296,7 @@ sub _update_property
    }
 
    if( my $cbs = $self->{props}->{$property}->{cbs} ) {
-      foreach my $cb ( @$cbs ) { $cb->( $self, $property, $how, @value ) }
+      foreach my $cb ( @$cbs ) { $cb->( $how, @value ) }
    }
 }
 
@@ -463,13 +463,13 @@ sub watch_property
          $self->get_property(
             property => $property,
             on_value => sub {
-               $callback->( $self, $property, CHANGE_SET, $_[0] );
+               $callback->( CHANGE_SET, $_[0] );
                push @$cbs, $callback;
             },
          );
       }
       elsif( $want_initial and $smash ) {
-         $callback->( $self, $property, CHANGE_SET, $self->{props}->{$property}->{cache} );
+         $callback->( CHANGE_SET, $self->{props}->{$property}->{cache} );
          push @$cbs, $callback;
       }
       else {
@@ -483,7 +483,7 @@ sub watch_property
 
    if( $smash ) {
       if( $want_initial ) {
-         $callback->( $self, $property, CHANGE_SET, $self->{props}->{$property}->{cache} );
+         $callback->( CHANGE_SET, $self->{props}->{$property}->{cache} );
       }
       $on_watched->() if $on_watched;
       return;

@@ -172,8 +172,7 @@ my $subbed;
 $ballproxy->subscribe_event(
    event => "bounced",
    on_fire => sub {
-      my ( $obj, $event, @args ) = @_;
-      $howhigh = $args[0];
+      ( $howhigh ) = @_;
    },
    on_subscribed => sub { $subbed = 1 },
 );
@@ -304,7 +303,7 @@ my $watched;
 $ballproxy->watch_property(
    property => "colour",
    on_change => sub { 
-      my ( $obj, $prop, $how, @value ) = @_;
+      my ( $how, @value ) = @_;
       $colour = $value[0];
    },
    on_watched => sub { $watched = 1 },
@@ -353,7 +352,7 @@ my $secondcolour;
 $ballproxy->watch_property(
    property => "colour",
    on_change => sub {
-      ( undef, undef, undef, $secondcolour ) = @_;
+      ( undef, $secondcolour ) = @_;
       $colourchanged = 1
    },
    want_initial => 1,
@@ -413,7 +412,7 @@ $watched = 0;
 $ballproxy->watch_property(
    property => "size",
    on_change => sub {
-      my ( $obj, $prop, $how, @value ) = @_;
+      my ( $how, @value ) = @_;
       $size = $value[0];
    },
    on_watched => sub { $watched = 1 },
