@@ -53,14 +53,14 @@ is_deeply( $ball->can_event(),
            '$ball->can_event() yields all' );
 
 is_deeply( $ball->can_property( "colour" ),
-           { dim => DIM_SCALAR, type => 'int' }, '$ball->can_property "colour"' );
+           { dim => DIM_SCALAR, type => 'str' }, '$ball->can_property "colour"' );
 
 is_deeply( $ball->can_property( "style" ),
            undef, '$ball->can_property "style" is undef' );
 
 is_deeply( $ball->can_property(),
            {
-              colour => { dim => DIM_SCALAR, type => 'int' },
+              colour => { dim => DIM_SCALAR, type => 'str' },
               size   => { dim => DIM_SCALAR, type => 'int', smash => 1 },
            },
            '$ball->can_property() yields all' );
@@ -77,7 +77,7 @@ is_deeply( $ball->introspect,
                  destroy => { args => [] },
               },
               properties => {
-                 colour => { dim => DIM_SCALAR, type => 'int' },
+                 colour => { dim => DIM_SCALAR, type => 'str' },
                  size   => { dim => DIM_SCALAR, type => 'int', smash => 1 },
               },
            }, '$ball introspect' );

@@ -116,7 +116,7 @@ $expect = "\x82" . "\0\0\0\xd2" .
                             "methods\0"    . "\x61" . "bounce\0" . "\x62" . "args\0" . "\x41" . "\x23" . "str" .
                                                                             "ret\0" . "\x23" . "str" .
                             "properties\0" . "\x62" . "colour\0" . "\x62" . "dim\0" . "\x21" . "1" .
-                                                                            "type\0" . "\x23" . "int" .
+                                                                            "type\0" . "\x23" . "str" .
                                                       "size\0"   . "\x63" . "dim\0" . "\x21" . "1" .
                                                                             "smash\0" . "\x21" . "1" .
                                                                             "type\0" . "\x23" . "int" .

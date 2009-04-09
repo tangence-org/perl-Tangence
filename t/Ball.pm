@@ -22,7 +22,7 @@ our %EVENTS = (
 our %PROPS = (
    colour => {
       dim  => DIM_SCALAR,
-      type => 'int',
+      type => 'str',
    },
 
    size => {
