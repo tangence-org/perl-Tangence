@@ -76,7 +76,7 @@ sub del_number
    if( grep { $_ == $num } @$array ) {
       my $index;
       $array->[$_] == $num and ( $index = $_, last ) for 0 .. $#$array;
-      $self->splice_prop_array( $index, 1, () );
+      $index == 0 ? $self->shift_prop_array() : $self->splice_prop_array( $index, 1, () );
    }
 }
 

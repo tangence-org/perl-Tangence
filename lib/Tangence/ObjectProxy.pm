@@ -294,6 +294,8 @@ sub _update_property
    else {
       croak "Unrecognised property dimension $dim for $property";
    }
+
+   $_->{on_updated} and $_->{on_updated}->( $prop->{cache} ) for @{ $prop->{cbs} };
 }
 
 sub _update_property_scalar
@@ -303,7 +305,7 @@ sub _update_property_scalar
 
    if( $how == CHANGE_SET ) {
       $prop->{cache} = $value[0];
-      $_->{on_set}->( $prop->{cache} ) for @{ $prop->{cbs} };
+      $_->{on_set} and $_->{on_set}->( $prop->{cache} ) for @{ $prop->{cbs} };
    }
    else {
       croak "Change type $how is not valid for a scalar property";
@@ -317,15 +319,15 @@ sub _update_property_hash
 
    if( $how == CHANGE_SET ) {
       $prop->{cache} = { %{ $value[0] } };
-      $_->{on_set}->( $prop->{cache} ) for @{ $prop->{cbs} };
+      $_->{on_set} and $_->{on_set}->( $prop->{cache} ) for @{ $prop->{cbs} };
    }
    elsif( $how == CHANGE_ADD ) {
       $prop->{cache}->{$value[0]} = $value[1];
-      $_->{on_add}->( $value[0], $value[1] ) for @{ $prop->{cbs} };
+      $_->{on_add} and $_->{on_add}->( $value[0], $value[1] ) for @{ $prop->{cbs} };
    }
    elsif( $how == CHANGE_DEL ) {
       delete $prop->{cache}->{$value[0]};
-      $_->{on_del}->( $value[0] ) for @{ $prop->{cbs} };
+      $_->{on_del} and $_->{on_del}->( $value[0] ) for @{ $prop->{cbs} };
    }
    else {
       croak "Change type $how is not valid for a hash property";
@@ -339,20 +341,20 @@ sub _update_property_array
 
    if( $how == CHANGE_SET ) {
       $prop->{cache} = [ @{ $value[0] } ];
-      $_->{on_set}->( $prop->{cache} ) for @{ $prop->{cbs} };
+      $_->{on_set} and $_->{on_set}->( $prop->{cache} ) for @{ $prop->{cbs} };
    }
    elsif( $how == CHANGE_PUSH ) {
       push @{ $prop->{cache} }, @value;
-      $_->{on_push}->( @value ) for @{ $prop->{cbs} };
+      $_->{on_push} and $_->{on_push}->( @value ) for @{ $prop->{cbs} };
    }
    elsif( $how == CHANGE_SHIFT ) {
       splice @{ $prop->{cache} }, 0, $value[0], ();
-      $_->{on_shift}->( $value[0] ) for @{ $prop->{cbs} };
+      $_->{on_shift} and $_->{on_shift}->( $value[0] ) for @{ $prop->{cbs} };
    }
    elsif( $how == CHANGE_SPLICE ) {
       my ( $start, $count, @new ) = @value;
       splice @{ $prop->{cache} }, $start, $count, @new;
-      $_->{on_splice}->( $start, $count, @new ) for @{ $prop->{cbs} };
+      $_->{on_splice} and $_->{on_splice}->( $start, $count, @new ) for @{ $prop->{cbs} };
    }
    else {
       croak "Change type $how is not valid for an array property";
@@ -367,18 +369,18 @@ sub _update_property_objset
    if( $how == CHANGE_SET ) {
       # Comes across in a LIST. We need to map id => obj
       $prop->{cache} = { map { $_->id => $_ } @{ $value[0] } };
-      $_->{on_set}->( $prop->{cache} ) for @{ $prop->{cbs} };
+      $_->{on_set} and $_->{on_set}->( $prop->{cache} ) for @{ $prop->{cbs} };
    }
    elsif( $how == CHANGE_ADD ) {
       # Comes as object only
       my $obj = $value[0];
       $prop->{cache}->{$obj->id} = $obj;
-      $_->{on_add}->( $obj ) for @{ $prop->{cbs} };
+      $_->{on_add} and $_->{on_add}->( $obj ) for @{ $prop->{cbs} };
    }
    elsif( $how == CHANGE_DEL ) {
       # Comes as ID number only
       delete $prop->{cache}->{$value[0]};
-      $_->{on_del}->( $value[0] ) for @{ $prop->{cbs} };
+      $_->{on_del} and $_->{on_del}->( $value[0] ) for @{ $prop->{cbs} };
    }
    else {
       croak "Change type $how is not valid for an objset property";
@@ -468,7 +470,16 @@ sub watch_property
    croak "Class ".$self->class." does not have a property $property" unless $pdef;
 
    my $callbacks = {};
+   my $on_updated = delete $args{on_updated};
+   if( $on_updated ) {
+      ref $on_updated eq "CODE" or croak "Expected 'on_updated' to be a CODE ref";
+      $callbacks->{on_updated} = $on_updated;
+   }
+
    foreach my $name ( @{ $callbacks_needed{$pdef->{dim}} } ) {
+      # All of these become optional if 'on_updated' is supplied
+      next if $on_updated and not exists $args{$name};
+
       ref( $callbacks->{$name} = delete $args{$name} ) eq "CODE"
          or croak "Expected '$name' as a CODE ref";
    }
