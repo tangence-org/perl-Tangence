@@ -280,33 +280,30 @@ sub _update_property
    my $dim = $self->{schema}->{properties}->{$property}->{dim};
 
    if( $dim == DIM_SCALAR ) {
-      $self->_update_property_scalar( $prop->{cache}, $how, @value );
+      $self->_update_property_scalar( $prop, $how, @value );
    }
    elsif( $dim == DIM_HASH ) {
-      $self->_update_property_hash( $prop->{cache}, $how, @value );
+      $self->_update_property_hash( $prop, $how, @value );
    }
    elsif( $dim == DIM_ARRAY ) {
-      $self->_update_property_array( $prop->{cache}, $how, @value );
+      $self->_update_property_array( $prop, $how, @value );
    }
    elsif( $dim == DIM_OBJSET ) {
-      $self->_update_property_objset( $prop->{cache}, $how, @value );
+      $self->_update_property_objset( $prop, $how, @value );
    }
    else {
       croak "Unrecognised property dimension $dim for $property";
-   }
-
-   if( my $cbs = $self->{props}->{$property}->{cbs} ) {
-      foreach my $cb ( @$cbs ) { $cb->( $how, @value ) }
    }
 }
 
 sub _update_property_scalar
 {
    my $self = shift;
-   my ( $cache, $how, @value ) = @_;
+   my ( $prop, $how, @value ) = @_;
 
    if( $how == CHANGE_SET ) {
-      $_[0] = $value[0];
+      $prop->{cache} = $value[0];
+      $_->{on_set}->( $prop->{cache} ) for @{ $prop->{cbs} };
    }
    else {
       croak "Change type $how is not valid for a scalar property";
@@ -316,16 +313,19 @@ sub _update_property_scalar
 sub _update_property_hash
 {
    my $self = shift;
-   my ( $cache, $how, @value ) = @_;
+   my ( $prop, $how, @value ) = @_;
 
    if( $how == CHANGE_SET ) {
-      $_[0] = { %{ $value[0] } };
+      $prop->{cache} = { %{ $value[0] } };
+      $_->{on_set}->( $prop->{cache} ) for @{ $prop->{cbs} };
    }
    elsif( $how == CHANGE_ADD ) {
-      $cache->{$value[0]} = $value[1];
+      $prop->{cache}->{$value[0]} = $value[1];
+      $_->{on_add}->( $value[0], $value[1] ) for @{ $prop->{cbs} };
    }
    elsif( $how == CHANGE_DEL ) {
-      delete $cache->{$value[0]};
+      delete $prop->{cache}->{$value[0]};
+      $_->{on_del}->( $value[0] ) for @{ $prop->{cbs} };
    }
    else {
       croak "Change type $how is not valid for a hash property";
@@ -335,20 +335,24 @@ sub _update_property_hash
 sub _update_property_array
 {
    my $self = shift;
-   my ( $cache, $how, @value ) = @_;
+   my ( $prop, $how, @value ) = @_;
 
    if( $how == CHANGE_SET ) {
-      $_[0] = [ @{ $value[0] } ];
+      $prop->{cache} = [ @{ $value[0] } ];
+      $_->{on_set}->( $prop->{cache} ) for @{ $prop->{cbs} };
    }
    elsif( $how == CHANGE_PUSH ) {
-      push @$cache, @value;
+      push @{ $prop->{cache} }, @value;
+      $_->{on_push}->( @value ) for @{ $prop->{cbs} };
    }
    elsif( $how == CHANGE_SHIFT ) {
-      splice @$cache, 0, $value[0], ();
+      splice @{ $prop->{cache} }, 0, $value[0], ();
+      $_->{on_shift}->( $value[0] ) for @{ $prop->{cbs} };
    }
    elsif( $how == CHANGE_SPLICE ) {
       my ( $start, $count, @new ) = @value;
-      splice @$cache, $start, $count, @new;
+      splice @{ $prop->{cache} }, $start, $count, @new;
+      $_->{on_splice}->( $start, $count, @new ) for @{ $prop->{cbs} };
    }
    else {
       croak "Change type $how is not valid for an array property";
@@ -358,20 +362,23 @@ sub _update_property_array
 sub _update_property_objset
 {
    my $self = shift;
-   my ( $cache, $how, @value ) = @_;
+   my ( $prop, $how, @value ) = @_;
 
    if( $how == CHANGE_SET ) {
       # Comes across in a LIST. We need to map id => obj
-      $_[0] = { map { $_->id => $_ } @{ $value[0] } };
+      $prop->{cache} = { map { $_->id => $_ } @{ $value[0] } };
+      $_->{on_set}->( $prop->{cache} ) for @{ $prop->{cbs} };
    }
    elsif( $how == CHANGE_ADD ) {
       # Comes as object only
       my $obj = $value[0];
-      $cache->{$obj->id} = $obj;
+      $prop->{cache}->{$obj->id} = $obj;
+      $_->{on_add}->( $obj ) for @{ $prop->{cbs} };
    }
    elsif( $how == CHANGE_DEL ) {
       # Comes as ID number only
-      delete $cache->{$value[0]};
+      delete $prop->{cache}->{$value[0]};
+      $_->{on_del}->( $value[0] ) for @{ $prop->{cbs} };
    }
    else {
       croak "Change type $how is not valid for an objset property";
@@ -436,14 +443,19 @@ sub set_property
    );
 }
 
+my %callbacks_needed = (
+   DIM_SCALAR() => [qw( on_set )],
+   DIM_HASH()   => [qw( on_set on_add on_del )],
+   DIM_ARRAY()  => [qw( on_set on_push on_shift on_splice )],
+   DIM_OBJSET() => [qw( on_set on_add on_del )],
+);
+
 sub watch_property
 {
    my $self = shift;
    my %args = @_;
 
    my $property = delete $args{property} or croak "Need a property";
-   ref( my $callback = delete $args{on_change} ) eq "CODE"
-      or croak "Expected 'on_change' as a CODE ref";
 
    my $on_error = delete $args{on_error} || $self->{on_error};
    ref $on_error eq "CODE" or croak "Expected 'on_error' as a CODE ref";
@@ -455,6 +467,12 @@ sub watch_property
    my $pdef = $self->can_property( $property );
    croak "Class ".$self->class." does not have a property $property" unless $pdef;
 
+   my $callbacks = {};
+   foreach my $name ( @{ $callbacks_needed{$pdef->{dim}} } ) {
+      ref( $callbacks->{$name} = delete $args{$name} ) eq "CODE"
+         or croak "Expected '$name' as a CODE ref";
+   }
+
    # Smashed properties behave differently
    my $smash = $pdef->{smash};
 
@@ -463,27 +481,27 @@ sub watch_property
          $self->get_property(
             property => $property,
             on_value => sub {
-               $callback->( CHANGE_SET, $_[0] );
-               push @$cbs, $callback;
+               $callbacks->{on_set}->( $_[0] );
+               push @$cbs, $callbacks;
             },
          );
       }
       elsif( $want_initial and $smash ) {
-         $callback->( CHANGE_SET, $self->{props}->{$property}->{cache} );
-         push @$cbs, $callback;
+         $callbacks->{on_set}->( $self->{props}->{$property}->{cache} );
+         push @$cbs, $callbacks;
       }
       else {
-         push @$cbs, $callback;
+         push @$cbs, $callbacks;
       }
 
       return;
    }
 
-   $self->{props}->{$property}->{cbs} = [ $callback ];
+   $self->{props}->{$property}->{cbs} = [ $callbacks ];
 
    if( $smash ) {
       if( $want_initial ) {
-         $callback->( CHANGE_SET, $self->{props}->{$property}->{cache} );
+         $callbacks->{on_set}->( $self->{props}->{$property}->{cache} );
       }
       $on_watched->() if $on_watched;
       return;

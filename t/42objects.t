@@ -63,10 +63,7 @@ my $colour;
 my $watched;
 $ballproxy->watch_property(
    property => "colour",
-   on_change => sub {
-      my ( $how, @value ) = @_;
-      $colour = $value[0];
-   },
+   on_set => sub { $colour = shift },
    on_watched => sub { $watched = 1 },
 );
 
@@ -123,10 +120,7 @@ is( $ballproxy->id, $ballid, 'New ball proxy reuses old object id' );
 
 $ballproxy->watch_property(
    property => "colour",
-   on_change => sub {
-      my ( $how, @value ) = @_;
-      $colour = $value[0];
-   },
+   on_set => sub { $colour = shift },
    on_watched => sub { $watched = 1 },
 );
 

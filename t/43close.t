@@ -43,10 +43,7 @@ my $colour1;
 my $watched;
 $ballproxy1->watch_property(
    property => "colour",
-   on_change => sub {
-      my ( $how, @value ) = @_;
-      $colour1 = $value[0];
-   },
+   on_set => sub { $colour1 = shift },
    on_watched => sub { $watched = 1 },
 );
 
@@ -68,10 +65,7 @@ my $colour2;
 $watched = 0;
 $ballproxy2->watch_property(
    property => "colour",
-   on_change => sub {
-      my ( $how, @value ) = @_;
-      $colour2 = $value[0];
-   },
+   on_set => sub { $colour2 = shift },
    on_watched => sub { $watched = 1 },
 );
 

@@ -42,8 +42,8 @@ my $scalar;
 my $scalar_changed = 0;
 $proxy->watch_property(
    property => "scalar",
-   on_change => sub { 
-      ( undef, $scalar ) = @_;
+   on_set => sub {
+      $scalar = shift;
       $scalar_changed = 1
    },
    on_watched => sub { $result = 1 },
@@ -64,7 +64,9 @@ is( $proxy->prop( "scalar" ),
 my $hash_changed = 0;
 $proxy->watch_property(
    property => "hash",
-   on_change => sub { $hash_changed = 1 },
+   on_set => sub { $hash_changed = 1 },
+   on_add => sub { $hash_changed = 1 },
+   on_del => sub { $hash_changed = 1 },
    on_watched => sub { $result = 1 },
    want_initial => 1,
 );
@@ -79,7 +81,10 @@ is_deeply( $proxy->prop( "hash" ),
 my $array_changed = 0;
 $proxy->watch_property(
    property => "array",
-   on_change => sub { $array_changed = 1 },
+   on_set    => sub { $array_changed = 1 },
+   on_push   => sub { $array_changed = 1 },
+   on_shift  => sub { $array_changed = 1 },
+   on_splice => sub { $array_changed = 1 },
    on_watched => sub { $result = 1 },
    want_initial => 1,
 );

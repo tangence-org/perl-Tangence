@@ -109,10 +109,7 @@ is( $ball->get_prop_colour, "blue", '$ball->colour is now blue' );
 my $watched;
 $ballproxy->watch_property(
    property => "colour",
-   on_change => sub { 
-      my ( $how, @value ) = @_;
-      $colour = $value[0];
-   },
+   on_set => sub { $colour = shift },
    on_watched => sub { $watched = 1 },
 );
 
@@ -129,8 +126,8 @@ my $colourchanged = 0;
 my $secondcolour;
 $ballproxy->watch_property(
    property => "colour",
-   on_change => sub {
-      ( undef, $secondcolour ) = @_;
+   on_set => sub {
+      $secondcolour = shift;
       $colourchanged = 1
    },
    want_initial => 1,
@@ -160,10 +157,7 @@ my $size;
 $watched = 0;
 $ballproxy->watch_property(
    property => "size",
-   on_change => sub {
-      my ( $how, @value ) = @_;
-      $size = $value[0];
-   },
+   on_set => sub { $size = shift },
    on_watched => sub { $watched = 1 },
    want_initial => 1,
 );
