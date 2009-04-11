@@ -492,17 +492,23 @@ sub watch_property
          $self->get_property(
             property => $property,
             on_value => sub {
-               $callbacks->{on_set}->( $_[0] );
+               $callbacks->{on_set} and $callbacks->{on_set}->( $_[0] );
+               $callbacks->{on_updated} and $callbacks->{on_updated}->( $_[0] );
                push @$cbs, $callbacks;
+               $on_watched->() if $on_watched;
             },
          );
       }
       elsif( $want_initial and $smash ) {
-         $callbacks->{on_set}->( $self->{props}->{$property}->{cache} );
+         my $cache = $self->{props}->{$property}->{cache};
+         $callbacks->{on_set} and $callbacks->{on_set}->( $cache );
+         $callbacks->{on_updated} and $callbacks->{on_updated}->( $cache );
          push @$cbs, $callbacks;
+         $on_watched->() if $on_watched;
       }
       else {
          push @$cbs, $callbacks;
+         $on_watched->() if $on_watched;
       }
 
       return;
@@ -512,7 +518,9 @@ sub watch_property
 
    if( $smash ) {
       if( $want_initial ) {
-         $callbacks->{on_set}->( $self->{props}->{$property}->{cache} );
+         my $cache = $self->{props}->{$property}->{cache};
+         $callbacks->{on_set} and $callbacks->{on_set}->( $cache );
+         $callbacks->{on_updated} and $callbacks->{on_updated}->( $cache );
       }
       $on_watched->() if $on_watched;
       return;

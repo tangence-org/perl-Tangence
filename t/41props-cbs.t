@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 11;
+use Test::More tests => 12;
 use IO::Async::Test;
 use IO::Async::Loop;
 
@@ -59,6 +59,21 @@ undef $scalar;
 wait_for { defined $scalar };
 
 is( $scalar, "1234", 'set scalar value' );
+
+my $also_scalar;
+$proxy->watch_property(
+   property => "scalar",
+   on_updated => sub { $also_scalar = shift },
+   on_watched => sub { $result = 1 },
+   want_initial => 1,
+);
+
+undef $result;
+wait_for { defined $result };
+
+wait_for { defined $also_scalar };
+
+is( $also_scalar, "1234", 'Can watch_property a second time' );
 
 my $hash;
 my ( $a_key, $a_value );
