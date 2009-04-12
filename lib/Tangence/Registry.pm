@@ -42,23 +42,13 @@ sub new
    );
    $self->{registry} = $self;
    
-   $self->{objects} = {
-      $id => $self, # registry is object 0
-   };
+   $self->{objects} = { $id => $self };
+   $self->add_prop_objects( $id => $self->describe );
 
    $self->{nextid}  = 1;
    $self->{freeids} = []; # free'd ids we can reuse
 
    return $self;
-}
-
-sub get_prop_objects
-{
-   my $self = shift;
-
-   my $objects = $self->{objects};
-
-   return { map { $_ => $objects->{$_}->describe } keys %$objects };
 }
 
 sub get_by_id
@@ -92,7 +82,7 @@ sub construct
    $self->fire_event( "object_constructed", $id );
 
    $self->{objects}->{$id} = $obj;
-   $self->update_property( "objects", CHANGE_ADD, $id, $obj->describe );
+   $self->add_prop_objects( $id => $obj->describe );
 
    return $obj;
 }
@@ -113,7 +103,7 @@ sub destroy_id
    exists $self->{objects}->{$id} or croak "Cannot destroy ID $id - does not exist";
 
    my $obj = delete $self->{objects}->{$id};
-   $self->update_property( "objects", CHANGE_DEL, $id );
+   $self->del_prop_objects( $id );
 
    $self->fire_event( "object_destroyed", $id );
 
