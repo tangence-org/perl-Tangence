@@ -21,10 +21,7 @@ is_deeply( $registry->get_prop_objects,
            '$registry objects initially has only registry' );
 
 my $added_object_id;
-$registry->subscribe_event( "object_constructed", sub {
-      my ( $obj, $event, @values ) = @_;
-      $added_object_id = $values[0];
-} );
+$registry->subscribe_event( "object_constructed", sub { $added_object_id = shift } );
 
 my $ball = $registry->construct(
    "t::Ball",

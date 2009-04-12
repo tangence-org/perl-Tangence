@@ -73,9 +73,6 @@ sub new
    $self->{peer_hasobj} = {}; # {$id} = $destroy_watch_id
    $self->{peer_hasclass} = {}; # {$classname} = [\@smashkeys];
 
-   # I'm likely to use a lot of these - just make one per stream
-   $self->{destroy_cb} = sub { $self->object_destroyed( @_ ) };
-
    return $self;
 }
 
@@ -118,7 +115,7 @@ sub on_read
 sub object_destroyed
 {
    my $self = shift;
-   my ( $obj, $event, $startsub, $donesub ) = @_;
+   my ( $obj, $startsub, $donesub ) = @_;
 
    $startsub->();
 

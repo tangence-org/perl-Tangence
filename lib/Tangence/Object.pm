@@ -100,7 +100,7 @@ sub destroy
    };
 
    foreach my $cb ( @{ $self->{event_subs}->{destroy} } ) {
-      $cb->( $self, "destroy", $incsub, $decsub );
+      $cb->( $incsub, $decsub );
    }
 
    $decsub->();
@@ -287,7 +287,7 @@ sub fire_event
    $self->can_event( $event ) or croak "$self has no event $event";
 
    foreach my $cb ( @{ $self->{event_subs}->{$event} } ) {
-      $cb->( $self, $event, @args );
+      $cb->( @args );
    }
 }
 
@@ -329,7 +329,7 @@ sub update_property
    my $pdef = $self->can_property( $prop ) or croak "$self has no property $prop";
 
    foreach my $cb ( @{ $self->{properties}->{$prop}->[1] } ) {
-      $cb->( $self, $prop, $how, @value );
+      $cb->( $how, @value );
    }
 }
 

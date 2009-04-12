@@ -85,7 +85,7 @@ $ballproxy->subscribe_event(
    on_fire => sub { $ballproxy_destroyed = 1 } );
 
 my @destroyed;
-$registry->subscribe_event( object_destroyed => sub { push @destroyed, $_[2] } );
+$registry->subscribe_event( object_destroyed => sub { push @destroyed, $_[0] } );
 
 $ball->destroy;
 

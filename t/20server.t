@@ -137,10 +137,7 @@ is_deeply( $bag->get_prop_colours,
 my $ball = $registry->get_by_id( 2 );
 
 my $howhigh;
-$ball->subscribe_event( bounced => sub {
-      my ( $obj, $event, @args ) = @_;
-      $howhigh = $args[0];
-} );
+$ball->subscribe_event( bounced => sub { $howhigh = shift } );
 
 # MSG_CALL
 $S2->syswrite( "\1" . "\0\0\0\x13" .

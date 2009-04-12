@@ -90,8 +90,7 @@ sub handle_request_SUBSCRIBE
 
    my $id = $object->subscribe_event( $event,
       sub {
-         my ( undef, $event, @args ) = @_;
-         my $message = $object->generate_message_EVENT( $self, $event, @args );
+         my $message = $object->generate_message_EVENT( $self, $event, @_ );
          $self->request(
             request     => $message,
             on_response => sub { "IGNORE" },
@@ -284,7 +283,7 @@ sub _install_watch
 
    my $id = $object->watch_property( $prop,
       sub {
-         my ( undef, $prop, $how, @args ) = @_;
+         my ( $how, @args ) = @_;
          my $message = $object->generate_message_UPDATE( $self, $prop, $how, @args );
          $self->request(
             request     => $message,

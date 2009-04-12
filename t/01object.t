@@ -92,9 +92,8 @@ my $howhigh;
 my $id;
 
 $id = $ball->subscribe_event( bounced => sub {
-      my ( $obj, $event, @args ) = @_;
+      ( $howhigh ) = @_;
       $bounces++;
-      $howhigh = $args[0];
 } );
 
 $ball->method_bounce( {}, "20 metres" );
@@ -111,10 +110,7 @@ is( $bounces, 1, '$bounces is still 1 after unsubscribe ->bounce' );
 is( $ball->get_prop_colour, "red", 'colour is initially red' );
 
 my $colour;
-$id = $ball->watch_property( colour => sub {
-      my ( $obj, $prop, $how, @value ) = @_;
-      $colour = $value[0];
-} );
+$id = $ball->watch_property( colour => sub { ( undef, $colour ) = @_ } );
 
 $ball->set_prop_colour( "blue" );
 
