@@ -445,13 +445,6 @@ sub set_property
    );
 }
 
-my %callbacks_needed = (
-   DIM_SCALAR() => [qw( on_set )],
-   DIM_HASH()   => [qw( on_set on_add on_del )],
-   DIM_ARRAY()  => [qw( on_set on_push on_shift on_splice )],
-   DIM_OBJSET() => [qw( on_set on_add on_del )],
-);
-
 sub watch_property
 {
    my $self = shift;
@@ -476,7 +469,7 @@ sub watch_property
       $callbacks->{on_updated} = $on_updated;
    }
 
-   foreach my $name ( @{ $callbacks_needed{$pdef->{dim}} } ) {
+   foreach my $name ( @{ CHANGETYPES->{$pdef->{dim}} } ) {
       # All of these become optional if 'on_updated' is supplied
       next if $on_updated and not exists $args{$name};
 

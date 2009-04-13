@@ -35,6 +35,8 @@ our @EXPORT = qw(
    CHANGE_SHIFT
    CHANGE_SPLICE
 
+   CHANGETYPES
+
    DATA_NUMBER
    DATA_STRING
    DATA_LIST
@@ -114,6 +116,13 @@ use constant CHANGE_DEL    => 3; # HASH: Deleted key follows, OBJSET: Deleted id
 use constant CHANGE_PUSH   => 4; # ARRAY: New members follow in a list
 use constant CHANGE_SHIFT  => 5; # ARRAY: Count of old elements to remove
 use constant CHANGE_SPLICE => 6; # ARRAY: Start index, count, [ new elements ]
+
+use constant CHANGETYPES => {
+   DIM_SCALAR() => [qw( on_set )],
+   DIM_HASH()   => [qw( on_set on_add on_del )],
+   DIM_ARRAY()  => [qw( on_set on_push on_shift on_splice )],
+   DIM_OBJSET() => [qw( on_set on_add on_del )],
+};
 
 # Stream data types
 use constant DATA_NUMBER => 0; # Number: num=subtype:
