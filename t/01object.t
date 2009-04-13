@@ -110,7 +110,9 @@ is( $bounces, 1, '$bounces is still 1 after unsubscribe ->bounce' );
 is( $ball->get_prop_colour, "red", 'colour is initially red' );
 
 my $colour;
-$id = $ball->watch_property( colour => sub { ( undef, $colour ) = @_ } );
+$id = $ball->watch_property( colour => 
+   on_set => sub { $colour = shift },
+);
 
 $ball->set_prop_colour( "blue" );
 

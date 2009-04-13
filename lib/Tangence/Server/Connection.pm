@@ -276,21 +276,36 @@ sub handle_request_GETREGISTRY
    );
 }
 
+my %change_values = (
+   on_set => CHANGE_SET,
+   on_add => CHANGE_ADD,
+   on_del => CHANGE_DEL,
+   on_push => CHANGE_PUSH,
+   on_shift => CHANGE_SHIFT,
+   on_splice => CHANGE_SPLICE,
+);
+
 sub _install_watch
 {
    my $self = shift;
    my ( $object, $prop ) = @_;
 
-   my $id = $object->watch_property( $prop,
-      sub {
-         my ( $how, @args ) = @_;
-         my $message = $object->generate_message_UPDATE( $self, $prop, $how, @args );
+   my $pdef = $object->can_property( $prop );
+   my $dim = $pdef->{dim};
+
+   my %callbacks;
+   foreach my $name ( @{ CHANGETYPES->{$dim} } ) {
+      my $how = $change_values{$name};
+      $callbacks{$name} = sub {
+         my $message = $object->generate_message_UPDATE( $self, $prop, $how, @_ );
          $self->request(
             request     => $message,
             on_response => sub { "IGNORE" },
          );
       }
-   );
+   }
+
+   my $id = $object->watch_property( $prop, %callbacks );
 
    push @{ $self->{watches} }, [ $object, $prop, $id ];
 }

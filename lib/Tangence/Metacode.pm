@@ -49,7 +49,8 @@ sub init_class_property
       my $self = shift;
       my ( $newval ) = @_;
       $self->{properties}->{$prop}->[0] = $newval;
-      $self->update_property( $prop, CHANGE_SET, $newval );
+      my $cbs = $self->{properties}->{$prop}->[1];
+      $_->{on_set}->( $newval ) for @$cbs;
    };
 
    my $dim = $pdef->{dim};
@@ -86,14 +87,16 @@ sub init_class_property_hash
       my $self = shift;
       my ( $key, $value ) = @_;
       $self->{properties}->{$prop}->[0]->{$key} = $value;
-      $self->update_property( $prop, CHANGE_ADD, $key, $value );
+      my $cbs = $self->{properties}->{$prop}->[1];
+      $_->{on_add}->( $key, $value ) for @$cbs;
    };
 
    $subs->{"del_prop_$prop"} = sub {
       my $self = shift;
       my ( $key ) = @_;
       delete $self->{properties}->{$prop}->[0]->{$key};
-      $self->update_property( $prop, CHANGE_DEL, $key );
+      my $cbs = $self->{properties}->{$prop}->[1];
+      $_->{on_del}->( $key ) for @$cbs;
    };
 }
 
@@ -105,7 +108,8 @@ sub init_class_property_array
       my $self = shift;
       my @values = @_;
       push @{ $self->{properties}->{$prop}->[0] }, @values;
-      $self->update_property( $prop, CHANGE_PUSH, @values );
+      my $cbs = $self->{properties}->{$prop}->[1];
+      $_->{on_push}->( @values ) for @$cbs;
    };
 
    $subs->{"shift_prop_$prop"} = sub {
@@ -113,14 +117,16 @@ sub init_class_property_array
       my ( $count ) = @_;
       $count = 1 unless @_;
       splice @{ $self->{properties}->{$prop}->[0] }, 0, $count, ();
-      $self->update_property( $prop, CHANGE_SHIFT, $count );
+      my $cbs = $self->{properties}->{$prop}->[1];
+      $_->{on_shift}->( $count ) for @$cbs;
    };
 
    $subs->{"splice_prop_$prop"} = sub {
       my $self = shift;
       my ( $index, $count, @values ) = @_;
       splice @{ $self->{properties}->{$prop}->[0] }, $index, $count, @values;
-      $self->update_property( $prop, CHANGE_SPLICE, $index, $count, @values );
+      my $cbs = $self->{properties}->{$prop}->[1];
+      $_->{on_splice}->( $index, $count, @values ) for @$cbs;
    };
 }
 
@@ -133,14 +139,16 @@ sub init_class_property_objset
       my $self = shift;
       my ( $newval ) = @_;
       $self->{properties}->{$prop}->[0] = $newval;
-      $self->update_property( $prop, CHANGE_SET, [ values %$newval ] );
+      my $cbs = $self->{properties}->{$prop}->[1];
+      $_->{on_set}->( [ values %$newval ] ) for @$cbs;
    };
 
    $subs->{"add_prop_$prop"} = sub {
       my $self = shift;
       my ( $obj ) = @_;
       $self->{properties}->{$prop}->[0]->{$obj->id} = $obj;
-      $self->update_property( $prop, CHANGE_ADD, $obj );
+      my $cbs = $self->{properties}->{$prop}->[1];
+      $_->{on_add}->( $obj ) for @$cbs;
    };
 
    $subs->{"del_prop_$prop"} = sub {
@@ -148,7 +156,8 @@ sub init_class_property_objset
       my ( $obj_or_id ) = @_;
       my $id = ref $obj_or_id ? $obj_or_id->id : $obj_or_id;
       delete $self->{properties}->{$prop}->[0]->{$id};
-      $self->update_property( $prop, CHANGE_DEL, $id );
+      my $cbs = $self->{properties}->{$prop}->[1];
+      $_->{on_del}->( $id ) for @$cbs;
    };
 }
 

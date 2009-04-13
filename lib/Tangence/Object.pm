@@ -321,28 +321,22 @@ sub unsubscribe_event
    splice @$sublist, $index, 1, ();
 }
 
-sub update_property
-{
-   my $self = shift;
-   my ( $prop, $how, @value ) = @_;
-
-   my $pdef = $self->can_property( $prop ) or croak "$self has no property $prop";
-
-   foreach my $cb ( @{ $self->{properties}->{$prop}->[1] } ) {
-      $cb->( $how, @value );
-   }
-}
-
 sub watch_property
 {
    my $self = shift;
-   my ( $prop, $callback ) = @_;
+   my ( $prop, %callbacks ) = @_;
 
-   $self->can_property( $prop ) or croak "$self has no property $prop";
+   my $pdef = $self->can_property( $prop ) or croak "$self has no property $prop";
+
+   my $callbacks = {};
+   foreach my $name ( @{ CHANGETYPES->{$pdef->{dim}} } ) {
+      ref( $callbacks->{$name} = delete $callbacks{$name} ) eq "CODE"
+         or croak "Expected '$name' as a CODE ref";
+   }
 
    my $watchlist = $self->{properties}->{$prop}->[1];
 
-   push @$watchlist, $callback;
+   push @$watchlist, $callbacks;
 
    my $ref = \@{$watchlist}[$#$watchlist];  # reference to last element
    return $ref + 0; # force numeric context
