@@ -165,14 +165,14 @@ sub unpack_bool
 }
 
 my %pack_int_format = (
-   DATANUM_UINT8,  "C",
-   DATANUM_SINT8,  "c",
-   DATANUM_UINT16, "S>",
-   DATANUM_SINT16, "s>",
-   DATANUM_UINT32, "L>",
-   DATANUM_SINT32, "l>",
-   DATANUM_UINT64, "Q>",
-   DATANUM_SINT64, "q>",
+   DATANUM_UINT8,  [ "C",  1 ],
+   DATANUM_SINT8,  [ "c",  1 ],
+   DATANUM_UINT16, [ "S>", 2 ],
+   DATANUM_SINT16, [ "s>", 2 ],
+   DATANUM_UINT32, [ "L>", 4 ],
+   DATANUM_SINT32, [ "l>", 4 ],
+   DATANUM_UINT64, [ "Q>", 8 ],
+   DATANUM_SINT64, [ "q>", 8 ],
 );
 
 my %int_sigs = (
@@ -211,7 +211,7 @@ sub pack_int
    ref $d and croak "$d is not a number";
    my $subtype = _best_int_type_for( $d );
    $self->_pack_leader( DATA_NUMBER, $subtype );
-   $self->{record} .= pack( $pack_int_format{$subtype}, $d );
+   $self->{record} .= pack( $pack_int_format{$subtype}[0], $d );
    return $self;
 }
 
@@ -222,8 +222,8 @@ sub unpack_int
 
    $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
    exists $pack_int_format{$num} or croak "Expected an integer subtype but got $num";
-   my ( $n ) = unpack( $pack_int_format{$num}, $self->{record} );
-   substr( $self->{record}, 0, length pack( $pack_int_format{$num}, 0 ), "" ); # TODO: Do this more efficiently
+   my ( $n ) = unpack( $pack_int_format{$num}[0], $self->{record} );
+   substr( $self->{record}, 0, $pack_int_format{$num}[1] ) = "";
    return $n;
 }
 
@@ -420,7 +420,7 @@ sub pack_typed
       ref $d and croak "$d is not a number";
       my $subtype = $int_sigs{$sig};
       $self->_pack_leader( DATA_NUMBER, $subtype );
-      $self->{record} .= pack( $pack_int_format{$subtype}, $d );
+      $self->{record} .= pack( $pack_int_format{$subtype}[0], $d );
    }
    elsif( $sig =~ m/^list\((.*)\)$/ ) {
       my $subtype = $1;
@@ -456,8 +456,8 @@ sub unpack_typed
 
       $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
       $num == $int_sigs{$sig} or croak "Expected subtype $int_sigs{$sig} but got $num";
-      my ( $n ) = unpack( $pack_int_format{$num}, $self->{record} );
-      substr( $self->{record}, 0, length pack( $pack_int_format{$num}, 0 ), "" ); # TODO: Do this more efficiently
+      my ( $n ) = unpack( $pack_int_format{$num}[0], $self->{record} );
+      substr( $self->{record}, 0, $pack_int_format{$num}[1] ) = "";
       return $n;
    }
    elsif( $sig =~ m/^list\((.*)\)$/ ) {
