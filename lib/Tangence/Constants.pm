@@ -28,6 +28,8 @@ our @EXPORT = qw(
    DIM_ARRAY
    DIM_OBJSET
 
+   DIMNAMES
+
    CHANGE_SET
    CHANGE_ADD
    CHANGE_DEL
@@ -108,6 +110,14 @@ use constant DIM_SCALAR => 1;
 use constant DIM_HASH   => 2;
 use constant DIM_ARRAY  => 3;
 use constant DIM_OBJSET => 4; # set of objects (implemented like id-keyed list in no particular order)
+
+use constant DIMNAMES => [
+   undef,
+   "scalar",
+   "hash",
+   "array",
+   "objset",
+];
 
 # Property change types
 use constant CHANGE_SET    => 1; # SCALAR/HASH/ARRAY: New value follows. OBJSET: LIST of objects follows

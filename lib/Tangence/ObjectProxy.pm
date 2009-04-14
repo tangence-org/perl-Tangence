@@ -278,18 +278,10 @@ sub _update_property
    my $prop = $self->{props}->{$property} ||= {};
 
    my $dim = $self->{schema}->{properties}->{$property}->{dim};
+   my $dimname = DIMNAMES->[$dim];
 
-   if( $dim == DIM_SCALAR ) {
-      $self->_update_property_scalar( $prop, $how, @value );
-   }
-   elsif( $dim == DIM_HASH ) {
-      $self->_update_property_hash( $prop, $how, @value );
-   }
-   elsif( $dim == DIM_ARRAY ) {
-      $self->_update_property_array( $prop, $how, @value );
-   }
-   elsif( $dim == DIM_OBJSET ) {
-      $self->_update_property_objset( $prop, $how, @value );
+   if( my $code = $self->can( "_update_property_$dimname" ) ) {
+      $code->( $self, $prop, $how, @value );
    }
    else {
       croak "Unrecognised property dimension $dim for $property";
