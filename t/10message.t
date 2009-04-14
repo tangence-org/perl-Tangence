@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 148;
+use Test::More tests => 154;
 use Test::Exception;
 use Test::HexString;
 
@@ -296,3 +296,21 @@ test_typed "any (HASH of HASH)",
    sig    => "any",
    data   => { hash => {} },
    stream => "\x61hash\0\x60";
+
+my $m;
+
+$m = Tangence::Message->new( 0 );
+$m->pack_all_typed( [ 'int', 'str', 'bool' ], 10, "hello", "true" );
+
+is_hexstr( $m->{record}, "\x02\x0a\x25hello\x01", 'pack_all_typed' );
+
+is_deeply( [ $m->unpack_all_typed( [ 'int', 'str', 'bool' ] ) ], [ 10, "hello", 1 ], 'unpack_all_typed' );
+is( length $m->{record}, 0, "eats all stream for all_typed" );
+
+$m = Tangence::Message->new( 0 );
+$m->pack_all_sametype( 'int', 10, 20, 30 );
+
+is_hexstr( $m->{record}, "\x02\x0a\x02\x14\x02\x1e", 'pack_all_sametype' );
+
+is_deeply( [ $m->unpack_all_sametype( 'int' ) ], [ 10, 20, 30 ], 'unpack_all_sametype' );
+is( length $m->{record}, 0, "eats all stream for all_sametype" );

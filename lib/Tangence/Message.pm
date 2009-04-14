@@ -503,4 +503,41 @@ sub unpack_typed
    }
 }
 
+sub pack_all_typed
+{
+   my $self = shift;
+   my ( $sigs, @args ) = @_;
+
+   $self->pack_typed( $_, shift @args ) for @$sigs;
+   return $self;
+}
+
+sub unpack_all_typed
+{
+   my $self = shift;
+   my ( $sigs ) = @_;
+
+   return map { $self->unpack_typed( $_ ) } @$sigs;
+}
+
+sub pack_all_sametype
+{
+   my $self = shift;
+   my $sig = shift;
+
+   $self->pack_typed( $sig, $_ ) for @_;
+
+   return $self;
+}
+
+sub unpack_all_sametype
+{
+   my $self = shift;
+   my ( $sig ) = @_;
+   my @data;
+   push @data, $self->unpack_typed( $sig ) while length $self->{record};
+
+   return @data;
+}
+
 1;
