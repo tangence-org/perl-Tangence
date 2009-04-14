@@ -218,32 +218,32 @@ test_typed_dies "string from ARRAY",
    stream => "\x40";
 
 test_typed "list(string)",
-   sig    => '[str',
+   sig    => 'list(str)',
    data   => [ "a", "b", "c" ],
    stream => "\x43\x21a\x21b\x21c";
 
 test_typed_dies "list(string) from string",
-   sig    => '[str',
+   sig    => 'list(str)',
    data   => "hello",
    stream => "\x25hello";
 
 test_typed_dies "list(string) from ARRAY(ARRAY)",
-   sig    => '[str',
+   sig    => 'list(str)',
    data   => [ [] ],
    stream => "\x41\x40";
 
 test_typed "dict(string)",
-   sig    => '{str',
+   sig    => 'dict(str)',
    data   => { one => "one", },
    stream => "\x61one\0\x23one";
 
 test_typed_dies "dict(string) from string",
-   sig    => '{str',
+   sig    => 'dict(str)',
    data   => "hello",
    stream => "\x25hello";
 
 test_typed_dies "dict(string) from HASH(ARRAY)",
-   sig    => '{str',
+   sig    => 'dict(str)',
    data   => { splot => [] },
    stream => "\x61splot\0\x40";
 

@@ -109,7 +109,7 @@ sub _unpack_meta
 
    if( $num == DATAMETA_CONSTRUCT ) {
       my ( $id, $class ) = unpack( "NZ*", $self->{record} ); substr( $self->{record}, 0, 5 + length $class, "" );
-      my $smasharr = $self->unpack_typed( '[any' );
+      my $smasharr = $self->unpack_typed( 'list(any)' );
 
       my $smashkeys = $stream->{peer_hasclass}->{$class}->[0];
 
@@ -120,11 +120,11 @@ sub _unpack_meta
    }
    elsif( $num == DATAMETA_CLASS ) {
       my ( $class ) = unpack( "Z*", $self->{record} ); substr( $self->{record}, 0, 1 + length $class, "" );
-      my $schema = $self->unpack_typed( '{any' );
+      my $schema = $self->unpack_typed( 'dict(any)' );
 
       $stream->make_schema( $class, $schema );
 
-      my $smashkeys = $self->unpack_typed( '[str' );
+      my $smashkeys = $self->unpack_typed( 'list(str)' );
       $stream->{peer_hasclass}->{$class} = [ $smashkeys ];
    }
    else {
@@ -276,13 +276,13 @@ sub pack_obj
 
             $self->_pack_leader( DATA_META, DATAMETA_CLASS );
             $self->{record} .= pack( "Z*", $class );
-            $self->pack_typed( '{any', $schema );
+            $self->pack_typed( 'dict(any)', $schema );
 
             $smashkeys = [ keys %{ $class->smashkeys } ];
 
             @$smashkeys = sort @$smashkeys if $SORT_HASH_KEYS;
 
-            $self->pack_typed( '[str', $smashkeys );
+            $self->pack_typed( 'list(str)', $smashkeys );
 
             $stream->{peer_hasclass}->{$class} = [ $smashkeys ];
          }
@@ -304,7 +304,7 @@ sub pack_obj
             }
          }
 
-         $self->pack_typed( '[any', $smasharr );
+         $self->pack_typed( 'list(any)', $smasharr );
 
          $stream->{peer_hasobj}->{$id} = $d->subscribe_event( "destroy", sub {
                $stream->object_destroyed( $d, @_ )
@@ -422,17 +422,19 @@ sub pack_typed
       $self->_pack_leader( DATA_NUMBER, $subtype );
       $self->{record} .= pack( $pack_int_format{$subtype}, $d );
    }
-   elsif( $sig =~ s/^\[// ) {
+   elsif( $sig =~ m/^list\((.*)\)$/ ) {
+      my $subtype = $1;
       ref $d eq "ARRAY" or croak "Cannot pack a list from non-ARRAY reference";
       $self->_pack_leader( DATA_LIST, scalar @$d );
-      $self->pack_typed( $sig, $_ ) for @$d;
+      $self->pack_typed( $subtype, $_ ) for @$d;
    }
-   elsif( $sig =~ s/^\{// ) {
+   elsif( $sig =~ m/^dict\((.*)\)$/ ) {
+      my $subtype = $1;
       ref $d eq "HASH" or croak "Cannot pack a dict from non-HASH reference";
       my @keys = keys %$d;
       @keys = sort @keys if $SORT_HASH_KEYS;
       $self->_pack_leader( DATA_DICT, scalar @keys );
-      $self->{record} .= pack( "Z*", $_ ) and $self->pack_typed( $sig, $d->{$_} ) for @keys;
+      $self->{record} .= pack( "Z*", $_ ) and $self->pack_typed( $subtype, $d->{$_} ) for @keys;
    }
    else {
       print STDERR "TODO: Pack as $sig from $d\n";
@@ -459,24 +461,26 @@ sub unpack_typed
       substr( $self->{record}, 0, length pack( $pack_int_format{$num}, 0 ), "" ); # TODO: Do this more efficiently
       return $n;
    }
-   elsif( $sig =~ s/^\[// ) {
+   elsif( $sig =~ m/^list\((.*)\)$/ ) {
+      my $subtype = $1;
       my ( $type, $num ) = $self->_unpack_leader_dometa();
 
       $type == DATA_LIST or croak "Expected to unpack a list but did not find one";
       my @a;
       foreach ( 1 .. $num ) {
-         push @a, $self->unpack_typed( $sig );
+         push @a, $self->unpack_typed( $subtype );
       }
       return \@a;
    }
-   elsif( $sig =~ s/^\{// ) {
+   elsif( $sig =~ m/^dict\((.*)\)$/ ) {
+      my $subtype = $1;
       my ( $type, $num ) = $self->_unpack_leader_dometa();
 
       $type == DATA_DICT or croak "Expected to unpack a dict but did not find one";
       my %h;
       foreach ( 1 .. $num ) {
          my ( $key ) = unpack( "Z*", $self->{record} ); substr( $self->{record}, 0, 1 + length $key, "" );
-         $h{$key} = $self->unpack_typed( $sig );
+         $h{$key} = $self->unpack_typed( $subtype );
       }
       return \%h;
    }

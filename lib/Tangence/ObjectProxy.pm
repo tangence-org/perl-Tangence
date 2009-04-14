@@ -476,7 +476,7 @@ sub _update_property_hash
    my ( $p, $type, $how, $message ) = @_;
 
    if( $how == CHANGE_SET ) {
-      my $value = $message->unpack_typed( '{' . $type );
+      my $value = $message->unpack_typed( "dict($type)" );
       $p->{cache} = $value;
       $_->{on_set} and $_->{on_set}->( $p->{cache} ) for @{ $p->{cbs} };
    }
@@ -502,7 +502,7 @@ sub _update_property_array
    my ( $p, $type, $how, $message ) = @_;
 
    if( $how == CHANGE_SET ) {
-      my $value = $message->unpack_typed( '[' . $type );
+      my $value = $message->unpack_typed( "list($type)" );
       $p->{cache} = $value;
       $_->{on_set} and $_->{on_set}->( $p->{cache} ) for @{ $p->{cbs} };
    }
@@ -535,7 +535,7 @@ sub _update_property_objset
 
    if( $how == CHANGE_SET ) {
       # Comes across in a LIST. We need to map id => obj
-      my $objects = $message->unpack_typed( '[' . $type );
+      my $objects = $message->unpack_typed( "list($type)" );
       $p->{cache} = { map { $_->id => $_ } @$objects };
       $_->{on_set} and $_->{on_set}->( $p->{cache} ) for @{ $p->{cbs} };
    }

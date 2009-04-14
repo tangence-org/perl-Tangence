@@ -73,11 +73,13 @@ introspection data; see later.
 
  * Lists of values
 
-   Uses the prefix "[" in front of the type signature of its element type.
+   Uses the type signature "list(T)" where T is the type signature of its
+   element type.
 
  * Dictionaries of (string) named keys to values
 
-   Uses the prefix "{" in front of the type signature of its element type.
+   Uses the type signature "dict(T)" where T is the type signature of its
+   element type.
 
  * For type signatures, there is also the type of "any", which allows any
    type.

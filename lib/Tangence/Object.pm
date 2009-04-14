@@ -475,7 +475,7 @@ sub _generate_message_UPDATE_hash
 
    if( $how == CHANGE_SET ) {
       my ( $value ) = @args;
-      $message->pack_typed( '{' . $type, $value );
+      $message->pack_typed( "dict($type)", $value );
    }
    elsif( $how == CHANGE_ADD ) {
       my ( $key, $value ) = @args;
@@ -498,7 +498,7 @@ sub _generate_message_UPDATE_array
 
    if( $how == CHANGE_SET ) {
       my ( $value ) = @args;
-      $message->pack_typed( '[' . $type, $value );
+      $message->pack_typed( "list($type)", $value );
    }
    elsif( $how == CHANGE_PUSH ) {
       $message->pack_all_sametype( $type, @args );
@@ -526,7 +526,7 @@ sub _generate_message_UPDATE_objset
    if( $how == CHANGE_SET ) {
       my ( $value ) = @args;
       # This will arrive in a plain LIST ref
-      $message->pack_typed( '[' . $type, $value );
+      $message->pack_typed( "list($type)", $value );
    }
    elsif( $how == CHANGE_ADD ) {
       my ( $value ) = @_;
