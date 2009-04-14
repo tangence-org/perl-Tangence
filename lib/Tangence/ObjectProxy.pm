@@ -144,14 +144,15 @@ sub call_method
       request => Tangence::Message->new( $conn, MSG_CALL )
          ->pack_int( $self->id )
          ->pack_str( $method )
-         ->pack_all_data( $args ? @$args : () ),
+         ->pack_all_typed( $mdef->{args}, $args ? @$args : () ),
 
       on_response => sub {
          my ( $message ) = @_;
          my $type = $message->type;
 
          if( $type == MSG_RESULT ) {
-            my $result = $message->unpack_any();
+            my $result = $mdef->{ret} ? $message->unpack_typed( $mdef->{ret} )
+                                      : undef;
             $on_result->( $result );
          }
          elsif( $type == MSG_ERROR ) {
@@ -222,7 +223,9 @@ sub handle_request_EVENT
    my ( $message ) = @_;
 
    my $event = $message->unpack_str();
-   my @args  = $message->unpack_all_data();
+   my $edef = $self->can_event( $event ) or return;
+
+   my @args = $message->unpack_all_typed( $edef->{args} );
 
    if( my $cbs = $self->{subscriptions}->{$event} ) {
       foreach my $cb ( @$cbs ) { $cb->( @args ) }
@@ -256,8 +259,8 @@ sub get_property
          my $type = $message->type;
 
          if( $type == MSG_RESULT ) {
-            my @data = $message->unpack_all_data();
-            $on_value->( @data );
+            my $value = $message->unpack_any();
+            $on_value->( $value );
          }
          elsif( $type == MSG_ERROR ) {
             my $msg = $message->unpack_str();
@@ -268,115 +271,6 @@ sub get_property
          }
       },
    );
-}
-
-sub _update_property
-{
-   my $self = shift;
-   my ( $property, $how, @value ) = @_;
-
-   my $prop = $self->{props}->{$property} ||= {};
-
-   my $dim = $self->{schema}->{properties}->{$property}->{dim};
-   my $dimname = DIMNAMES->[$dim];
-
-   if( my $code = $self->can( "_update_property_$dimname" ) ) {
-      $code->( $self, $prop, $how, @value );
-   }
-   else {
-      croak "Unrecognised property dimension $dim for $property";
-   }
-
-   $_->{on_updated} and $_->{on_updated}->( $prop->{cache} ) for @{ $prop->{cbs} };
-}
-
-sub _update_property_scalar
-{
-   my $self = shift;
-   my ( $prop, $how, @value ) = @_;
-
-   if( $how == CHANGE_SET ) {
-      $prop->{cache} = $value[0];
-      $_->{on_set} and $_->{on_set}->( $prop->{cache} ) for @{ $prop->{cbs} };
-   }
-   else {
-      croak "Change type $how is not valid for a scalar property";
-   }
-}
-
-sub _update_property_hash
-{
-   my $self = shift;
-   my ( $prop, $how, @value ) = @_;
-
-   if( $how == CHANGE_SET ) {
-      $prop->{cache} = { %{ $value[0] } };
-      $_->{on_set} and $_->{on_set}->( $prop->{cache} ) for @{ $prop->{cbs} };
-   }
-   elsif( $how == CHANGE_ADD ) {
-      $prop->{cache}->{$value[0]} = $value[1];
-      $_->{on_add} and $_->{on_add}->( $value[0], $value[1] ) for @{ $prop->{cbs} };
-   }
-   elsif( $how == CHANGE_DEL ) {
-      delete $prop->{cache}->{$value[0]};
-      $_->{on_del} and $_->{on_del}->( $value[0] ) for @{ $prop->{cbs} };
-   }
-   else {
-      croak "Change type $how is not valid for a hash property";
-   }
-}
-
-sub _update_property_array
-{
-   my $self = shift;
-   my ( $prop, $how, @value ) = @_;
-
-   if( $how == CHANGE_SET ) {
-      $prop->{cache} = [ @{ $value[0] } ];
-      $_->{on_set} and $_->{on_set}->( $prop->{cache} ) for @{ $prop->{cbs} };
-   }
-   elsif( $how == CHANGE_PUSH ) {
-      push @{ $prop->{cache} }, @value;
-      $_->{on_push} and $_->{on_push}->( @value ) for @{ $prop->{cbs} };
-   }
-   elsif( $how == CHANGE_SHIFT ) {
-      splice @{ $prop->{cache} }, 0, $value[0], ();
-      $_->{on_shift} and $_->{on_shift}->( $value[0] ) for @{ $prop->{cbs} };
-   }
-   elsif( $how == CHANGE_SPLICE ) {
-      my ( $start, $count, @new ) = @value;
-      splice @{ $prop->{cache} }, $start, $count, @new;
-      $_->{on_splice} and $_->{on_splice}->( $start, $count, @new ) for @{ $prop->{cbs} };
-   }
-   else {
-      croak "Change type $how is not valid for an array property";
-   }
-}
-
-sub _update_property_objset
-{
-   my $self = shift;
-   my ( $prop, $how, @value ) = @_;
-
-   if( $how == CHANGE_SET ) {
-      # Comes across in a LIST. We need to map id => obj
-      $prop->{cache} = { map { $_->id => $_ } @{ $value[0] } };
-      $_->{on_set} and $_->{on_set}->( $prop->{cache} ) for @{ $prop->{cbs} };
-   }
-   elsif( $how == CHANGE_ADD ) {
-      # Comes as object only
-      my $obj = $value[0];
-      $prop->{cache}->{$obj->id} = $obj;
-      $_->{on_add} and $_->{on_add}->( $obj ) for @{ $prop->{cbs} };
-   }
-   elsif( $how == CHANGE_DEL ) {
-      # Comes as ID number only
-      delete $prop->{cache}->{$value[0]};
-      $_->{on_del} and $_->{on_del}->( $value[0] ) for @{ $prop->{cbs} };
-   }
-   else {
-      croak "Change type $how is not valid for an objset property";
-   }
 }
 
 sub prop
@@ -543,9 +437,123 @@ sub handle_request_UPDATE
 
    my $prop  = $message->unpack_str();
    my $how   = $message->unpack_typed( "u8" );
-   my @value = $message->unpack_all_data();
 
-   $self->_update_property( $prop, $how, @value );
+   my $pdef = $self->can_property( $prop ) or return;
+   my $type = $pdef->{type};
+   my $dim  = $pdef->{dim};
+
+   my $p = $self->{props}->{$prop} ||= {};
+
+   my $dimname = DIMNAMES->[$dim];
+   if( my $code = $self->can( "_update_property_$dimname" ) ) {
+      $code->( $self, $p, $type, $how, $message );
+   }
+   else {
+      croak "Unrecognised property dimension $dim for $prop";
+   }
+
+   $_->{on_updated} and $_->{on_updated}->( $p->{cache} ) for @{ $p->{cbs} };
+}
+
+sub _update_property_scalar
+{
+   my $self = shift;
+   my ( $p, $type, $how, $message ) = @_;
+
+   if( $how == CHANGE_SET ) {
+      my $value = $message->unpack_typed( $type );
+      $p->{cache} = $value;
+      $_->{on_set} and $_->{on_set}->( $p->{cache} ) for @{ $p->{cbs} };
+   }
+   else {
+      croak "Change type $how is not valid for a scalar property";
+   }
+}
+
+sub _update_property_hash
+{
+   my $self = shift;
+   my ( $p, $type, $how, $message ) = @_;
+
+   if( $how == CHANGE_SET ) {
+      my $value = $message->unpack_typed( '{' . $type );
+      $p->{cache} = $value;
+      $_->{on_set} and $_->{on_set}->( $p->{cache} ) for @{ $p->{cbs} };
+   }
+   elsif( $how == CHANGE_ADD ) {
+      my $key   = $message->unpack_str();
+      my $value = $message->unpack_typed( $type );
+      $p->{cache}->{$key} = $value;
+      $_->{on_add} and $_->{on_add}->( $key, $value ) for @{ $p->{cbs} };
+   }
+   elsif( $how == CHANGE_DEL ) {
+      my $key = $message->unpack_str();
+      delete $p->{cache}->{$key};
+      $_->{on_del} and $_->{on_del}->( $key ) for @{ $p->{cbs} };
+   }
+   else {
+      croak "Change type $how is not valid for a hash property";
+   }
+}
+
+sub _update_property_array
+{
+   my $self = shift;
+   my ( $p, $type, $how, $message ) = @_;
+
+   if( $how == CHANGE_SET ) {
+      my $value = $message->unpack_typed( '[' . $type );
+      $p->{cache} = $value;
+      $_->{on_set} and $_->{on_set}->( $p->{cache} ) for @{ $p->{cbs} };
+   }
+   elsif( $how == CHANGE_PUSH ) {
+      my @value = $message->unpack_all_sametype( $type );
+      push @{ $p->{cache} }, @value;
+      $_->{on_push} and $_->{on_push}->( @value ) for @{ $p->{cbs} };
+   }
+   elsif( $how == CHANGE_SHIFT ) {
+      my $count = $message->unpack_int();
+      splice @{ $p->{cache} }, 0, $count, ();
+      $_->{on_shift} and $_->{on_shift}->( $count ) for @{ $p->{cbs} };
+   }
+   elsif( $how == CHANGE_SPLICE ) {
+      my $start = $message->unpack_int();
+      my $count = $message->unpack_int();
+      my @value = $message->unpack_all_sametype( $type );
+      splice @{ $p->{cache} }, $start, $count, @value;
+      $_->{on_splice} and $_->{on_splice}->( $start, $count, @value ) for @{ $p->{cbs} };
+   }
+   else {
+      croak "Change type $how is not valid for an array property";
+   }
+}
+
+sub _update_property_objset
+{
+   my $self = shift;
+   my ( $p, $type, $how, $message ) = @_;
+
+   if( $how == CHANGE_SET ) {
+      # Comes across in a LIST. We need to map id => obj
+      my $objects = $message->unpack_typed( '[' . $type );
+      $p->{cache} = { map { $_->id => $_ } @$objects };
+      $_->{on_set} and $_->{on_set}->( $p->{cache} ) for @{ $p->{cbs} };
+   }
+   elsif( $how == CHANGE_ADD ) {
+      # Comes as object only
+      my $obj = $message->unpack_typed( $type );
+      $p->{cache}->{$obj->id} = $obj;
+      $_->{on_add} and $_->{on_add}->( $obj ) for @{ $p->{cbs} };
+   }
+   elsif( $how == CHANGE_DEL ) {
+      # Comes as ID number only
+      my $id = $message->unpack_int();
+      delete $p->{cache}->{$id};
+      $_->{on_del} and $_->{on_del}->( $id ) for @{ $p->{cbs} };
+   }
+   else {
+      croak "Change type $how is not valid for an objset property";
+   }
 }
 
 1;

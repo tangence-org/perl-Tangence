@@ -365,17 +365,20 @@ sub handle_request_CALL
    my ( $ctx, $message ) = @_;
 
    my $method = $message->unpack_str();
-   my @args   = $message->unpack_all_data();
 
    my $mdef = $self->can_method( $method ) or die "Object cannot respond to method $method\n";
 
    my $m = "method_$method";
    $self->can( $m ) or die "Object cannot run method $method\n";
 
+   my @args = $message->unpack_all_typed( $mdef->{args} );
+
    my $result = $self->$m( $ctx, @args );
 
-   return Tangence::Message->new( $ctx->connection, MSG_RESULT )
-      ->pack_any( $result );
+   my $response = Tangence::Message->new( $ctx->connection, MSG_RESULT );
+   $response->pack_typed( $mdef->{ret}, $result ) if $mdef->{ret};
+
+   return $response;
 }
 
 sub generate_message_EVENT
@@ -388,7 +391,7 @@ sub generate_message_EVENT
    return Tangence::Message->new( $conn, MSG_EVENT )
       ->pack_int( $self->id )
       ->pack_str( $event )
-      ->pack_all_data( @args );
+      ->pack_all_typed( $edef->{args}, @args );
 }
 
 sub handle_request_GETPROP
@@ -433,12 +436,109 @@ sub generate_message_UPDATE
    my ( $conn, $prop, $how, @args ) = @_;
 
    my $pdef = $self->can_property( $prop ) or die "Object does not have property $prop\n";
+   my $dim = $pdef->{dim};
 
-   return Tangence::Message->new( $conn, MSG_UPDATE )
+   my $message = Tangence::Message->new( $conn, MSG_UPDATE )
       ->pack_int( $self->id )
       ->pack_str( $prop )
-      ->pack_typed( "u8", $how )
-      ->pack_all_data( @args );
+      ->pack_typed( "u8", $how );
+
+   my $dimname = DIMNAMES->[$dim];
+   if( my $code = $self->can( "_generate_message_UPDATE_$dimname" ) ) {
+      $code->( $self, $message, $how, $pdef->{type}, @args );
+   }
+   else {
+      croak "Unrecognised property dimension $dim for $prop";
+   }
+
+   return $message;
+}
+
+sub _generate_message_UPDATE_scalar
+{
+   my $self = shift;
+   my ( $message, $how, $type, @args ) = @_;
+
+   if( $how == CHANGE_SET ) {
+      my ( $value ) = @args;
+      $message->pack_typed( $type, $value );
+   }
+   else {
+      croak "Change type $how is not valid for a scalar property";
+   }
+}
+
+sub _generate_message_UPDATE_hash
+{
+   my $self = shift;
+   my ( $message, $how, $type, @args ) = @_;
+
+   if( $how == CHANGE_SET ) {
+      my ( $value ) = @args;
+      $message->pack_typed( '{' . $type, $value );
+   }
+   elsif( $how == CHANGE_ADD ) {
+      my ( $key, $value ) = @args;
+      $message->pack_str( $key );
+      $message->pack_typed( $type, $value );
+   }
+   elsif( $how == CHANGE_DEL ) {
+      my ( $key ) = @args;
+      $message->pack_str( $key );
+   }
+   else {
+      croak "Change type $how is not valid for a hash property";
+   }
+}
+
+sub _generate_message_UPDATE_array
+{
+   my $self = shift;
+   my ( $message, $how, $type, @args ) = @_;
+
+   if( $how == CHANGE_SET ) {
+      my ( $value ) = @args;
+      $message->pack_typed( '[' . $type, $value );
+   }
+   elsif( $how == CHANGE_PUSH ) {
+      $message->pack_all_sametype( $type, @args );
+   }
+   elsif( $how == CHANGE_SHIFT ) {
+      my ( $count ) = @args;
+      $message->pack_int( $count );
+   }
+   elsif( $how == CHANGE_SPLICE ) {
+      my ( $start, $count, @values ) = @args;
+      $message->pack_int( $start );
+      $message->pack_int( $count );
+      $message->pack_all_sametype( $type, @values );
+   }
+   else {
+      croak "Change type $how is not valid for an array property";
+   }
+}
+
+sub _generate_message_UPDATE_objset
+{
+   my $self = shift;
+   my ( $message, $how, $type, @args ) = @_;
+
+   if( $how == CHANGE_SET ) {
+      my ( $value ) = @args;
+      # This will arrive in a plain LIST ref
+      $message->pack_typed( '[' . $type, $value );
+   }
+   elsif( $how == CHANGE_ADD ) {
+      my ( $value ) = @_;
+      $message->pack_typed( $type, $value );
+   }
+   elsif( $how == CHANGE_DEL ) {
+      my ( $id ) = @_;
+      $message->pack_int( $id );
+   }
+   else {
+      croak "Change type $how is not valid for an objset property";
+   }
 }
 
 1;

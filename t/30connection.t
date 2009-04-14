@@ -418,11 +418,11 @@ is( $watched, 1, 'watch_property on smashed prop is synchronous' );
 is( $size, 100, 'watch_property on smashed prop gives initial value' );
 
 # MSG_UPDATE
-$S2->syswrite( "\x09" . "\0\0\0\x0d" .
+$S2->syswrite( "\x09" . "\0\0\0\x0b" .
                "\x02" . "\x02" .
                "\x24" . "size" .
                "\x02" . "\x01" .
-               "\x23" . "200" );
+               "\x02" . "\xc8" ); # 0xC8 == 200
 
 undef $size;
 wait_for { defined $size };
@@ -456,8 +456,7 @@ wait_for_stream { length $clientstream >= 5 and
 
 is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL with an ObjectProxy' );
 
-$S2->syswrite( "\x82" . "\0\0\0\1" .
-               "\x80" );
+$S2->syswrite( "\x82" . "\0\0\0\0" );
 
 undef @result;
 wait_for { @result };

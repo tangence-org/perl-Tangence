@@ -265,11 +265,11 @@ $S2->syswrite( "\x80" . "\0\0\0\0" );
 
 $ball->set_prop_size( 200 );
 
-$expect = "\x09" . "\0\0\0\x0d" .
+$expect = "\x09" . "\0\0\0\x0b" .
           "\x02" . "\x02" .
           "\x24" . "size" .
           "\x02" . "\x01" .
-          "\x23" . "200";
+          "\x02" . "\xc8"; # 0xC8 == 200
 
 $serverstream = "";
 wait_for_stream { length $serverstream >= 5 and
@@ -286,8 +286,7 @@ $S2->syswrite( "\1" . "\0\0\0\x10" .
                "\x28" . "add_ball" .
                "\x84" . "\0\0\0\2" );
 
-$expect = "\x82" . "\0\0\0\1" .
-          "\x80";
+$expect = "\x82" . "\0\0\0\0";
 
 $serverstream = "";
 
