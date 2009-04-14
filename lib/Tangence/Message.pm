@@ -145,23 +145,6 @@ sub _unpack_leader_dometa
    }
 }
 
-sub pack_all_data
-{
-   my $self = shift;
-   $self->pack_any( $_ ) for @_;
-
-   return $self;
-}
-
-sub unpack_all_data
-{
-   my $self = shift;
-   my @data;
-   push @data, $self->unpack_any while length $self->{record};
-
-   return @data;
-}
-
 sub pack_bool
 {
    my $self = shift;
