@@ -437,8 +437,7 @@ sub pack_typed
       $self->{record} .= pack( "Z*", $_ ) and $self->pack_typed( $subtype, $d->{$_} ) for @keys;
    }
    else {
-      print STDERR "TODO: Pack as $sig from $d\n";
-      die "TODO";
+      croak "Unrecognised type signature $sig";
    }
 
    return $self;
@@ -485,8 +484,7 @@ sub unpack_typed
       return \%h;
    }
    else {
-      print STDERR "TODO: Unpack as $sig\n";
-      die "TODO";
+      croak "Unrecognised type signature $sig";
    }
 }
 
