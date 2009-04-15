@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 31;
+use Test::More tests => 40;
 
 use Tangence::Constants;
 use Tangence::Registry;
@@ -55,6 +55,34 @@ is( $h_value, 6,      '$h_value after add as change' );
 $obj->del_prop_hash( 'five' );
 is_deeply( $obj->get_prop_hash, { four => 4 }, 'hash after del' );
 is( $h_key, 'five', '$h_key after del' );
+
+# QUEUE
+
+is_deeply( $obj->get_prop_queue, [ 1, 2, 3 ], 'queue initially' );
+
+my $queue;
+my ( $q_count, @q_values );
+$obj->watch_property( queue =>
+   on_set => sub { $queue = shift },
+   on_push => sub { @q_values = @_ },
+   on_shift => sub { ( $q_count ) = @_ },
+);
+
+$obj->set_prop_queue( [ 4, 5, 6 ] );
+is_deeply( $obj->get_prop_queue, [ 4, 5, 6 ], 'queue after set' );
+is_deeply( $queue, [ 4, 5, 6 ], '$queue after set' );
+
+$obj->push_prop_queue( 7 );
+is_deeply( $obj->get_prop_queue, [ 4, 5, 6, 7 ], 'queue after push' );
+is_deeply( \@q_values, [ 7 ], '@q_values after push' );
+
+$obj->shift_prop_queue;
+is_deeply( $obj->get_prop_queue, [ 5, 6, 7 ], 'queue after shift' );
+is( $q_count, 1, '$q_count after shift' );
+
+$obj->shift_prop_queue( 2 );
+is_deeply( $obj->get_prop_queue, [ 7 ], 'queue after shift(2)' );
+is( $q_count, 2, '$q_count after shift(2)' );
 
 # ARRAY
 

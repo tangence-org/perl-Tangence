@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 12;
+use Test::More tests => 14;
 use IO::Async::Test;
 use IO::Async::Loop;
 
@@ -37,6 +37,8 @@ wait_for { defined $conn->get_root };
 my $proxy = $conn->get_root;
 
 my $result;
+
+# SCALAR
 
 my $scalar;
 $proxy->watch_property(
@@ -75,6 +77,8 @@ wait_for { defined $also_scalar };
 
 is( $also_scalar, "1234", 'Can watch_property a second time' );
 
+# HASH
+
 my $hash;
 my ( $a_key, $a_value );
 my ( $d_key );
@@ -107,10 +111,39 @@ wait_for { defined $d_key };
 
 is( $d_key, 'one', 'del hash key' );
 
-my $array;
+# QUEUE
+
+my $queue;
 my ( @p_values );
 my ( $sh_count );
 my ( $s_index, $s_count, @s_values );
+$proxy->watch_property(
+   property => "queue",
+   on_set => sub { $queue = shift },
+   on_push => sub { @p_values = @_ },
+   on_shift => sub { ( $sh_count ) = @_ },
+   on_watched => sub { $result = 1 },
+   want_initial => 1,
+);
+
+undef $result;
+wait_for { defined $result };
+
+$obj->push_prop_queue( 6 );
+
+wait_for { @p_values };
+
+is_deeply( \@p_values, [ 6 ], 'push queue values' );
+
+$obj->shift_prop_queue( 1 );
+
+wait_for { defined $sh_count };
+
+is( $sh_count, 1, 'shift queue count' );
+
+# ARRAY
+
+my $array;
 $proxy->watch_property(
    property => "array",
    on_set => sub { $array = shift },

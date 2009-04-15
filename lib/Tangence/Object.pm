@@ -65,7 +65,7 @@ sub _new_property
    elsif( $dim == DIM_HASH ) {
       $initial = {};
    }
-   elsif( $dim == DIM_ARRAY ) {
+   elsif( $dim == DIM_QUEUE or $dim == DIM_ARRAY ) {
       $initial = [];
    }
    elsif( $dim == DIM_OBJSET ) {
@@ -488,6 +488,27 @@ sub _generate_message_UPDATE_hash
    }
    else {
       croak "Change type $how is not valid for a hash property";
+   }
+}
+
+sub _generate_message_UPDATE_queue
+{
+   my $self = shift;
+   my ( $message, $how, $type, @args ) = @_;
+
+   if( $how == CHANGE_SET ) {
+      my ( $value ) = @args;
+      $message->pack_typed( "list($type)", $value );
+   }
+   elsif( $how == CHANGE_PUSH ) {
+      $message->pack_all_sametype( $type, @args );
+   }
+   elsif( $how == CHANGE_SHIFT ) {
+      my ( $count ) = @args;
+      $message->pack_int( $count );
+   }
+   else {
+      croak "Change type $how is not valid for a queue property";
    }
 }
 

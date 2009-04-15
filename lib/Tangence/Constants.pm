@@ -25,6 +25,7 @@ our @EXPORT = qw(
 
    DIM_SCALAR
    DIM_HASH
+   DIM_QUEUE
    DIM_ARRAY
    DIM_OBJSET
 
@@ -108,28 +109,31 @@ use constant MSG_WATCHING => 0x84;
 # Property dimensions
 use constant DIM_SCALAR => 1;
 use constant DIM_HASH   => 2;
-use constant DIM_ARRAY  => 3;
-use constant DIM_OBJSET => 4; # set of objects (implemented like id-keyed list in no particular order)
+use constant DIM_QUEUE  => 3;
+use constant DIM_ARRAY  => 4;
+use constant DIM_OBJSET => 5; # set of objects (implemented like id-keyed list in no particular order)
 
 use constant DIMNAMES => [
    undef,
    "scalar",
    "hash",
+   "queue",
    "array",
    "objset",
 ];
 
 # Property change types
-use constant CHANGE_SET    => 1; # SCALAR/HASH/ARRAY: New value follows. OBJSET: LIST of objects follows
+use constant CHANGE_SET    => 1; # SCALAR/HASH/QUEUE/ARRAY: New value follows. OBJSET: LIST of objects follows
 use constant CHANGE_ADD    => 2; # HASH: New key/value pair follows, OBJSET: New object follows
 use constant CHANGE_DEL    => 3; # HASH: Deleted key follows, OBJSET: Deleted id follows
-use constant CHANGE_PUSH   => 4; # ARRAY: New members follow in a list
-use constant CHANGE_SHIFT  => 5; # ARRAY: Count of old elements to remove
+use constant CHANGE_PUSH   => 4; # QUEUE/ARRAY: New members follow in a list
+use constant CHANGE_SHIFT  => 5; # QUEUE/ARRAY: Count of old elements to remove
 use constant CHANGE_SPLICE => 6; # ARRAY: Start index, count, [ new elements ]
 
 use constant CHANGETYPES => {
    DIM_SCALAR() => [qw( on_set )],
    DIM_HASH()   => [qw( on_set on_add on_del )],
+   DIM_QUEUE()  => [qw( on_set on_push on_shift )],
    DIM_ARRAY()  => [qw( on_set on_push on_shift on_splice )],
    DIM_OBJSET() => [qw( on_set on_add on_del )],
 };

@@ -17,6 +17,11 @@ our %PROPS = (
       type => 'int',
    },
 
+   queue => {
+      dim  => DIM_QUEUE,
+      type => 'int',
+   },
+
    array => {
       dim  => DIM_ARRAY,
       type => 'int',
@@ -35,6 +40,7 @@ sub new
 
 sub init_prop_scalar { 123 }
 sub init_prop_hash   { { one => 1, two => 2, three => 3 } }
+sub init_prop_queue  { [ 1, 2, 3 ] }
 sub init_prop_array  { [ 1, 2, 3 ] }
 
 sub add_number

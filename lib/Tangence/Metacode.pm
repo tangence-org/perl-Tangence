@@ -92,6 +92,28 @@ sub init_class_property_hash
    };
 }
 
+sub init_class_property_queue
+{
+   my ( $class, $prop, $pdef, $subs ) = @_;
+
+   $subs->{"push_prop_$prop"} = sub {
+      my $self = shift;
+      my @values = @_;
+      push @{ $self->{properties}->{$prop}->[0] }, @values;
+      my $cbs = $self->{properties}->{$prop}->[1];
+      $_->{on_push}->( @values ) for @$cbs;
+   };
+
+   $subs->{"shift_prop_$prop"} = sub {
+      my $self = shift;
+      my ( $count ) = @_;
+      $count = 1 unless @_;
+      splice @{ $self->{properties}->{$prop}->[0] }, 0, $count, ();
+      my $cbs = $self->{properties}->{$prop}->[1];
+      $_->{on_shift}->( $count ) for @$cbs;
+   };
+}
+
 sub init_class_property_array
 {
    my ( $class, $prop, $pdef, $subs ) = @_;

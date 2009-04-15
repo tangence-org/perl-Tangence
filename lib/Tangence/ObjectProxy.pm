@@ -496,6 +496,31 @@ sub _update_property_hash
    }
 }
 
+sub _update_property_queue
+{
+   my $self = shift;
+   my ( $p, $type, $how, $message ) = @_;
+
+   if( $how == CHANGE_SET ) {
+      my $value = $message->unpack_typed( "list($type)" );
+      $p->{cache} = $value;
+      $_->{on_set} and $_->{on_set}->( $p->{cache} ) for @{ $p->{cbs} };
+   }
+   elsif( $how == CHANGE_PUSH ) {
+      my @value = $message->unpack_all_sametype( $type );
+      push @{ $p->{cache} }, @value;
+      $_->{on_push} and $_->{on_push}->( @value ) for @{ $p->{cbs} };
+   }
+   elsif( $how == CHANGE_SHIFT ) {
+      my $count = $message->unpack_int();
+      splice @{ $p->{cache} }, 0, $count, ();
+      $_->{on_shift} and $_->{on_shift}->( $count ) for @{ $p->{cbs} };
+   }
+   else {
+      croak "Change type $how is not valid for a queue property";
+   }
+}
+
 sub _update_property_array
 {
    my $self = shift;

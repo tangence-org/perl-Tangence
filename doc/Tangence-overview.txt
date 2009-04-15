@@ -171,7 +171,7 @@ Each object class may define named properties that the object has. Each
 object in the class will have a value for the property. Each property has:
 
     + a name
-    + a dimension - scalar, array, hash or object set
+    + a dimension - scalar, queue, array, hash or object set
     + a type
     + a boolean indicating if it is "smashed"
 
@@ -180,19 +180,20 @@ of a property on an object, or set a new value. It can also register an
 interest in the property, where the server will inform the client of
 changes to the value.
 
-Each property has a dimension; one of scalar, array, hash, or object set.
-The behaviour of each type of property is:
+Each property has a dimension; one of scalar, queue, array, hash, or object
+set. The behaviour of each type of property is:
 
 3.3.1 Scalar Properties
 
 The property is a single atomic scalar. It is set atomically by the
 server, and may be queried.
 
-3.3.2 Array Properties
+3.3.2 Queue and Array Properties
 
 The property is a contiguous array of individual elements. Each element is
-indexed by a non-negative integer. The property type gives the type of
-each element in the array.
+indexed by a non-negative integer. The property type gives the type of each
+element in the array. These properties differ in the types of operations they
+can support. Queues do not support splice operations, arrays do.
 
 3.3.3 Hash Properties
 
@@ -395,7 +396,7 @@ DATAMETA_CLASS:
     'properties' = DATA_DICT:
       one key per property, values are DATA_DICT:
         'dim' = dimension, one of:
-          DIM_SCALAR, DIM_HASH, DIM_ARRAY, DIM_OBJSET
+          DIM_SCALAR, DIM_HASH, DIM_QUEUE, DIM_ARRAY, DIM_OBJSET
         'type' = string description of the type
         'smash' = true if this is a smashed property
 
@@ -524,6 +525,23 @@ MSG_UPDATE (S->C)
       STRING    key
 
       Deletes an element from the hash.
+
+  For DIM_QUEUE:
+    CHANGE_SET:
+      LIST      new value
+
+      Sets the new value of the property.
+
+    CHANGE_PUSH:
+      data...   additional values
+
+      Appends the additional values to the end of the queue.
+
+    CHANGE_SHIFT:
+      STRING    number of elements
+
+      Removes a number of leading elements from the beginning of the
+      queue.
 
   For DIM_ARRAY:
     CHANGE_SET:
