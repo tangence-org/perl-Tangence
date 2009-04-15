@@ -55,17 +55,9 @@ sub init_class_property
 
    my $dim = $pdef->{dim};
 
-   if( $dim == DIM_SCALAR ) {
-      init_class_property_scalar( $class, $prop, $pdef, $subs );
-   }
-   elsif( $dim == DIM_HASH ) {
-      init_class_property_hash( $class, $prop, $pdef, $subs );
-   }
-   elsif( $dim == DIM_ARRAY ) {
-      init_class_property_array( $class, $prop, $pdef, $subs );
-   }
-   elsif( $dim == DIM_OBJSET ) {
-      init_class_property_objset( $class, $prop, $pdef, $subs );
+   my $dimname = DIMNAMES->[$dim];
+   if( my $code = __PACKAGE__->can( "init_class_property_$dimname" ) ) {
+      $code->( $class, $prop, $pdef, $subs );
    }
    else {
       croak "Unrecognised property dimension $dim for $class :: $prop";
