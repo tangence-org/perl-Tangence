@@ -538,7 +538,7 @@ MSG_UPDATE (S->C)
       Appends the additional values to the end of the queue.
 
     CHANGE_SHIFT:
-      STRING    number of elements
+      INT       number of elements
 
       Removes a number of leading elements from the beginning of the
       queue.
@@ -555,14 +555,14 @@ MSG_UPDATE (S->C)
       Appends the additional values to the end of the array.
 
     CHANGE_SHIFT:
-      STRING    number of elements
+      INT       number of elements
 
       Removes a number of leading elements from the beginning of the
       array.
 
     CHANGE_SPLICE:
-      STRING    start
-      STRING    count
+      INT       start
+      INT       count
       data...   new elements
 
       Replaces the given range of the array with the new elements given.
