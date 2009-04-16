@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 40;
+use Test::More tests => 45;
 
 use Tangence::Constants;
 use Tangence::Registry;
@@ -89,12 +89,13 @@ is( $q_count, 2, '$q_count after shift(2)' );
 is_deeply( $obj->get_prop_array, [ 1, 2, 3 ], 'array initially' );
 
 my $array;
-my ( $a_index, $a_count, @a_values );
+my ( $a_index, $a_count, @a_values, $a_delta );
 $obj->watch_property( array =>
    on_set => sub { $array = shift },
    on_push => sub { @a_values = @_ },
    on_shift => sub { ( $a_count ) = @_ },
    on_splice => sub { ( $a_index, $a_count, @a_values ) = @_ },
+   on_move => sub { ( $a_index, $a_delta ) = @_ },
 );
 
 $obj->set_prop_array( [ 4, 5, 6 ] );
@@ -124,3 +125,15 @@ is_deeply( $obj->get_prop_array, [ 5, 6 ], 'array after splice(2,1)' );
 is( $a_index, 2, '$a_index after splice(2,1)' );
 is( $a_count, 1, '$a_count after splice(2,1)' );
 is_deeply( \@a_values, [ ], '@a_values after splice(2,1)' );
+
+$obj->move_prop_array( 0, 1 );
+is_deeply( $obj->get_prop_array, [ 6, 5 ], 'array after move(+1)' );
+is( $a_index, 0, '$a_index after move' );
+is( $a_delta, 1, '$a_delta after move' );
+
+$obj->set_prop_array( [ 0 .. 9 ] );
+$obj->move_prop_array( 3, 2 );
+is_deeply( $obj->get_prop_array, [ 0, 1, 2, 4, 5, 3, 6, 7, 8, 9 ], 'array after move(+2)' );
+
+$obj->move_prop_array( 5, -2 );
+is_deeply( $obj->get_prop_array, [ 0 .. 9 ], 'array after move(-2)' );

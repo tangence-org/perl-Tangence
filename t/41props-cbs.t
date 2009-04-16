@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 14;
+use Test::More tests => 16;
 use IO::Async::Test;
 use IO::Async::Loop;
 
@@ -144,12 +144,14 @@ is( $sh_count, 1, 'shift queue count' );
 # ARRAY
 
 my $array;
+my ( $m_index, $m_delta );
 $proxy->watch_property(
    property => "array",
    on_set => sub { $array = shift },
    on_push => sub { @p_values = @_ },
    on_shift => sub { ( $sh_count ) = @_ },
    on_splice => sub { ( $s_index, $s_count, @s_values ) = @_ },
+   on_move => sub { ( $m_index, $m_delta ) = @_ },
    on_watched => sub { $result = 1 },
    want_initial => 1,
 );
@@ -176,3 +178,11 @@ wait_for { defined $s_index };
 is( $s_index, 1, 'splice array index' );
 is( $s_count, 2, 'splice array count' );
 is_deeply( \@s_values, [ 7 ], 'splice array values' );
+
+$obj->set_prop_array( [ 0 .. 4 ] );
+$obj->move_prop_array( 1, 3 );
+
+wait_for { defined $m_index };
+
+is( $m_index, 1, 'move array index' );
+is( $m_delta, 3, 'move array delta' );

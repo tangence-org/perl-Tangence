@@ -283,6 +283,7 @@ my %change_values = (
    on_push => CHANGE_PUSH,
    on_shift => CHANGE_SHIFT,
    on_splice => CHANGE_SPLICE,
+   on_move => CHANGE_MOVE,
 );
 
 sub _install_watch

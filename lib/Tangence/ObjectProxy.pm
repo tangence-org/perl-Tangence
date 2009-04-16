@@ -548,6 +548,21 @@ sub _update_property_array
       splice @{ $p->{cache} }, $start, $count, @value;
       $_->{on_splice} and $_->{on_splice}->( $start, $count, @value ) for @{ $p->{cbs} };
    }
+   elsif( $how == CHANGE_MOVE ) {
+      my $index = $message->unpack_int();
+      my $delta = $message->unpack_int();
+      # it turns out that exchanging neighbours is quicker by list assignment,
+      # but other times it's generally best to use splice() to extract then
+      # insert
+      if( abs($delta) == 1 ) {
+         @{$p->{cache}}[$index,$index+$delta] = @{$p->{cache}}[$index+$delta,$index];
+      }
+      else {
+         my $elem = splice @{ $p->{cache} }, $index, 1, ();
+         splice @{ $p->{cache} }, $index + $delta, 0, ( $elem );
+      }
+      $_->{on_move} and $_->{on_move}->( $index, $delta ) for @{ $p->{cbs} };
+   }
    else {
       croak "Change type $how is not valid for an array property";
    }

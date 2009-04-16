@@ -193,7 +193,7 @@ server, and may be queried.
 The property is a contiguous array of individual elements. Each element is
 indexed by a non-negative integer. The property type gives the type of each
 element in the array. These properties differ in the types of operations they
-can support. Queues do not support splice operations, arrays do.
+can support. Queues do not support splice or move operations, arrays do.
 
 3.3.3 Hash Properties
 
@@ -569,6 +569,14 @@ MSG_UPDATE (S->C)
       The new list of values may be a different length to the replaced
       section - in this case, subsequent elements will be shifted up or
       down accordingly.
+
+    CHANGE_MOVE:
+      INT       index
+      INT       delta
+
+      Moves the item currently at the index forward a (signed) delta amount,
+      such that its new index becomes index+delta. The items inbetween the old
+      and new index will be moved up or down as appropriate.
 
   For DIM_OBJSET:
     CHANGE_SET:

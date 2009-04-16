@@ -142,6 +142,25 @@ sub init_class_property_array
       my $cbs = $self->{properties}->{$prop}->[1];
       $_->{on_splice}->( $index, $count, @values ) for @$cbs;
    };
+
+   $subs->{"move_prop_$prop"} = sub {
+      my $self = shift;
+      my ( $index, $delta ) = @_;
+      return if $delta == 0;
+      # it turns out that exchanging neighbours is quicker by list assignment,
+      # but other times it's generally best to use splice() to extract then
+      # insert
+      my $cache = $self->{properties}->{$prop}->[0];
+      if( abs($delta) == 1 ) {
+         @{$cache}[$index,$index+$delta] = @{$cache}[$index+$delta,$index];
+      }
+      else {
+         my $elem = splice @$cache, $index, 1, ();
+         splice @$cache, $index + $delta, 0, ( $elem );
+      }
+      my $cbs = $self->{properties}->{$prop}->[1];
+      $_->{on_move}->( $index, $delta ) for @$cbs;
+   };
 }
 
 sub init_class_property_objset

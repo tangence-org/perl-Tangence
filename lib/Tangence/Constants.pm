@@ -37,6 +37,7 @@ our @EXPORT = qw(
    CHANGE_PUSH
    CHANGE_SHIFT
    CHANGE_SPLICE
+   CHANGE_MOVE
 
    CHANGETYPES
 
@@ -129,12 +130,13 @@ use constant CHANGE_DEL    => 3; # HASH: Deleted key follows, OBJSET: Deleted id
 use constant CHANGE_PUSH   => 4; # QUEUE/ARRAY: New members follow in a list
 use constant CHANGE_SHIFT  => 5; # QUEUE/ARRAY: Count of old elements to remove
 use constant CHANGE_SPLICE => 6; # ARRAY: Start index, count, [ new elements ]
+use constant CHANGE_MOVE   => 7; # ARRAY: Index, delta
 
 use constant CHANGETYPES => {
    DIM_SCALAR() => [qw( on_set )],
    DIM_HASH()   => [qw( on_set on_add on_del )],
    DIM_QUEUE()  => [qw( on_set on_push on_shift )],
-   DIM_ARRAY()  => [qw( on_set on_push on_shift on_splice )],
+   DIM_ARRAY()  => [qw( on_set on_push on_shift on_splice on_move )],
    DIM_OBJSET() => [qw( on_set on_add on_del )],
 };
 

@@ -534,6 +534,11 @@ sub _generate_message_UPDATE_array
       $message->pack_int( $count );
       $message->pack_all_sametype( $type, @values );
    }
+   elsif( $how == CHANGE_MOVE ) {
+      my ( $index, $delta ) = @args;
+      $message->pack_int( $index );
+      $message->pack_int( $delta );
+   }
    else {
       croak "Change type $how is not valid for an array property";
    }

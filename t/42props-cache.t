@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 16;
+use Test::More tests => 18;
 use IO::Async::Test;
 use IO::Async::Loop;
 
@@ -11,6 +11,11 @@ use Tangence::Registry;
 use Tangence::Server;
 use Tangence::Connection;
 use t::TestObj;
+
+### TODO
+# This test file relies a lot on weird logic in TestObj. Should probably instead just use 
+# the object's property manip. methods directly
+###
 
 my $loop = IO::Async::Loop->new();
 testing_loop( $loop );
@@ -149,3 +154,26 @@ is_deeply( $proxy->prop( "hash" ),
 is_deeply( $proxy->prop( "array" ),
            [ 1, 2, 4, 5 ],
            'array property cache after delete three' );
+
+# Just test this directly
+
+$obj->set_prop_array( [ 0 .. 9 ] );
+
+undef $array_changed;
+wait_for { $array_changed };
+
+$obj->move_prop_array( 3, 2 );
+
+undef $array_changed;
+wait_for { $array_changed };
+is_deeply( $proxy->prop( "array" ),
+           [ 0, 1, 2, 4, 5, 3, 6, 7, 8, 9 ],
+           'array property cacahe after move(+2)' );
+
+$obj->move_prop_array( 5, -2 );
+
+undef $array_changed;
+wait_for { $array_changed };
+is_deeply( $proxy->prop( "array" ),
+           [ 0 .. 9 ],
+           'array property cacahe after move(-2)' );
