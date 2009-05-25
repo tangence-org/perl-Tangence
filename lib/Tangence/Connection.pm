@@ -16,30 +16,28 @@ sub new
    my $class = shift;
    my %args = @_;
 
-   my $self = $class->SUPER::new( %args );
+   my $identity = delete $args{identity};
 
-   $self->{objectproxies} = {};
-   $self->{schemata}      = {};
-
-   $self->{identity} = $args{identity};
-
-   # Default
-   $args{on_error} = "croak" if !$args{on_error};
-
-   my $on_error;
-   if( ref $args{on_error} eq "CODE" ) {
-      $on_error = $args{on_error};
+   my $on_error = delete $args{on_error} || "croak";
+   if( ref $on_error eq "CODE" ) {
+      # OK
    }
-   elsif( $args{on_error} eq "croak" ) {
+   elsif( $on_error eq "croak" ) {
       $on_error = sub { croak "Received MSG_ERROR: $_[0]" };
    }
-   elsif( $args{on_error} eq "carp" ) {
+   elsif( $on_error eq "carp" ) {
       $on_error = sub { carp "Received MSG_ERROR: $_[0]" };
    }
    else {
       croak "Expected 'on_error' to be CODE reference or strings 'croak' or 'carp'";
    }
 
+   my $self = $class->SUPER::new( %args );
+
+   $self->{objectproxies} = {};
+   $self->{schemata}      = {};
+
+   $self->{identity} = $identity;
    $self->{on_error} = $on_error;
 
    # It's possible a handle was passed in the constructor.
