@@ -7,6 +7,38 @@ use Tangence::Connection;
 use IO::Async 0.16;
 use IO::Async::Loop;
 
+use Data::Dump;
+
+# We want to mangle the way Data::Dump prints our object proxies
+# While we're at it, lets build a generic delegated printing system
+
+{
+   my $_dump = \&Data::Dump::_dump;
+
+   my %dump_delegations;
+
+   no warnings 'redefine';
+   *Data::Dump::_dump = sub {
+      if( exists $dump_delegations{ref $_[0]} ) {
+         return $dump_delegations{ref $_[0]}->( @_ );
+      }
+      else {
+         return $_dump->( @_ );
+      }
+   };
+
+   sub register_dump_delegation
+   {
+      my ( $class, $cb ) = @_;
+      $dump_delegations{$class} = $cb;
+   }
+}
+
+register_dump_delegation( "Tangence::ObjectProxy" => sub {
+      my ( $obj ) = @_;
+      return "OBJPROXY( id=$obj->{id}, props=" . Data::Dump::dump($obj->{props}) . " )";
+} );
+
 my $loop = IO::Async::Loop->new();
 
 my $URL = shift @ARGV or die "Need URL as argv[1]\n";
@@ -56,8 +88,6 @@ elsif( $ARGV[0] eq "-i" ) {
    shift @ARGV; # eat -i
    my $objid = shift @ARGV;
 
-   require Data::Dump;
-
    $registry->call_method(
       method  => "get_by_id",
       args    => [ $objid ],
@@ -73,8 +103,6 @@ elsif( $ARGV[0] eq "-p" ) {
    shift @ARGV; # eat -p
    my $objid    = shift @ARGV;
    my $property = shift @ARGV;
-
-   require Data::Dump;
 
    $registry->call_method(
       method => "get_by_id",
