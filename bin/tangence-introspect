@@ -73,7 +73,7 @@ if( !@ARGV ) {
       on_value => sub {
          my ( $objshash ) = @_;
 
-         foreach my $id ( sort keys %$objshash ) {
+         foreach my $id ( sort { $a <=> $b } keys %$objshash ) {
             my $desc = $objshash->{$id};
 
             printf "%-6d: %s\n", $id, $desc;
