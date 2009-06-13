@@ -329,14 +329,26 @@ sub watch_property
    my $pdef = $self->can_property( $prop ) or croak "$self has no property $prop";
 
    my $callbacks = {};
-   foreach my $name ( @{ CHANGETYPES->{$pdef->{dim}} } ) {
-      ref( $callbacks->{$name} = delete $callbacks{$name} ) eq "CODE"
-         or croak "Expected '$name' as a CODE ref";
+   my $on_updated;
+
+   if( $callbacks{on_updated} ) {
+      $on_updated = delete $callbacks{on_updated};
+      ref $on_updated eq "CODE" or croak "Expected 'on_updated' to be a CODE ref";
+      keys %callbacks and croak "Expected no key other than 'on_updated'";
+      $callbacks->{on_updated} = $on_updated;
+   }
+   else {
+      foreach my $name ( @{ CHANGETYPES->{$pdef->{dim}} } ) {
+         ref( $callbacks->{$name} = delete $callbacks{$name} ) eq "CODE"
+            or croak "Expected '$name' as a CODE ref";
+      }
    }
 
    my $watchlist = $self->{properties}->{$prop}->[1];
 
    push @$watchlist, $callbacks;
+
+   $on_updated->( $self->{properties}->{$prop}->[0] ) if $on_updated;
 
    my $ref = \@{$watchlist}[$#$watchlist];  # reference to last element
    return $ref + 0; # force numeric context
