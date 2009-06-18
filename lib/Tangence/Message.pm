@@ -208,6 +208,7 @@ sub pack_int
    my $self = shift;
    my ( $d ) = @_;
 
+   defined $d or croak "cannot pack_int(undef)";
    ref $d and croak "$d is not a number";
    my $subtype = _best_int_type_for( $d );
    $self->_pack_leader( DATA_NUMBER, $subtype );
@@ -232,6 +233,7 @@ sub pack_str
    my $self = shift;
    my ( $d ) = @_;
 
+   defined $d or croak "cannot pack_str(undef)";
    ref $d and croak "$d is not a string";
    my $octets = encode_utf8( $d );
    $self->_pack_leader( DATA_STRING, length($octets) );

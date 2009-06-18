@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 154;
+use Test::More tests => 162;
 use Test::Exception;
 use Test::HexString;
 
@@ -21,7 +21,7 @@ sub test_specific
    is_hexstr( $m->{record}, $args{stream}, "$pack_method $name" );
 
    my $unpack_method = "unpack_$args{type}";
-   is_deeply( $m->$unpack_method(), $args{data}, "$unpack_method $name" );
+   is_deeply( $m->$unpack_method(), exists $args{retdata} ? $args{retdata} : $args{data}, "$unpack_method $name" );
    is( length $m->{record}, 0, "eats all stream for $name" );
 }
 
@@ -54,6 +54,14 @@ test_specific "bool t",
    type   => "bool",
    data   => 1,
    stream => "\x01";
+
+# So many parts of code would provide undef == false, so we will serialise
+# undef as false and not care about nullable
+test_specific "bool undef",
+   type   => "bool",
+   data   => undef,
+   stream => "\x00",
+   retdata => 0;
 
 test_specific_dies "bool from str",
    type   => "bool",
@@ -88,6 +96,11 @@ test_specific_dies "int from ARRAY",
    data   => [],
    stream => "\x40";
 
+test_specific_dies "int from undef",
+   type   => "int",
+   data   => undef,
+   stream => "\x80";
+
 test_specific "string",
    type   => "str",
    data   => "hello",
@@ -107,6 +120,11 @@ test_specific_dies "string from ARRAY",
    type   => "str",
    data   => [],
    stream => "\x40";
+
+test_specific_dies "string from undef",
+   type   => "str",
+   data   => undef,
+   stream => "\x80";
 
 sub test_typed
 {
