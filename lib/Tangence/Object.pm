@@ -100,7 +100,7 @@ sub destroy
    };
 
    foreach my $cb ( @{ $self->{event_subs}->{destroy} } ) {
-      $cb->( $incsub, $decsub );
+      $cb->( $self, $incsub, $decsub );
    }
 
    $decsub->();

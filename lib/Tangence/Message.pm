@@ -308,9 +308,9 @@ sub pack_obj
 
          $self->pack_typed( 'list(any)', $smasharr );
 
-         $stream->{peer_hasobj}->{$id} = $d->subscribe_event( "destroy", sub {
-               $stream->object_destroyed( $d, @_ )
-         } );
+         $stream->{peer_hasobj}->{$id} = $d->subscribe_event( 
+            destroy => sub { $stream->object_destroyed( @_ ) },
+         );
       }
 
       $self->_pack_leader( DATA_OBJECT, 4 );
