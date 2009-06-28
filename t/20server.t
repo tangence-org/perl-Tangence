@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 29;
+use Test::More tests => 32;
 use Test::HexString;
 use Test::Refcount;
 
@@ -26,6 +26,8 @@ my $bag = $registry->construct(
    colours => [ qw( red blue green yellow ) ],
    size => 100,
 );
+
+is_oneref( $bag, '$bag has refcount 1 initially' );
 
 my $server = Tangence::Server->new(
    loop     => $loop,
@@ -78,6 +80,8 @@ wait_for_stream { length $serverstream >= 5 and
                   length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
 
 is_hexstr( $serverstream, $expect, 'serverstream initially contains root object' );
+
+is_oneref( $bag, '$bag has refcount 1 after MSG_GETROOT' );
 
 is( $conn->identity, "testscript", '$conn->identity' );
 
@@ -346,6 +350,7 @@ $S2->syswrite( "\x80" . "\0\0\0\0" );
 wait_for { $obj_destroyed };
 is( $obj_destroyed, 1, 'object gets destroyed' );
 
+is_oneref( $bag, '$bag has refcount 1 before shutdown' );
 is_oneref( $server, '$server has refcount 1 before shutdown' );
 
 undef $server;

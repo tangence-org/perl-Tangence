@@ -7,6 +7,8 @@ use Carp;
 
 use Tangence::Constants;
 
+use Scalar::Util qw( weaken );
+
 our %METHODS = (
    get_by_id => {
       args => [qw( int )],
@@ -40,9 +42,10 @@ sub new
       id => $id,
       registry => "BOOTSTRAP",
    );
-   $self->{registry} = $self;
+   weaken( $self->{registry} = $self );
    
    $self->{objects} = { $id => $self };
+   weaken( $self->{objects}{$id} );
    $self->add_prop_objects( $id => $self->describe );
 
    $self->{nextid}  = 1;
@@ -81,7 +84,7 @@ sub construct
 
    $self->fire_event( "object_constructed", $id );
 
-   $self->{objects}->{$id} = $obj;
+   weaken( $self->{objects}->{$id} = $obj );
    $self->add_prop_objects( $id => $obj->describe );
 
    return $obj;

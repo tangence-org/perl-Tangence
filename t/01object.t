@@ -2,7 +2,8 @@
 
 use strict;
 
-use Test::More tests => 24;
+use Test::More tests => 31;
+use Test::Refcount;
 
 use Tangence::Constants;
 
@@ -11,14 +12,21 @@ use t::Ball;
 # Here we'll cheat. Normally, the registry constructs all objects. But we
 # haven't tested the registry yet, so we'll do it ourselves.
 
+my $fakereg = bless [], "FakeRegistry";
+my $fakereg_got_destroy = 0;
+
+sub FakeRegistry::destroy_object { shift; $fakereg_got_destroy = shift->id; }
+
 my $ball = t::Ball->new(
    id => 1,
-   registry => "NOTYET", # Some true value. We know it isn't used in this test
+   registry => $fakereg,
    colour => "red",
 );
 
 ok( defined $ball, 'defined $ball' );
 isa_ok( $ball, "Tangence::Object", '$ball isa Tangence::Object' );
+
+is_oneref( $ball, '$ball has refcount 1 initially' );
 
 is( $ball->id, "1", '$ball->id' );
 
@@ -96,12 +104,16 @@ $id = $ball->subscribe_event( bounced => sub {
       $bounces++;
 } );
 
+is_oneref( $ball, '$ball has refcount 1 after subscribe_event' );
+
 $ball->method_bounce( {}, "20 metres" );
 
 is( $bounces, 1, '$bounces is 1 after ->bounce' );
 is( $howhigh, "20 metres", '$howhigh is 20 metres' );
 
 $ball->unsubscribe_event( bounced => $id );
+
+is_oneref( $ball, '$ball has refcount 1 after unsubscribe_event' );
 
 $ball->method_bounce( {}, "10 metres" );
 
@@ -114,6 +126,8 @@ $id = $ball->watch_property( colour =>
    on_set => sub { $colour = shift },
 );
 
+is_oneref( $ball, '$ball has refcount 1 after watch_property' );
+
 $ball->set_prop_colour( "blue" );
 
 is( $ball->get_prop_colour, "blue", 'colour is now blue' );
@@ -121,7 +135,15 @@ is( $colour, "blue", '$colour is blue' );
 
 $ball->unwatch_property( colour => $id );
 
+is_oneref( $ball, '$ball has refcount 1 after unwatch_property' );
+
 $ball->set_prop_colour( "green" );
 
 is( $ball->get_prop_colour, "green", 'colour is now green' );
 is( $colour, "blue", '$colour is still blue' );
+
+is_oneref( $ball, '$ball has refcount 1 just before unref' );
+
+undef $ball;
+
+is( $fakereg_got_destroy, 1, 'registry acknowledges object destruction' );

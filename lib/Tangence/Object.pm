@@ -78,6 +78,12 @@ sub _new_property
    $self->{properties}->{$prop} = [ $initial, [] ];
 }
 
+sub DESTROY
+{
+   my $self = shift;
+   $self->destroy if defined $self->{registry};
+}
+
 sub destroy
 {
    my $self = shift;
