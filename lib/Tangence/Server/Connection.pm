@@ -18,24 +18,30 @@ sub new
 
    my $self = $class->SUPER::new(
       %args,
-
-      on_closed => sub {
-         my ( $self ) = @_;
-
-         foreach my $s ( @{ $self->{subscriptions} } ) {
-            my ( $object, $event, $id ) = @$s;
-            $object->unsubscribe_event( $event, $id );
-         }
-         foreach my $w ( @{ $self->{watches} } ) {
-            my ( $object, $prop, $id ) = @$w;
-            $object->unwatch_property( $prop, $id );
-         }
-      },
+      on_closed => sub { my $self = shift; $self->shutdown },
    );
 
    $self->{registry} = $registry;
 
    return $self;
+}
+
+sub shutdown
+{
+   my $self = shift;
+
+   foreach my $s ( @{ $self->{subscriptions} } ) {
+      my ( $object, $event, $id ) = @$s;
+      $object->unsubscribe_event( $event, $id );
+   }
+
+   foreach my $w ( @{ $self->{watches} } ) {
+      my ( $object, $prop, $id ) = @$w;
+      $object->unwatch_property( $prop, $id );
+   }
+
+   undef @{ $self->{subscriptions} };
+   undef @{ $self->{watches} };
 }
 
 sub identity
