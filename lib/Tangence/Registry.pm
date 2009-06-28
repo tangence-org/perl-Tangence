@@ -92,17 +92,10 @@ sub destroy_object
    my $self = shift;
    my ( $obj ) = @_;
 
-   $self->destroy_id( $obj->id );
-}
-
-sub destroy_id
-{
-   my $self = shift;
-   my ( $id ) = @_;
+   my $id = $obj->id;
 
    exists $self->{objects}->{$id} or croak "Cannot destroy ID $id - does not exist";
 
-   my $obj = delete $self->{objects}->{$id};
    $self->del_prop_objects( $id );
 
    $self->fire_event( "object_destroyed", $id );

@@ -110,7 +110,7 @@ sub _destroy_really
 {
    my $self = shift;
 
-   $self->registry->destroy_id( $self->id );
+   $self->registry->destroy_object( $self );
 
    undef %$self; # Now I am dead
    $self->{destroyed} = 1;
