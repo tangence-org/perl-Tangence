@@ -4,6 +4,8 @@ use strict;
 
 use Carp;
 
+use Scalar::Util qw( weaken );
+
 use Tangence::Server::Connection;
 
 sub new
@@ -17,6 +19,7 @@ sub new
    my $self = bless {
       loop     => $loop,
       registry => $registry,
+      conns    => [],
    }, $class;
 
    return $self;
@@ -41,13 +44,40 @@ sub new_conn
    my $self = shift;
    my %args = @_;
 
-   my $be = Tangence::Server::Connection->new( %args,
+   weaken( my $weakself = $self );
+
+   my $conn = Tangence::Server::Connection->new( %args,
       registry => $self->{registry},
+      on_closed => sub { $weakself->del_conn( @_ ) },
    );
 
-   $self->{loop}->add( $be );
+   $self->{loop}->add( $conn );
 
-   return $be;
+   push @{ $self->{conns} }, $conn;
+
+   return $conn;
+}
+
+sub del_conn
+{
+   my $self = shift;
+   my ( $conn ) = @_;
+
+   my $conns = $self->{conns};
+   my $idx;
+   $conns->[$_] == $conn and $idx = $_, last for 0 .. $#$conns;
+
+   defined $idx and splice @$conns, $idx, 1;
+}
+
+sub DESTROY
+{
+   my $self = shift;
+
+   foreach my $conn ( @{ $self->{conns} } ) {
+      $conn->shutdown;
+      $conn->close;
+   }
 }
 
 1;

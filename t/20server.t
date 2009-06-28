@@ -2,8 +2,10 @@
 
 use strict;
 
-use Test::More tests => 24;
+use Test::More tests => 29;
 use Test::HexString;
+use Test::Refcount;
+
 use IO::Async::Test;
 use IO::Async::Loop;
 
@@ -30,9 +32,15 @@ my $server = Tangence::Server->new(
    registry => $registry,
 );
 
+is_oneref( $server, '$server has refcount 1 initially' );
+
 my ( $S1, $S2 ) = $loop->socketpair() or die "Cannot create socket pair - $!";
 
 my $conn = $server->new_conn( handle => $S1 );
+
+is_oneref( $server, '$server has refcount 1 after new BE' );
+# Three refs: one in Server, one in IO::Async::Loop, one here
+is_refcount( $conn, 3, '$conn has refcount 3 initially' );
 
 is_deeply( $bag->get_prop_colours,
            { red => 1, blue => 1, green => 1, yellow => 1 },
@@ -337,3 +345,9 @@ $S2->syswrite( "\x80" . "\0\0\0\0" );
 
 wait_for { $obj_destroyed };
 is( $obj_destroyed, 1, 'object gets destroyed' );
+
+is_oneref( $server, '$server has refcount 1 before shutdown' );
+
+undef $server;
+
+is_oneref( $conn, '$conn has refcount 1 after shutdown' );

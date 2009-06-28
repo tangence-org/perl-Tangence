@@ -15,6 +15,7 @@ my $build = Module::Build->new
                         'Test::Exception' => 0,
                         'Test::HexString' => 0,
                         'Test::More' => 0,
+                        'Test::Refcount' => 0,
                      },
    license => 'perl',
    create_makefile_pl => 'traditional',
