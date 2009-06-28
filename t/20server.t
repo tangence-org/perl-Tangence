@@ -32,7 +32,7 @@ my $server = Tangence::Server->new(
 
 my ( $S1, $S2 ) = $loop->socketpair() or die "Cannot create socket pair - $!";
 
-my $be = $server->new_be( handle => $S1 );
+my $conn = $server->new_conn( handle => $S1 );
 
 is_deeply( $bag->get_prop_colours,
            { red => 1, blue => 1, green => 1, yellow => 1 },
@@ -71,7 +71,7 @@ wait_for_stream { length $serverstream >= 5 and
 
 is_hexstr( $serverstream, $expect, 'serverstream initially contains root object' );
 
-is( $be->identity, "testscript", '$be->identity' );
+is( $conn->identity, "testscript", '$conn->identity' );
 
 # MSG_GETREGISTRY
 $S2->syswrite( "\x41" . "\0\0\0\0" );
@@ -151,7 +151,7 @@ ok( defined $t::Ball::last_bounce_ctx, 'defined $last_bounce_ctx' );
 
 isa_ok( $t::Ball::last_bounce_ctx, "Tangence::Server::Context", '$last_bounce_ctx isa Tangence::Server::Context' );
 
-is( $t::Ball::last_bounce_ctx->connection, $be, '$last_bounce_ctx->connection' );
+is( $t::Ball::last_bounce_ctx->connection, $conn, '$last_bounce_ctx->connection' );
 
 is( $howhigh, "20 metres", '$howhigh is 20 metres after CALL' );
 

@@ -32,11 +32,11 @@ sub listen
    $loop->listen(
       %listenargs,
 
-      on_accept => sub { $self->new_be( handle => $_[0] ) },
+      on_accept => sub { $self->new_conn( handle => $_[0] ) },
    );
 }
 
-sub new_be
+sub new_conn
 {
    my $self = shift;
    my %args = @_;

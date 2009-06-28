@@ -27,7 +27,7 @@ my $server = Tangence::Server->new(
 
 my ( $S1, $S2 ) = $loop->socketpair() or die "Cannot create socket pair - $!";
 
-$server->new_be( handle => $S1 );
+$server->new_conn( handle => $S1 );
 
 my $conn = Tangence::Connection->new( handle => $S2 );
 $loop->add( $conn );
