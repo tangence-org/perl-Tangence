@@ -37,7 +37,7 @@ use Data::Dump;
 
 register_dump_delegation( "Tangence::ObjectProxy" => sub {
       my ( $obj ) = @_;
-      return "OBJPROXY( id=$obj->{id}, props=" . Data::Dump::dump($obj->{props}) . " )";
+      return "OBJPROXY( id=$obj->{id} )";
 } );
 
 my $loop = IO::Async::Loop->new();
@@ -66,27 +66,24 @@ $conn->connect(
 
       $registry->watch_property( 
          property => "objects",
-         on_change => \&objects_changed,
+         on_set => sub {
+            my ( $objects ) = @_;
+            new_object( $_ ) foreach keys %$objects;
+         },
+         on_add => sub {
+            my ( $id, $obj ) = @_;
+            new_object( $id );
+         },
+         on_del => sub {
+            my ( $id ) = @_;
+            print STDERR "deleted object $id\n";
+         },
          want_initial => 1,
       );
    },
 );
 
 $loop->loop_forever;
-
-sub objects_changed
-{
-   my ( undef, undef, $how, @value ) = @_;
-
-   if( $how == CHANGE_SET ) {
-      my ( $objects ) = @value;
-      new_object( $_ ) foreach keys %$objects;
-   }
-   elsif( $how == CHANGE_ADD ) {
-      my ( $id, $obj ) = @value;
-      new_object( $id );
-   }
-}
 
 sub new_object
 {
@@ -107,10 +104,7 @@ sub new_object
 
          foreach my $event ( keys %$events ) {
             print "Subscribing to object $objid event $event\n";
-            $obj->subscribe_event(
-               event => $event,
-               on_fire => \&event_happened
-            );
+            object_event( $obj, $event );
          }
 
          my $properties = $introspection->{properties};
@@ -119,105 +113,170 @@ sub new_object
             # We're already watching 'objects' on the registry, so ignore that
             next if $objid == 0 and $prop eq "objects";
             print "Watching object $objid property $prop\n";
-            # Need to choose the callback based on the property dimension
+            # Need to handle based on the property dimension
             my $dim = $properties->{$prop}->{dim};
-            my $cb = $dim == DIM_SCALAR ? \&prop_scalar_changed :
-                     $dim == DIM_HASH   ? \&prop_hash_changed :
-                     $dim == DIM_ARRAY  ? \&prop_array_changed :
-                     $dim == DIM_OBJSET ? \&prop_objset_changed :
-                     undef;
+            my $install = $dim == DIM_SCALAR ? \&object_prop_scalar :
+                          $dim == DIM_HASH   ? \&object_prop_hash :
+                          $dim == DIM_QUEUE  ? \&object_prop_queue :
+                          $dim == DIM_ARRAY  ? \&object_prop_array :
+                          $dim == DIM_OBJSET ? \&object_prop_objset :
+                          undef;
 
-            $obj->watch_property(
-               property => $prop,
-               on_change => $cb,
-               want_initial => 1,
-            ) if defined $cb;
+            $install->( $obj, $prop ) if defined $install;
          }
       },
    );
 }
 
-sub event_happened
+sub object_event
 {
-   my ( $objid, $event, @args ) = @_;
+   my ( $obj, $event ) = @_;
 
-   print "EVENT $objid -> $event\n";
-   print "  " . Data::Dump::dump(@args) . "\n";
+   my $id = $obj->id;
+
+   $obj->subscribe_event(
+      event => $event,
+      on_fire => sub {
+         my ( @args ) = @_;
+
+         print "EVENT $id -> $event\n";
+         print "  " . Data::Dump::dump(@args) . "\n";
+      },
+   );
 }
 
-sub prop_scalar_changed
+sub object_prop_scalar
 {
-   my ( $objid, $prop, $how, @value ) = @_;
+   my ( $obj, $prop ) = @_;
 
-   if( $how == CHANGE_SET ) {
-      print "PROP SET $objid [$prop]\n";
-      print "  " . Data::Dump::dump($value[0]) . "\n";
-   }
-   else {
-      print "PROP UNKNOWN($how)?? $objid [$prop]\n";
-   }
+   my $id = $obj->id;
+
+   $obj->watch_property(
+      property => $prop,
+      on_set => sub {
+         my ( $scalar ) = @_;
+         print "PROP SET $id [$prop]\n";
+         print "  " . Data::Dump::dump($scalar) . "\n";
+      },
+      want_initial => 1,
+   );
 }
 
-sub prop_hash_changed
+sub object_prop_hash
 {
-   my ( $objid, $prop, $how, @value ) = @_;
+   my ( $obj, $prop ) = @_;
 
-   if( $how == CHANGE_SET ) {
-      print "PROP SET $objid [$prop]\n";
-      print "  " . Data::Dump::dump($value[0]) . "\n";
-   }
-   elsif( $how == CHANGE_ADD ) {
-      print "PROP ADD $objid [$prop]\n";
-      print "  $value[0] => " . Data::Dump::dump($value[1]) . "\n";
-   }
-   elsif( $how == CHANGE_DEL ) {
-      print "PROP DEL $objid [$prop]\n";
-      print "  $value[0]\n";
-   }
-   else {
-      print "PROP UNKNOWN($how)?? $objid [$prop]\n";
-   }
+   my $id = $obj->id;
+
+   $obj->watch_property(
+      property => $prop,
+      on_set => sub {
+         my ( $hash ) = @_;
+         print "PROP SET $id [$prop]\n";
+         print "  {$_} = " . Data::Dump::dump($hash->{$_}) . "\n" for sort keys %$hash;
+      },
+      on_add => sub {
+         my ( $key, $value ) = @_;
+         print "PROP ADD $id [$prop]\n";
+         print "  {$key} = " . Data::Dump::dump($value) . "\n";
+      },
+      on_del => sub {
+         my ( $key ) = @_;
+         print "PROP DEL $id [$prop]\n";
+         print "  {$key}\n";
+      },
+      want_initial => 1,
+   );
 }
 
-sub prop_array_changed
+sub object_prop_array
 {
-   my ( $objid, $prop, $how, @value ) = @_;
+   my ( $obj, $prop ) = @_;
 
-   if( $how == CHANGE_SET ) {
-      print "PROP SET $objid [$prop]\n";
-      print "  " . Data::Dump::dump(@value) . "\n";
-   }
-   elsif( $how == CHANGE_PUSH ) {
-      print "PROP PUSH $objid [$prop]\n";
-      print "  $_: " . Data::Dump::dump($value[$_]) . "\n" for 0 .. $#value;
-   }
-   elsif( $how == CHANGE_SHIFT ) {
-      print "PROP SHIFT $objid [$prop]\n";
-      print "  shift x $value[0]\n";
-   }
-   else {
-      print "PROP UNKNOWN($how)?? $objid [$prop]\n";
-   }
+   my $id = $obj->id;
+
+   $obj->watch_property(
+      property => $prop,
+      on_set => sub {
+         my ( $array ) = @_;
+         print "PROP SET $id [$prop]\n";
+         print "  [$_] = " . Data::Dump::dump($array->[$_]) . "\n" for 0 .. $#$array;
+      },
+      on_push => sub {
+         my ( @newvals ) = @_;
+         print "PROP PUSH $id [$prop]\n";
+         print "  : " . Data::Dump::dump($newvals[$_]) . "\n" for 0 .. $#newvals;
+      },
+      on_shift => sub {
+         my ( $count ) = @_;
+         print "PROP SHIFT $id [$prop]\n";
+         print "  shift x $count\n";
+      },
+      on_splice => sub {
+         my ( $index, $count, @newvals ) = @_;
+         print "PROP SPLICE $id [$prop]\n";
+         print "  splice[$index .. $index+$count] = \n";
+         print "  : " . Data::Dump::dump($newvals[$_]) . "\n" for 0 .. $#newvals;
+      },
+      on_move => sub {
+         my ( $index, $delta ) = @_;
+         print "PROP MOVE $id [$prop]\n";
+         print "  [$index] by ".($delta>0?"+$delta":"$delta")."\n";
+      },
+      want_initial => 1,
+   );
 }
 
-sub prop_objset_changed
+sub object_prop_queue
 {
-   my ( $objid, $prop, $how, @value ) = @_;
+   my ( $obj, $prop ) = @_;
 
-   if( $how == CHANGE_SET ) {
-      print "PROP SET $objid [$prop]\n";
-      my @objs = @{ $value[0] };
-      print "  " . $_->id . " = " . Data::Dump::dump($_) . "\n" for @objs;
-   }
-   elsif( $how == CHANGE_ADD ) {
-      print "PROP ADD $objid [$prop]\n";
-      print "  " . $value[0]->id . " = " . Data::Dump::dump($value[0]) . "\n";
-   }
-   elsif( $how == CHANGE_DEL ) {
-      print "PROP DEL $objid [$prop]\n";
-      print "  $value[0]\n";
-   }
-   else {
-      print "PROP UNKNOWN($how)?? $objid [$prop]\n";
-   }
+   my $id = $obj->id;
+
+   $obj->watch_property(
+      property => $prop,
+      on_set => sub {
+         my ( $queue ) = @_;
+         print "PROP SET $id [$prop]\n";
+         print "  [$_] = " . Data::Dump::dump($queue->[$_]) . "\n" for 0 .. $#$queue;
+      },
+      on_push => sub {
+         my ( @newvals ) = @_;
+         print "PROP PUSH $id [$prop]\n";
+         print "  : " . Data::Dump::dump($newvals[$_]) . "\n" for 0 .. $#newvals;
+      },
+      on_shift => sub {
+         my ( $count ) = @_;
+         print "PROP SHIFT $id [$prop]\n";
+         print "  shift x $count\n";
+      },
+      want_initial => 1,
+   );
+}
+
+sub object_prop_objset
+{
+   my ( $obj, $prop ) = @_;
+
+   my $id = $obj->id;
+
+   $obj->watch_property(
+      property => $prop,
+      on_set => sub {
+         my ( $objs ) = @_;
+         print "PROP SET $id [$prop]\n";
+         print "  " . $_->id . " = " . Data::Dump::dump($_) . "\n" for values %$objs;
+      },
+      on_add => sub {
+         my ( $newobj ) = @_;
+         print "PROP ADD $id [$prop]\n";
+         print "  " . $newobj->id . " = " . Data::Dump::dump($newobj) . "\n";
+      },
+      on_del => sub {
+         my ( $delid ) = @_;
+         print "PROP DEL $id [$prop]\n";
+         print "  $delid\n";
+      },
+      want_initial => 1,
+   );
 }
