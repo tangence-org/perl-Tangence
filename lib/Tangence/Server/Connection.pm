@@ -30,18 +30,23 @@ sub shutdown
 {
    my $self = shift;
 
-   foreach my $s ( @{ $self->{subscriptions} } ) {
-      my ( $object, $event, $id ) = @$s;
-      $object->unsubscribe_event( $event, $id );
+   if( my $subscriptions = $self->{subscriptions} ) {
+      foreach my $s ( @$subscriptions ) {
+         my ( $object, $event, $id ) = @$s;
+         $object->unsubscribe_event( $event, $id );
+      }
+
+      undef @$subscriptions;
    }
 
-   foreach my $w ( @{ $self->{watches} } ) {
-      my ( $object, $prop, $id ) = @$w;
-      $object->unwatch_property( $prop, $id );
-   }
+   if( my $watches = $self->{watches} ) {
+      foreach my $w ( @$watches ) {
+         my ( $object, $prop, $id ) = @$w;
+         $object->unwatch_property( $prop, $id );
+      }
 
-   undef @{ $self->{subscriptions} };
-   undef @{ $self->{watches} };
+      undef @$watches;
+   }
 }
 
 sub identity
