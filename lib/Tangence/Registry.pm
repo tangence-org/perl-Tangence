@@ -76,6 +76,8 @@ sub construct
 
    my $id = shift @{ $self->{freeids} } || ( $self->{nextid}++ );
 
+   eval { $type->can( "new" ) } or croak "Registry cannot construct a '$type' as it has no ->new() method";
+
    my $obj = $type->new(
       registry => $self,
       id       => $id,
