@@ -2,7 +2,7 @@ package Tangence::Constants;
 
 use strict;
 
-use base qw( Exporter );
+use Exporter 'import';
 our @EXPORT = qw(
    MSG_CALL
    MSG_SUBSCRIBE
