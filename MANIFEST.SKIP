@@ -14,3 +14,4 @@ _build
 ^\.shelf
 .*\.c
 .*\.o
+^MYMETA.yml$
