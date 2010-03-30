@@ -1,3 +1,8 @@
+#  You may distribute under the terms of either the GNU General Public License
+#  or the Artistic License (the same terms as Perl itself)
+#
+#  (C) Paul Evans, 2010 -- leonerd@leonerd.org.uk
+
 package Tangence::Constants;
 
 use strict;
@@ -160,4 +165,11 @@ use constant DATA_META   => 7; # Meta stream operation: num=:
 use constant DATAMETA_CONSTRUCT => 1; # Construct: num(id), typenameZ
 use constant DATAMETA_CLASS     => 2; # Class: typenameZ, schema
 
+# Keep perl happy; keep Britain tidy
 1;
+
+__END__
+
+=head1 AUTHOR
+
+Paul Evans <leonerd@leonerd.org.uk>

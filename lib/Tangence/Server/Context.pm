@@ -1,3 +1,8 @@
+#  You may distribute under the terms of either the GNU General Public License
+#  or the Artistic License (the same terms as Perl itself)
+#
+#  (C) Paul Evans, 2010 -- leonerd@leonerd.org.uk
+
 package Tangence::Server::Context;
 
 use strict;
@@ -54,4 +59,11 @@ sub responderr
    );
 }
 
+# Keep perl happy; keep Britain tidy
 1;
+
+__END__
+
+=head1 AUTHOR
+
+Paul Evans <leonerd@leonerd.org.uk>
