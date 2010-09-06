@@ -22,6 +22,16 @@ sub new
    }, $class;
 }
 
+sub superclasses
+{
+   my $self = shift;
+   my ( $class ) = @_;
+
+   $class ||= $self->{name};
+
+   return do { no strict 'refs'; @{$class."::ISA"} };
+}
+
 sub can_method
 {
    my $self = shift;
@@ -33,9 +43,7 @@ sub can_method
 
    return $methods{$method} if defined $method and exists $methods{$method};
 
-   my @isa = do { no strict 'refs'; @{$class."::ISA"} };
-
-   foreach my $superclass ( @isa ) {
+   foreach my $superclass ( $self->superclasses( $class ) ) {
       my $m = $self->can_method( $method, $superclass );
       if( defined $method ) {
          return $m if $m;
@@ -60,9 +68,7 @@ sub can_event
 
    return $events{$event} if defined $event and exists $events{$event};
 
-   my @isa = do { no strict 'refs'; @{$class."::ISA"} };
-
-   foreach my $superclass ( @isa ) {
+   foreach my $superclass ( $self->superclasses( $class ) ) {
       my $e = $self->can_event( $event, $superclass );
       if( defined $event ) {
          return $e if $e;
@@ -87,9 +93,7 @@ sub can_property
 
    return $props{$prop} if defined $prop and exists $props{$prop};
 
-   my @isa = do { no strict 'refs'; @{$class."::ISA"} };
-
-   foreach my $superclass ( @isa ) {
+   foreach my $superclass ( $self->superclasses( $class ) ) {
       my $p = $self->can_property( $prop, $superclass );
       if( defined $prop ) {
          return $p if $p;
@@ -116,9 +120,7 @@ sub smashkeys
 
    $props{$_}->{smash} and $smash{$_} = 1 for keys %props;
 
-   my @isa = do { no strict 'refs'; @{$class."::ISA"} };
-
-   foreach my $superclass ( @isa ) {
+   foreach my $superclass ( $self->superclasses( $class ) ) {
       my $supkeys = $self->smashkeys( $superclass );
 
       # Merge keys we don't yet have
@@ -138,7 +140,7 @@ sub introspect
       methods    => $self->can_method(),
       events     => $self->can_event(),
       properties => $self->can_property(),
-      isa        => [ $class, do { no strict 'refs'; @{$class."::ISA"} } ],
+      isa        => [ $class, $self->superclasses( $class ) ],
    };
 
    return $ret;
