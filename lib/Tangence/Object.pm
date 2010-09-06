@@ -12,6 +12,8 @@ use Carp;
 use Tangence::Constants;
 use Tangence::Metacode;
 
+use Tangence::Meta::Class;
+
 our %METHODS = (
 );
 
@@ -34,9 +36,12 @@ sub new
 
    Tangence::Metacode::init_class( $class ) unless do { no strict 'refs'; defined &{"${class}::_has_Tangence"} };
 
+   my $meta = Tangence::Meta::Class->new( $class );
+
    my $self = bless {
       id => $id,
       registry => $registry,
+      meta => $meta,
 
       event_subs => {},   # {$event} => [ @cbs ]
 
@@ -166,126 +171,40 @@ sub smash
    } @keys };
 }
 
+sub _meta
+{
+   my $self = shift;
+   return ref $self ? $self->{meta} : Tangence::Meta::Class->new( $self );
+}
+
 sub can_method
 {
    my $self = shift;
-   my ( $method, $class ) = @_;
-
-   $class ||= ( ref $self || $self );
-
-   my %methods = do { no strict 'refs'; %{$class."::METHODS"} };
-
-   return $methods{$method} if defined $method and exists $methods{$method};
-
-   my @isa = do { no strict 'refs'; @{$class."::ISA"} };
-
-   foreach my $superclass ( @isa ) {
-      my $m = $self->can_method( $method, $superclass );
-      if( defined $method ) {
-         return $m if $m;
-      }
-      else {
-         exists $methods{$_} or $methods{$_} = $m->{$_} for keys %$m;
-      }
-   }
-
-   return \%methods unless defined $method;
-   return undef;
+   return $self->_meta->can_method( @_ );
 }
 
 sub can_event
 {
    my $self = shift;
-   my ( $event, $class ) = @_;
-
-   $class ||= ( ref $self || $self );
-
-   my %events = do { no strict 'refs'; %{$class."::EVENTS"} };
-
-   return $events{$event} if defined $event and exists $events{$event};
-
-   my @isa = do { no strict 'refs'; @{$class."::ISA"} };
-
-   foreach my $superclass ( @isa ) {
-      my $e = $self->can_event( $event, $superclass );
-      if( defined $event ) {
-         return $e if $e;
-      }
-      else {
-         exists $events{$_} or $events{$_} = $e->{$_} for keys %$e;
-      }
-   }
-
-   return \%events unless defined $event;
-   return undef;
+   return $self->_meta->can_event( @_ );
 }
 
 sub can_property
 {
    my $self = shift;
-   my ( $prop, $class ) = @_;
-
-   $class ||= ( ref $self || $self );
-
-   my %props = do { no strict 'refs'; %{$class."::PROPS"} };
-
-   return $props{$prop} if defined $prop and exists $props{$prop};
-
-   my @isa = do { no strict 'refs'; @{$class."::ISA"} };
-
-   foreach my $superclass ( @isa ) {
-      my $p = $self->can_property( $prop, $superclass );
-      if( defined $prop ) {
-         return $p if $p;
-      }
-      else {
-         exists $props{$_} or $props{$_} = $p->{$_} for keys %$p;
-      }
-   }
-
-   return \%props unless defined $prop;
-   return undef;
+   return $self->_meta->can_property( @_ );
 }
 
 sub smashkeys
 {
    my $self = shift;
-   my ( $class ) = @_;
-
-   $class ||= ( ref $self || $self );
-
-   my %props = do { no strict 'refs'; %{$class."::PROPS"} };
-
-   my %smash;
-
-   $props{$_}->{smash} and $smash{$_} = 1 for keys %props;
-
-   my @isa = do { no strict 'refs'; @{$class."::ISA"} };
-
-   foreach my $superclass ( @isa ) {
-      my $supkeys = $self->smashkeys( $superclass );
-
-      # Merge keys we don't yet have
-      $smash{$_} = 1 for keys %$supkeys;
-   }
-
-   return \%smash;
+   return $self->_meta->smashkeys;
 }
 
 sub introspect
 {
    my $self = shift;
-
-   my $class = ( ref $self || $self );
-
-   my $ret = {
-      methods    => $self->can_method(),
-      events     => $self->can_event(),
-      properties => $self->can_property(),
-      isa        => [ $class, do { no strict 'refs'; @{$class."::ISA"} } ],
-   };
-
-   return $ret;
+   return $self->_meta->introspect;
 }
 
 sub fire_event
