@@ -32,6 +32,14 @@ sub superclasses
    return do { no strict 'refs'; @{$class."::ISA"} };
 }
 
+sub supermetas
+{
+   my $self = shift;
+   my ( $class ) = @_;
+
+   return map { Tangence::Meta::Class->new( $_ ) } $self->superclasses;
+}
+
 sub can_method
 {
    my $self = shift;
@@ -43,8 +51,8 @@ sub can_method
 
    return $methods{$method} if defined $method and exists $methods{$method};
 
-   foreach my $superclass ( $self->superclasses( $class ) ) {
-      my $m = $self->can_method( $method, $superclass );
+   foreach my $supermeta ( $self->supermetas ) {
+      my $m = $supermeta->can_method( $method );
       if( defined $method ) {
          return $m if $m;
       }
@@ -68,8 +76,8 @@ sub can_event
 
    return $events{$event} if defined $event and exists $events{$event};
 
-   foreach my $superclass ( $self->superclasses( $class ) ) {
-      my $e = $self->can_event( $event, $superclass );
+   foreach my $supermeta ( $self->supermetas ) {
+      my $e = $supermeta->can_event( $event );
       if( defined $event ) {
          return $e if $e;
       }
@@ -93,8 +101,8 @@ sub can_property
 
    return $props{$prop} if defined $prop and exists $props{$prop};
 
-   foreach my $superclass ( $self->superclasses( $class ) ) {
-      my $p = $self->can_property( $prop, $superclass );
+   foreach my $supermeta ( $self->supermetas ) {
+      my $p = $supermeta->can_property( $prop );
       if( defined $prop ) {
          return $p if $p;
       }
@@ -120,8 +128,8 @@ sub smashkeys
 
    $props{$_}->{smash} and $smash{$_} = 1 for keys %props;
 
-   foreach my $superclass ( $self->superclasses( $class ) ) {
-      my $supkeys = $self->smashkeys( $superclass );
+   foreach my $supermeta ( $self->supermetas ) {
+      my $supkeys = $supermeta->smashkeys;
 
       # Merge keys we don't yet have
       $smash{$_} = 1 for keys %$supkeys;
