@@ -1,0 +1,9 @@
+class t.Ball {
+  method bounce(str) -> str;
+
+  event bounced(str);
+
+  prop colour = str;
+
+  smashed prop size = int;
+}

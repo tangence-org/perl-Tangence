@@ -1,0 +1,7 @@
+class t.Bag {
+  method get_ball (str) -> obj;
+  method pull_ball(str) -> obj;
+  method add_ball (str) -> obj;
+
+  prop colours = hash of int;
+}

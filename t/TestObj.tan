@@ -1,0 +1,6 @@
+class t.TestObj {
+  prop scalar =          int;
+  prop hash   = hash  of int;
+  prop queue  = queue of int;
+  prop array  = array of int;
+}
