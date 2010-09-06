@@ -25,29 +25,21 @@ sub new
 sub superclasses
 {
    my $self = shift;
-   my ( $class ) = @_;
-
-   $class ||= $self->{name};
-
-   return do { no strict 'refs'; @{$class."::ISA"} };
+   return do { no strict 'refs'; @{$self->{name}."::ISA"} };
 }
 
 sub supermetas
 {
    my $self = shift;
-   my ( $class ) = @_;
-
    return map { Tangence::Meta::Class->new( $_ ) } $self->superclasses;
 }
 
 sub can_method
 {
    my $self = shift;
-   my ( $method, $class ) = @_;
+   my ( $method ) = @_;
 
-   $class ||= $self->{name};
-
-   my %methods = do { no strict 'refs'; %{$class."::METHODS"} };
+   my %methods = do { no strict 'refs'; %{$self->{name}."::METHODS"} };
 
    return $methods{$method} if defined $method and exists $methods{$method};
 
@@ -68,11 +60,9 @@ sub can_method
 sub can_event
 {
    my $self = shift;
-   my ( $event, $class ) = @_;
+   my ( $event ) = @_;
 
-   $class ||= $self->{name};
-
-   my %events = do { no strict 'refs'; %{$class."::EVENTS"} };
+   my %events = do { no strict 'refs'; %{$self->{name}."::EVENTS"} };
 
    return $events{$event} if defined $event and exists $events{$event};
 
@@ -93,11 +83,9 @@ sub can_event
 sub can_property
 {
    my $self = shift;
-   my ( $prop, $class ) = @_;
+   my ( $prop ) = @_;
 
-   $class ||= $self->{name};
-
-   my %props = do { no strict 'refs'; %{$class."::PROPS"} };
+   my %props = do { no strict 'refs'; %{$self->{name}."::PROPS"} };
 
    return $props{$prop} if defined $prop and exists $props{$prop};
 
@@ -118,11 +106,8 @@ sub can_property
 sub smashkeys
 {
    my $self = shift;
-   my ( $class ) = @_;
 
-   $class ||= $self->{name};
-
-   my %props = do { no strict 'refs'; %{$class."::PROPS"} };
+   my %props = do { no strict 'refs'; %{$self->{name}."::PROPS"} };
 
    my %smash;
 
@@ -142,13 +127,11 @@ sub introspect
 {
    my $self = shift;
 
-   my $class = $self->{name};
-
    my $ret = {
-      methods    => $self->can_method(),
-      events     => $self->can_event(),
-      properties => $self->can_property(),
-      isa        => [ $class, $self->superclasses( $class ) ],
+      methods    => $self->can_method,
+      events     => $self->can_event,
+      properties => $self->can_property,
+      isa        => [ $self->{name}, $self->superclasses ],
    };
 
    return $ret;
