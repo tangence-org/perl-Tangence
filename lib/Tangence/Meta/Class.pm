@@ -13,7 +13,7 @@ our %metas; # cache one per class
 sub new
 {
    my $class = shift;
-   my ( $name ) = @_;
+   my ( $name, %args ) = @_;
 
    return $metas{$name} if exists $metas{$name};
 
@@ -22,13 +22,33 @@ sub new
    }, $class;
 
    no strict 'refs';
+   no warnings 'once'; # In case these vars are not defined
 
    $self->{superclasses} = [ @{"$self->{name}::ISA"}     ];
-   $self->{methods}      = { %{"$self->{name}::METHODS"} };
-   $self->{events}       = { %{"$self->{name}::EVENTS"}  };
-   $self->{props}        = { %{"$self->{name}::PROPS"}   };
+
+   $self->{methods}      = $args{methods} || { %{"$self->{name}::METHODS"} };
+   $self->{events}       = $args{events}  || { %{"$self->{name}::EVENTS"}  };
+   $self->{props}        = $args{props}   || { %{"$self->{name}::PROPS"}   };
 
    return $self;
+}
+
+sub renew
+{
+   my $class = shift;
+   my ( $name ) = @_;
+
+   if( exists $metas{$name} ) {
+      my $oldself = $metas{$name};
+      local $metas{$name};
+
+      my $newself = $class->new( @_ );
+
+      %$oldself = %$newself;
+   }
+   else {
+      $class->new( @_ );
+   }
 }
 
 sub superclasses
