@@ -15,11 +15,9 @@ sub init_class
 {
    my $class = shift;
 
-   # This method does lots of evilness. But we'll try to keep it brief, and
-   # all in one place
-   no strict 'refs';
+   my $meta = $class->_meta;
 
-   foreach my $superclass ( @{$class."::ISA"} ) {
+   foreach my $superclass ( $meta->superclasses ) {
       init_class( $superclass ) unless defined &{"${superclass}::_has_Tangence"};
    }
 
@@ -27,13 +25,15 @@ sub init_class
       _has_Tangence => sub() { 1 },
    );
 
-   my %props = %{$class."::PROPS"};
+   my $props = $meta->can_property;
 
-   foreach my $prop ( keys %props ) {
-      my $pdef = $props{$prop};
+   foreach my $prop ( keys %$props ) {
+      my $pdef = $props->{$prop};
 
       init_class_property( $class, $prop, $pdef, \%subs );
    }
+
+   no strict 'refs';
 
    foreach my $name ( keys %subs ) {
       next if defined &{"${class}::${name}"};
