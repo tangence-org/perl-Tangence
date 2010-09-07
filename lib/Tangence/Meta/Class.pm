@@ -17,15 +17,24 @@ sub new
 
    return $metas{$name} if exists $metas{$name};
 
-   return $metas{$name} = bless {
+   my $self = $metas{$name} = bless {
       name => $name,
    }, $class;
+
+   no strict 'refs';
+
+   $self->{superclasses} = [ @{"$self->{name}::ISA"}     ];
+   $self->{methods}      = { %{"$self->{name}::METHODS"} };
+   $self->{events}       = { %{"$self->{name}::EVENTS"}  };
+   $self->{props}        = { %{"$self->{name}::PROPS"}   };
+
+   return $self;
 }
 
 sub superclasses
 {
    my $self = shift;
-   return do { no strict 'refs'; @{$self->{name}."::ISA"} };
+   return @{ $self->{superclasses} };
 }
 
 sub supermetas
@@ -39,9 +48,9 @@ sub can_method
    my $self = shift;
    my ( $method ) = @_;
 
-   my %methods = do { no strict 'refs'; %{$self->{name}."::METHODS"} };
+   return $self->{methods}{$method} if defined $method and exists $self->{methods}{$method};
 
-   return $methods{$method} if defined $method and exists $methods{$method};
+   my %methods = %{ $self->{methods} };
 
    foreach my $supermeta ( $self->supermetas ) {
       my $m = $supermeta->can_method( $method );
@@ -62,9 +71,9 @@ sub can_event
    my $self = shift;
    my ( $event ) = @_;
 
-   my %events = do { no strict 'refs'; %{$self->{name}."::EVENTS"} };
+   return $self->{events}{$event} if defined $event and exists $self->{events}{$event};
 
-   return $events{$event} if defined $event and exists $events{$event};
+   my %events = %{ $self->{events} };
 
    foreach my $supermeta ( $self->supermetas ) {
       my $e = $supermeta->can_event( $event );
@@ -85,7 +94,9 @@ sub can_property
    my $self = shift;
    my ( $prop ) = @_;
 
-   my %props = do { no strict 'refs'; %{$self->{name}."::PROPS"} };
+   return $self->{props}{$prop} if defined $prop and exists $self->{props}{$prop};
+
+   my %props = %{ $self->{props} };
 
    return $props{$prop} if defined $prop and exists $props{$prop};
 
@@ -107,7 +118,7 @@ sub smashkeys
 {
    my $self = shift;
 
-   my %props = do { no strict 'refs'; %{$self->{name}."::PROPS"} };
+   my %props = %{ $self->{props} };
 
    my %smash;
 
