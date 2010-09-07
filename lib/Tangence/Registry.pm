@@ -14,27 +14,31 @@ use Tangence::Constants;
 
 use Scalar::Util qw( weaken );
 
-our %METHODS = (
-   get_by_id => {
-      args => [qw( int )],
-      ret  => 'obj',
-   },
-);
+Tangence::Meta::Class->renew(
+   __PACKAGE__,
 
-our %EVENTS = (
-   object_constructed => {
-      args => [qw( int )],
+   methods => {
+      get_by_id => {
+         args => [qw( int )],
+         ret  => 'obj',
+      },
    },
-   object_destroyed => {
-      args => [qw( int )],
-   },
-);
 
-our %PROPS = (
-   objects => {
-      dim  => DIM_HASH,
-      type => 'str',
-   }
+   events => {
+      object_constructed => {
+         args => [qw( int )],
+      },
+      object_destroyed => {
+         args => [qw( int )],
+      },
+   },
+
+   props => {
+      objects => {
+         dim  => DIM_HASH,
+         type => 'str',
+      }
+   },
 );
 
 sub new

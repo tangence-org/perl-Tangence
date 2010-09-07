@@ -14,16 +14,14 @@ use Tangence::Metacode;
 
 use Tangence::Meta::Class;
 
-our %METHODS = (
-);
+Tangence::Meta::Class->renew(
+   __PACKAGE__,
 
-our %EVENTS = (
-   destroy => {
-      args => [],
+   events => {
+      destroy => {
+         args => [],
+      },
    },
-);
-
-our %PROPS = (
 );
 
 sub new
