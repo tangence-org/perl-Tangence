@@ -34,12 +34,10 @@ sub new
 
    Tangence::Metacode::init_class( $class ) unless do { no strict 'refs'; defined &{"${class}::_has_Tangence"} };
 
-   my $meta = Tangence::Meta::Class->new( $class );
-
    my $self = bless {
       id => $id,
       registry => $registry,
-      meta => $meta,
+      meta => $args{meta} || $registry->get_meta_class( $class ),
 
       event_subs => {},   # {$event} => [ @cbs ]
 

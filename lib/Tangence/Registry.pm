@@ -50,6 +50,7 @@ sub new
    my $self = $class->SUPER::new(
       id => $id,
       registry => "BOOTSTRAP",
+      meta => Tangence::Meta::Class->new( $class ),
    );
    weaken( $self->{registry} = $self );
    
@@ -115,6 +116,14 @@ sub destroy_object
    $self->fire_event( "object_destroyed", $id );
 
    push @{ $self->{freeids} }, $id; # Recycle the ID
+}
+
+sub get_meta_class
+{
+   my $self = shift;
+   my ( $class ) = @_;
+
+   return Tangence::Meta::Class->new( $class );
 }
 
 # Keep perl happy; keep Britain tidy

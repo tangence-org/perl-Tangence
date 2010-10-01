@@ -16,6 +16,7 @@ my $fakereg = bless [], "FakeRegistry";
 my $fakereg_got_destroy = 0;
 
 sub FakeRegistry::destroy_object { shift; $fakereg_got_destroy = shift->id; }
+sub FakeRegistry::get_meta_class { shift; Tangence::Meta::Class->new( shift ) }
 
 my $ball = t::Ball->new(
    id => 1,
