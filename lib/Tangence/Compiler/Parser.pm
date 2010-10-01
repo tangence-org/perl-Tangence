@@ -6,6 +6,7 @@ use warnings;
 use feature qw( switch ); # we like given/when
 
 use File::Slurp qw( slurp );
+use File::Basename qw( dirname );
 
 use Tangence::Constants;
 
@@ -14,19 +15,25 @@ sub from_file
    my $class = shift;
    my ( $filename ) = @_;
 
-   $class->from_string( scalar slurp $filename );
+   $class->from_string( scalar(slurp $filename),
+      filename => $filename,
+   );
 }
 
 sub from_string
 {
    my $class = shift;
-   my ( $str ) = @_;
+   my ( $str, %args ) = @_;
 
    my $self = bless {
       str => $str,
 
       line => 1,
+
+      %args,
    }, $class;
+
+   pos $self->{str} = 0;
 
    return $self->parse;
 }
@@ -84,6 +91,29 @@ sub parse_kw
       pos($self->{str}) = $pos, $self->fail( "Expected any of ".join( ", ", @acceptable ) );
 
    return $kw;
+}
+
+sub parse_string
+{
+   my $self = shift;
+
+   $self->skip_ws;
+
+   my $pos = pos $self->{str};
+
+   $self->{str} =~ m/\G(["'])/gc or
+      $self->fail( "Expected ' or \"" );
+
+   my $delim = $1;
+
+   $self->{str} =~ m/\G((?:\\.|[^\\])*)$delim/gc or
+      pos($self->{str}) = $pos, $self->fail( "Expected contents of string" );
+
+   my $string = $1;
+
+   # TODO: Unescape stuff like \\ and \n and whatnot
+
+   return $string;
 }
 
 sub fail
@@ -157,7 +187,7 @@ sub parse
    my %package;
 
    while(1) {
-      given( $self->parse_kw(qw( class )) ) {
+      given( $self->parse_kw(qw( class include )) ) {
          when( undef ) {
             # EOF
             return \%package;
@@ -171,6 +201,18 @@ sub parse
             $self->enter_scope( '{', '}', sub {
                $package{$classname} = $self->parse_classblock;
             } );
+         }
+         when( 'include' ) {
+            my $filename = dirname($self->{filename}) . "/" . $self->parse_string;
+
+            my $included = Tangence::Compiler::Parser->from_file( $filename );
+
+            foreach my $classname ( keys %$included ) {
+               exists $package{$classname} and
+                  $self->fail( "Cannot include '$filename' as class $classname collides" );
+
+               $package{$classname} = $included->{$classname};
+            }
          }
          default {
             $self->fail( "Expected keyword, found $_" );

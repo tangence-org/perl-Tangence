@@ -32,6 +32,18 @@ is_deeply( $meta,
 $meta = Tangence::Compiler::Parser->from_file( "t/Bag.tan" );
 is_deeply( $meta,
    {
+      't.Ball' => {
+         methods => {
+            bounce => { args => [qw( str )], ret => 'str' },
+         },
+         events => {
+            bounced => { args => [qw( str )] },
+         },
+         props => {
+            colour => { dim => DIM_SCALAR, type => 'str' },
+            size   => { dim => DIM_SCALAR, type => 'int', smash => 1 },
+         },
+      },
       't.Bag' => {
          methods => {
             add_ball  => { args => [qw( str )], ret => 'obj' },
