@@ -28,9 +28,9 @@ sub new
 
    $self->{superclasses} = [ @{"$self->{name}::ISA"}     ];
 
-   $self->{methods}      = $args{methods} || { %{"$self->{name}::METHODS"} };
-   $self->{events}       = $args{events}  || { %{"$self->{name}::EVENTS"}  };
-   $self->{props}        = $args{props}   || { %{"$self->{name}::PROPS"}   };
+   $self->{methods}      = $args{methods} || {};
+   $self->{events}       = $args{events}  || {};
+   $self->{props}        = $args{props}   || {};
 
    return $self;
 }
