@@ -245,9 +245,13 @@ sub parse_classblock
                $mdef->{args} = $self->parse_typelist;
             } );
 
-            $self->expect( '->' );
+            $mdef->{ret} = "";
 
-            $mdef->{ret} = $self->parse_type;
+            $self->maybe( sub {
+               $self->expect( '->' );
+
+               $mdef->{ret} = $self->parse_type;
+            } );
          }
 
          when( 'event' ) {

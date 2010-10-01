@@ -46,7 +46,7 @@ is_deeply( $meta,
       },
       't.Bag' => {
          methods => {
-            add_ball  => { args => [qw( str )], ret => 'obj' },
+            add_ball  => { args => [qw( obj )], ret => '' },
             get_ball  => { args => [qw( str )], ret => 'obj' },
             pull_ball => { args => [qw( str )], ret => 'obj' },
          },
