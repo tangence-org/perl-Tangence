@@ -6,6 +6,7 @@
 package Tangence::Metacode;
 
 use strict;
+use warnings;
 
 use Carp;
 

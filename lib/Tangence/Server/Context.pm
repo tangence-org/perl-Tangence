@@ -6,6 +6,7 @@
 package Tangence::Server::Context;
 
 use strict;
+use warnings;
 
 use Carp;
 

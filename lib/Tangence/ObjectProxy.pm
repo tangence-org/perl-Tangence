@@ -6,6 +6,8 @@
 package Tangence::ObjectProxy;
 
 use strict;
+use warnings;
+
 use Carp;
 
 use Tangence::Constants;

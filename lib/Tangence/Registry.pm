@@ -6,6 +6,7 @@
 package Tangence::Registry;
 
 use strict;
+use warnings;
 use base qw( Tangence::Object );
 
 use Carp;

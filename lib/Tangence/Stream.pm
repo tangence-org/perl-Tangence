@@ -6,6 +6,7 @@
 package Tangence::Stream;
 
 use strict;
+use warnings;
 
 use base qw( IO::Async::Sequencer );
 

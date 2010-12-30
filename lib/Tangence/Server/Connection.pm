@@ -6,6 +6,7 @@
 package Tangence::Server::Connection;
 
 use strict;
+use warnings;
 
 use base qw( Tangence::Stream );
 use Tangence::Constants;

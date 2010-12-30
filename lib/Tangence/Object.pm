@@ -6,6 +6,7 @@
 package Tangence::Object;
 
 use strict;
+use warnings;
 
 use Carp;
 

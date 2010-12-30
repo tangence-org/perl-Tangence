@@ -6,6 +6,7 @@
 package Tangence::Message;
 
 use strict;
+use warnings;
 
 use Tangence::Constants;
 
