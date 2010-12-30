@@ -38,6 +38,18 @@ is_oneref( $server, '$server has refcount 1 initially' );
 
 my ( $S1, $S2 ) = $loop->socketpair() or die "Cannot create socket pair - $!";
 
+{
+   my $serverstream = "";
+   sub wait_for_message
+   {
+      my $msglen;
+      wait_for_stream { length $serverstream >= 5 and
+                        length $serverstream >= ( $msglen = 5 + unpack "xN", $serverstream ) } $S2 => $serverstream;
+
+      return substr( $serverstream, 0, $msglen, "" );
+   }
+}
+
 my $conn = $server->new_conn( handle => $S1 );
 
 is_oneref( $server, '$server has refcount 1 after new BE' );
@@ -73,13 +85,7 @@ $expect = "\x82" . "\0\0\0\xcf" .
           "\xe1" . "\0\0\0\1" . "t::Bag\0" . "\x40" .
           "\x84" . "\0\0\0\1";
 
-my $serverstream;
-
-$serverstream = "";
-wait_for_stream { length $serverstream >= 5 and
-                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
-
-is_hexstr( $serverstream, $expect, 'serverstream initially contains root object' );
+is_hexstr( wait_for_message, $expect, 'serverstream initially contains root object' );
 
 is_oneref( $bag, '$bag has refcount 1 after MSG_GETROOT' );
 
@@ -105,11 +111,7 @@ $expect = "\x82" . "\0\0\0\xf8" .
           "\xe1" . "\0\0\0\0" . "Tangence::Registry\0" . "\x40" .
           "\x84" . "\0\0\0\0";
 
-$serverstream = "";
-wait_for_stream { length $serverstream >= 5 and
-                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
-
-is_hexstr( $serverstream, $expect, 'serverstream initially contains registry' );
+is_hexstr( wait_for_message, $expect, 'serverstream initially contains registry' );
 
 # MSG_CALL
 $S2->syswrite( "\1" . "\0\0\0\x10" . 
@@ -136,11 +138,7 @@ $expect = "\x82" . "\0\0\0\xd2" .
           "\xe1" . "\0\0\0\2" . "t::Ball\0" . "\x41" . "\x23" . "100" .
           "\x84" . "\0\0\0\2";
 
-$serverstream = "";
-wait_for_stream { length $serverstream >= 5 and
-                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
-
-is_hexstr( $serverstream, $expect, 'serverstream after response to CALL' );
+is_hexstr( wait_for_message, $expect, 'serverstream after response to CALL' );
 
 is_deeply( $bag->get_prop_colours,
            { blue => 1, green => 1, yellow => 1 },
@@ -170,12 +168,7 @@ is( $howhigh, "20 metres", '$howhigh is 20 metres after CALL' );
 $expect = "\x82" . "\0\0\0\x09" .
           "\x28" . "bouncing";
 
-$serverstream = "";
-
-wait_for_stream { length $serverstream >= 5 and
-                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
-
-is_hexstr( $serverstream, $expect, 'serverstream after response to CALL' );
+is_hexstr( wait_for_message, $expect, 'serverstream after response to CALL' );
 
 # MSG_SUBSCRIBE
 $S2->syswrite( "\2" . "\0\0\0\x0a" .
@@ -184,12 +177,7 @@ $S2->syswrite( "\2" . "\0\0\0\x0a" .
 
 $expect = "\x83" . "\0\0\0\0";
 
-$serverstream = "";
-
-wait_for_stream { length $serverstream >= 5 and
-                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
-
-is_hexstr( $serverstream, $expect, 'received MSG_SUBSCRIBED response' );
+is_hexstr( wait_for_message, $expect, 'received MSG_SUBSCRIBED response' );
 
 $ball->method_bounce( {}, "10 metres" );
 
@@ -198,12 +186,7 @@ $expect = "\4" . "\0\0\0\x14" .
           "\x27" . "bounced" .
           "\x29" . "10 metres";
 
-$serverstream = "";
-
-wait_for_stream { length $serverstream >= 5 and
-                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
-
-is_hexstr( $serverstream, $expect, 'received MSG_EVENT' );
+is_hexstr( wait_for_message, $expect, 'received MSG_EVENT' );
 
 # MSG_OK
 $S2->syswrite( "\x80" . "\0\0\0\0" );
@@ -216,12 +199,7 @@ $S2->syswrite( "\5" . "\0\0\0\x09" .
 $expect = "\x82" . "\0\0\0\4" .
           "\x23" . "red";
 
-$serverstream = "";
-
-wait_for_stream { length $serverstream >= 5 and
-                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
-
-is_hexstr( $serverstream, $expect, 'received property value after MSG_GETPROP' );
+is_hexstr( wait_for_message, $expect, 'received property value after MSG_GETPROP' );
 
 # MSG_SETPROP
 $S2->syswrite( "\6" . "\0\0\0\x0e" .
@@ -231,12 +209,7 @@ $S2->syswrite( "\6" . "\0\0\0\x0e" .
 
 $expect = "\x80" . "\0\0\0\0";
 
-$serverstream = "";
-
-wait_for_stream { length $serverstream >= 5 and
-                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
-
-is_hexstr( $serverstream, $expect, 'received OK after MSG_SETPROP' );
+is_hexstr( wait_for_message, $expect, 'received OK after MSG_SETPROP' );
 
 is( $ball->get_prop_colour, "blue", '$ball->colour is now blue' );
 
@@ -248,12 +221,7 @@ $S2->syswrite( "\7" . "\0\0\0\x0a" .
 
 $expect = "\x84" . "\0\0\0\0";
 
-$serverstream = "";
-
-wait_for_stream { length $serverstream >= 5 and
-                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
-
-is_hexstr( $serverstream, $expect, 'received MSG_WATCHING response' );
+is_hexstr( wait_for_message, $expect, 'received MSG_WATCHING response' );
 
 $ball->set_prop_colour( "orange" );
 
@@ -263,12 +231,7 @@ $expect = "\x09" . "\0\0\0\x12" .
           "\x02" . "\x01" .
           "\x26" . "orange";
 
-$serverstream = "";
-
-wait_for_stream { length $serverstream >= 5 and
-                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
-
-is_hexstr( $serverstream, $expect, 'received property MSG_UPDATE notice' );
+is_hexstr( wait_for_message, $expect, 'received property MSG_UPDATE notice' );
 
 # MSG_OK
 $S2->syswrite( "\x80" . "\0\0\0\0" );
@@ -283,11 +246,7 @@ $expect = "\x09" . "\0\0\0\x0b" .
           "\x02" . "\x01" .
           "\x02" . "\xc8"; # 0xC8 == 200
 
-$serverstream = "";
-wait_for_stream { length $serverstream >= 5 and
-                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
-
-is_hexstr( $serverstream, $expect, 'received property MSG_UPDATE notice on smashed prop' );
+is_hexstr( wait_for_message, $expect, 'received property MSG_UPDATE notice on smashed prop' );
 
 # MSG_OK
 $S2->syswrite( "\x80" . "\0\0\0\0" );
@@ -300,12 +259,7 @@ $S2->syswrite( "\1" . "\0\0\0\x10" .
 
 $expect = "\x82" . "\0\0\0\0";
 
-$serverstream = "";
-
-wait_for_stream { length $serverstream >= 5 and
-                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
-
-is_hexstr( $serverstream, $expect, 'serverstream after response to "add_ball"' );
+is_hexstr( wait_for_message, $expect, 'serverstream after response to "add_ball"' );
 
 is_deeply( $bag->get_prop_colours,
            { blue => 1, green => 1, yellow => 1, orange => 1 },
@@ -320,12 +274,7 @@ $S2->syswrite( "\1" . "\0\0\0\x12" .
 $expect = "\x82" . "\0\0\0\5" .
           "\x84" . "\0\0\0\2";
 
-$serverstream = "";
-
-wait_for_stream { length $serverstream >= 5 and
-                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
-
-is_hexstr( $serverstream, $expect, 'orange ball has same identity as red one earlier' );
+is_hexstr( wait_for_message, $expect, 'orange ball has same identity as red one earlier' );
 
 # Test object destruction
 
@@ -337,12 +286,7 @@ $ball->destroy( on_destroyed => sub { $obj_destroyed = 1 } );
 $expect = "\x0a" . "\0\0\0\2" .
           "\x02" . "\x02";
 
-$serverstream = "";
-
-wait_for_stream { length $serverstream >= 5 and
-                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
-
-is_hexstr( $serverstream, $expect, 'MSG_DESTROY from server' );
+is_hexstr( wait_for_message, $expect, 'MSG_DESTROY from server' );
 
 # MSG_OK
 $S2->syswrite( "\x80" . "\0\0\0\0" );

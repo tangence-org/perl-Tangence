@@ -18,6 +18,18 @@ testing_loop( $loop );
 
 my ( $S1, $S2 ) = $loop->socketpair() or die "Cannot create socket pair - $!";
 
+{
+   my $clientstream = "";
+   sub wait_for_message
+   {
+      my $msglen;
+      wait_for_stream { length $clientstream >= 5 and
+                        length $clientstream >= ( $msglen = 5 + unpack "xN", $clientstream ) } $S2 => $clientstream;
+
+      return substr( $clientstream, 0, $msglen, "" );
+   }
+}
+
 my $conn = Tangence::Connection->new(
    handle => $S1,
    on_error => sub { die "Test died early - $_[0]" },
@@ -29,15 +41,14 @@ my $expect;
 
 # MSG_GETROOT
 $expect = "\x40" . "\0\0\0\x0b" .
-          "\x2a" . "testscript" .
+          "\x2a" . "testscript";
+
+is_hexstr( wait_for_message, $expect, 'client stream initially contains MSG_GETROOT' );
+
 # MSG_GETREGISTRY
-          "\x41" . "\0\0\0\0";
+$expect = "\x41" . "\0\0\0\0";
 
-my $clientstream = "";
-wait_for_stream { length $clientstream >= 5 and
-                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
-
-is_hexstr( $clientstream, $expect, 'client stream initially contains MSG_GETROOT and MSG_GETREGISTRY' );
+is_hexstr( wait_for_message, $expect, 'client stream initially contains MSG_GETREGISTRY' );
 
 $S2->syswrite( "\x82" . "\0\0\0\xcf" .
                "\xe2" . "t::Bag\0" .
@@ -93,11 +104,7 @@ $expect = "\1" . "\0\0\0\x10" .
           "\x29" . "pull_ball" .
           "\x23" . "red";
 
-$clientstream = "";
-wait_for_stream { length $clientstream >= 5 and
-                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
-
-is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL' );
+is_hexstr( wait_for_message, $expect, 'client stream contains MSG_CALL' );
 
 # MSG_RESULT
 
@@ -146,11 +153,7 @@ $expect = "\1" . "\0\0\0\x13" .
           "\x26" . "bounce" .
           "\x29" . "20 metres";
 
-$clientstream = "";
-wait_for_stream { length $clientstream >= 5 and
-                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
-
-is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL' );
+is_hexstr( wait_for_message, $expect, 'client stream contains MSG_CALL' );
 
 # MSG_RESULT
 $S2->syswrite( "\x82" . "\0\0\0\x09" .
@@ -182,11 +185,7 @@ $expect = "\2" . "\0\0\0\x0a" .
           "\x02" . "\x02" .
           "\x27" . "bounced";
 
-$clientstream = "";
-wait_for_stream { length $clientstream >= 5 and
-                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
-
-is_hexstr( $clientstream, $expect, 'client stream contains MSG_SUBSCRIBE' );
+is_hexstr( wait_for_message, $expect, 'client stream contains MSG_SUBSCRIBE' );
 
 # MSG_SUBSCRIBED
 $S2->syswrite( "\x83" . "\0\0\0\0" );
@@ -206,11 +205,7 @@ is( $howhigh, "10 metres", '$howhigh is 10 metres after MSG_EVENT' );
 # Check it said MSG_OK
 $expect = "\x80" . "\0\0\0\0";
 
-$clientstream = "";
-wait_for_stream { length $clientstream >= 5 and
-                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
-
-is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK' );
+is_hexstr( wait_for_message, $expect, 'client stream contains MSG_OK' );
 
 my $bounced = 0;
 $ballproxy->subscribe_event(
@@ -224,22 +219,15 @@ $S2->syswrite( "\4" . "\0\0\0\x13" .
                "\x27" . "bounced" .
                "\x28" . "5 metres" );
 
-$clientstream = "";
-wait_for_stream { $bounced } $S2 => $clientstream;
+wait_for { $bounced };
 
 is( $howhigh, "5 metres", '$howhigh is orange after second MSG_EVENT' );
 is( $bounced, 1, '$bounced is true after second MSG_EVENT' );
 
-is_hexstr( $clientstream, "", '$client stream is empty after second subscribe' );
-
 # MSG_OK
 $expect = "\x80" . "\0\0\0\0";
 
-$clientstream = "";
-wait_for_stream { length $clientstream >= 5 and
-                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
-
-is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK' );
+is_hexstr( wait_for_message, $expect, 'client stream contains MSG_OK' );
 
 dies_ok( sub { $ballproxy->subscribe_event(
                  event => "no_such_event",
@@ -261,11 +249,7 @@ $expect = "\5" . "\0\0\0\x09" .
           "\x02" . "\x02" .
           "\x26" . "colour";
 
-$clientstream = "";
-wait_for_stream { length $clientstream >= 5 and
-                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
-
-is_hexstr( $clientstream, $expect, 'client stream contains MSG_GETPROP' );
+is_hexstr( wait_for_message, $expect, 'client stream contains MSG_GETPROP' );
 
 # MSG_RESULT
 $S2->syswrite( "\x82" . "\0\0\0\4" .
@@ -288,11 +272,7 @@ $expect = "\6" . "\0\0\0\x0e" .
           "\x26" . "colour" .
           "\x24" . "blue";
 
-$clientstream = "";
-wait_for_stream { length $clientstream >= 5 and
-                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
-
-is_hexstr( $clientstream, $expect, 'client stream contains MSG_SETPROP' );
+is_hexstr( wait_for_message, $expect, 'client stream contains MSG_SETPROP' );
 
 # MSG_OK
 $S2->syswrite( "\x80" . "\0\0\0\0" );
@@ -312,11 +292,7 @@ $expect = "\7" . "\0\0\0\x0a" .
           "\x26" . "colour" .
           "\x00";
 
-$clientstream = "";
-wait_for_stream { length $clientstream >= 5 and
-                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
-
-is_hexstr( $clientstream, $expect, 'client stream contains MSG_WATCH' );
+is_hexstr( wait_for_message, $expect, 'client stream contains MSG_WATCH' );
 
 # MSG_WATCHING
 $S2->syswrite( "\x84" . "\0\0\0\0" );
@@ -338,11 +314,7 @@ is( $colour, "green", '$colour is green after MSG_UPDATE' );
 # MSG_OK
 $expect = "\x80" . "\0\0\0\0";
 
-$clientstream = "";
-wait_for_stream { length $clientstream >= 5 and
-                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
-
-is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK' );
+is_hexstr( wait_for_message, $expect, 'client stream contains MSG_OK' );
 
 my $colourchanged = 0;
 my $secondcolour;
@@ -360,11 +332,7 @@ $expect = "\5" . "\0\0\0\x09" .
           "\x02" . "\x02" .
           "\x26" . "colour";
 
-$clientstream = "";
-wait_for_stream { length $clientstream >= 5 and
-                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
-
-is_hexstr( $clientstream, $expect, 'client stream contains MSG_GETPROP' );
+is_hexstr( wait_for_message, $expect, 'client stream contains MSG_GETPROP' );
 
 # MSG_RESULT
 $S2->syswrite( "\x82" . "\0\0\0\6" .
@@ -390,11 +358,7 @@ is( $colourchanged, 1, '$colourchanged is true after second MSG_UPDATE' );
 # MSG_OK
 $expect = "\x80" . "\0\0\0\0";
 
-$clientstream = "";
-wait_for_stream { length $clientstream >= 5 and
-                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
-
-is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK' );
+is_hexstr( wait_for_message, $expect, 'client stream contains MSG_OK' );
 
 dies_ok( sub { $ballproxy->get_property(
                  property => "no_such_property",
@@ -432,11 +396,7 @@ is( $size, 200, 'smashed prop watch succeeds' );
 # MSG_OK
 $expect = "\x80" . "\0\0\0\0";
 
-$clientstream = "";
-wait_for_stream { length $clientstream >= 5 and
-                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
-
-is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK after smashed prop UPDATE' );
+is_hexstr( wait_for_message, $expect, 'client stream contains MSG_OK after smashed prop UPDATE' );
 
 $bagproxy->call_method(
    method => "add_ball",
@@ -450,11 +410,7 @@ $expect = "\1" . "\0\0\0\x10" .
           "\x28" . "add_ball" .
           "\x84" . "\0\0\0\2";
 
-$clientstream = "";
-wait_for_stream { length $clientstream >= 5 and
-                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
-
-is_hexstr( $clientstream, $expect, 'client stream contains MSG_CALL with an ObjectProxy' );
+is_hexstr( wait_for_message, $expect, 'client stream contains MSG_CALL with an ObjectProxy' );
 
 $S2->syswrite( "\x82" . "\0\0\0\0" );
 
@@ -482,8 +438,4 @@ is( $proxy_destroyed, 1, 'proxy gets destroyed' );
 # MSG_OK
 $expect = "\x80" . "\0\0\0\0";
 
-$clientstream = "";
-wait_for_stream { length $clientstream >= 5 and
-                  length $clientstream >= (unpack "xN", $clientstream)[0] } $S2 => $clientstream;
-
-is_hexstr( $clientstream, $expect, 'client stream contains MSG_OK after MSG_DESTROY' );
+is_hexstr( wait_for_message, $expect, 'client stream contains MSG_OK after MSG_DESTROY' );
