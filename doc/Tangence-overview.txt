@@ -261,16 +261,16 @@ format:
 
  Type:    1 byte  integer
  Length:  4 bytes integer, big-endian
- Payload: (n-5) bytes
+ Payload: n bytes
 
 The type is a single byte which defines the message type. The collection 
 of message types is given below. The length is a big-endian 4 byte integer
-which gives the total size of the message, including this header. Thus,
-the length will always be at least 5. The data payload of the message is
-encoded in the data serialisation scheme given below. Each argument to the
-message is encoded as a single serialisation item. For message types with
-a variable number of arguments, the length of the message itself defines
-the number of arguments given.
+which gives the size of the message payload, excluding this header. Thus,
+the length of the entire message will always be 5 bytes more. The data
+payload of the message is encoded in the data serialisation scheme given
+below. Each argument to the message is encoded as a single serialisation
+item. For message types with a variable number of arguments, the length of
+the message itself defines the number of arguments given.
 
 The stream protocol is designed to be used in situations where the CPU
 power of each endpoint is high, but the connection in between may have
