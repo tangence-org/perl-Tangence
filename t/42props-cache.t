@@ -99,7 +99,7 @@ is_deeply( $proxy->prop( "array" ),
 $obj->add_number( four => 4 );
 
 $array_changed = 0;
-wait_for { $array_changed };
+wait_for { $scalar_changed and $hash_changed and $array_changed };
 
 is( $proxy->prop( "scalar" ), 
     "1234",
@@ -127,7 +127,7 @@ $scalar_changed = $hash_changed = $array_changed = 0;
 
 $obj->add_number( five => 5 );
 
-wait_for { $hash_changed };
+wait_for { $scalar_changed and $hash_changed and $array_changed };
 
 is( $proxy->prop( "scalar" ),
     "12345",
@@ -139,11 +139,11 @@ is_deeply( $proxy->prop( "array" ),
            [ 1, 2, 3, 4, 5 ],
            'array property cache after five' );
 
-$array_changed = 0;
+$scalar_changed = $hash_changed = $array_changed = 0;
 
 $obj->del_number( 3 );
 
-wait_for { $array_changed };
+wait_for { $scalar_changed and $hash_changed and $array_changed };
 
 is( $proxy->prop( "scalar" ),
     "1245",
