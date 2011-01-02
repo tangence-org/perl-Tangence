@@ -36,17 +36,31 @@ my %REQ_METHOD = (
    MSG_GETREGISTRY, 'handle_request_GETREGISTRY',
 );
 
-sub new
+sub _init
 {
-   my $class = shift;
-   my %args = @_;
+   my $self = shift;
+   my ( $params ) = @_;
 
-   my $on_closed = delete $args{on_closed};
+   $self->SUPER::_init( $params );
 
-   my $self = $class->SUPER::new(
-      %args,
+   $self->{peer_hasobj} = {}; # {$id} = $destroy_watch_id
+   $self->{peer_hasclass} = {}; # {$classname} = [\@smashkeys];
 
-      on_closed => sub {
+   $self->{request_queue} = [];
+   $self->{responder_queue} = [];
+
+   $params->{on_closed} ||= undef;
+}
+
+sub configure
+{
+   my $self = shift;
+   my %params = @_;
+
+   if( exists $params{on_closed} ) {
+      my $on_closed = delete $params{on_closed};
+
+      $params{on_closed} = sub {
          my ( $self ) = @_;
          $on_closed->( $self ) if $on_closed;
 
@@ -61,16 +75,10 @@ sub new
          else {
             $self->get_loop->remove( $self );
          }
-      },
-   );
+      };
+   }
 
-   $self->{peer_hasobj} = {}; # {$id} = $destroy_watch_id
-   $self->{peer_hasclass} = {}; # {$classname} = [\@smashkeys];
-
-   $self->{request_queue} = [];
-   $self->{responder_queue} = [];
-
-   return $self;
+   $self->SUPER::configure( %params );
 }
 
 sub marshall_message
