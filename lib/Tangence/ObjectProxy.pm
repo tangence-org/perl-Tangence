@@ -8,6 +8,8 @@ package Tangence::ObjectProxy;
 use strict;
 use warnings;
 
+our $VERSION = '0.02';
+
 use Carp;
 
 use Tangence::Constants;

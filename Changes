@@ -1,0 +1,9 @@
+Revision history for Tangence
+
+0.02    CHANGES:
+         * New Meta::Class introspection objects
+         * Bugfixes for test reliability due to the way stream writes/reads
+           get split
+
+0.01    First version, released on an unsuspecting world.
+

@@ -8,6 +8,8 @@ package Tangence::Stream;
 use strict;
 use warnings;
 
+our $VERSION = '0.02';
+
 use base qw( IO::Async::Sequencer );
 
 use Tangence::Constants;

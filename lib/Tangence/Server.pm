@@ -8,6 +8,8 @@ package Tangence::Server;
 use strict;
 use warnings;
 
+our $VERSION = '0.02';
+
 use Carp;
 
 use Scalar::Util qw( weaken );
