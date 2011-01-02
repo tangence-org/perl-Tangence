@@ -3,7 +3,7 @@
 #
 #  (C) Paul Evans, 2010 -- leonerd@leonerd.org.uk
 
-package Tangence::Server::Context;
+package Net::Async::Tangence::ServerContext;
 
 use strict;
 use warnings;

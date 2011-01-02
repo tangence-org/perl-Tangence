@@ -8,8 +8,10 @@ use IO::Async::Loop;
 
 use Tangence::Constants;
 use Tangence::Registry;
-use Tangence::Server;
-use Tangence::Connection;
+
+use Net::Async::Tangence::Server;
+use Net::Async::Tangence::Client;
+
 use t::Ball;
 
 my $loop = IO::Async::Loop->new();
@@ -22,7 +24,7 @@ my $ball = $registry->construct(
    size   => 100,
 );
 
-my $server = Tangence::Server->new(
+my $server = Net::Async::Tangence::Server->new(
    loop     => $loop,
    registry => $registry,
 );
@@ -31,7 +33,7 @@ my ( $S1a, $S1b ) = $loop->socketpair() or die "Cannot create socket pair - $!";
 
 $server->new_conn( handle => $S1a );
 
-my $conn1 = Tangence::Connection->new( handle => $S1b );
+my $conn1 = Net::Async::Tangence::Client->new( handle => $S1b );
 $loop->add( $conn1 );
 
 wait_for { defined $conn1->get_root };
@@ -53,7 +55,7 @@ my ( $S2a, $S2b ) = $loop->socketpair() or die "Cannot create socket pair - $!";
 
 $server->new_conn( handle => $S2a );
 
-my $conn2 = Tangence::Connection->new( handle => $S2b );
+my $conn2 = Net::Async::Tangence::Client->new( handle => $S2b );
 $loop->add( $conn2 );
 
 wait_for { defined $conn2->get_root };

@@ -3,12 +3,12 @@
 #
 #  (C) Paul Evans, 2010-2011 -- leonerd@leonerd.org.uk
 
-package Tangence::Connection;
+package Net::Async::Tangence::Client;
 
 use strict;
 use warnings;
 
-use base qw( Tangence::Protocol );
+use base qw( Net::Async::Tangence::Protocol );
 
 our $VERSION = '0.02';
 

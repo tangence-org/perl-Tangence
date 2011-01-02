@@ -3,7 +3,7 @@
 #
 #  (C) Paul Evans, 2010-2011 -- leonerd@leonerd.org.uk
 
-package Tangence::Protocol;
+package Net::Async::Tangence::Protocol;
 
 use strict;
 use warnings;

@@ -11,7 +11,8 @@ use IO::Async::Loop;
 
 use Tangence::Constants;
 use Tangence::Registry;
-use Tangence::Connection;
+
+use Net::Async::Tangence::Client;
 $Tangence::Message::SORT_HASH_KEYS = 1;
 
 my $loop = IO::Async::Loop->new();
@@ -31,7 +32,7 @@ my ( $S1, $S2 ) = $loop->socketpair() or die "Cannot create socket pair - $!";
    }
 }
 
-my $conn = Tangence::Connection->new(
+my $conn = Net::Async::Tangence::Client->new(
    handle => $S1,
    on_error => sub { die "Test died early - $_[0]" },
    identity => "testscript",

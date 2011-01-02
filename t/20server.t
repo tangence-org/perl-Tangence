@@ -12,7 +12,8 @@ use IO::Async::Loop;
 
 use Tangence::Constants;
 use Tangence::Registry;
-use Tangence::Server;
+
+use Net::Async::Tangence::Server;
 $Tangence::Message::SORT_HASH_KEYS = 1;
 
 use t::Ball;
@@ -30,7 +31,7 @@ my $bag = $registry->construct(
 
 is_oneref( $bag, '$bag has refcount 1 initially' );
 
-my $server = Tangence::Server->new(
+my $server = Net::Async::Tangence::Server->new(
    loop     => $loop,
    registry => $registry,
 );
@@ -160,7 +161,7 @@ wait_for { defined $howhigh };
 
 ok( defined $t::Ball::last_bounce_ctx, 'defined $last_bounce_ctx' );
 
-isa_ok( $t::Ball::last_bounce_ctx, "Tangence::Server::Context", '$last_bounce_ctx isa Tangence::Server::Context' );
+isa_ok( $t::Ball::last_bounce_ctx, "Net::Async::Tangence::ServerContext", '$last_bounce_ctx isa Net::Async::Tangence::ServerContext' );
 
 is( $t::Ball::last_bounce_ctx->connection, $conn, '$last_bounce_ctx->connection' );
 

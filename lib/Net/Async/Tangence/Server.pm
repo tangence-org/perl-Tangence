@@ -3,7 +3,7 @@
 #
 #  (C) Paul Evans, 2010 -- leonerd@leonerd.org.uk
 
-package Tangence::Server;
+package Net::Async::Tangence::Server;
 
 use strict;
 use warnings;
@@ -14,7 +14,7 @@ use Carp;
 
 use Scalar::Util qw( weaken );
 
-use Tangence::Server::Connection;
+use Net::Async::Tangence::ServerProtocol;
 
 use IO::Async::Stream;
 
@@ -59,7 +59,7 @@ sub new_conn
 
    weaken( my $weakself = $self );
 
-   my $conn = Tangence::Server::Connection->new(
+   my $conn = Net::Async::Tangence::ServerProtocol->new(
       transport => $stream,
       registry => $self->{registry},
       on_closed => sub { $weakself->del_conn( @_ ) },

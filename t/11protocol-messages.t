@@ -33,7 +33,7 @@ my $stream = Testing::Protocol->new(
 );
 
 ok( defined $stream, 'defined $stream' );
-isa_ok( $stream, "Tangence::Protocol", '$stream isa Tangence::Protocol' );
+isa_ok( $stream, "Net::Async::Tangence::Protocol", '$stream isa Net::Async::Tangence::Protocol' );
 
 $loop->add( $stream );
 
@@ -85,7 +85,7 @@ is_hexstr( wait_for_message, $expect, '$serverstream after response' );
 package Testing::Protocol;
 
 use strict;
-use base qw( Tangence::Protocol );
+use base qw( Net::Async::Tangence::Protocol );
 
 sub handle_request_EVENT
 {
