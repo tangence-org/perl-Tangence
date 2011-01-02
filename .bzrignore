@@ -10,4 +10,6 @@ MANIFEST.bak
 Build
 _build
 META.yml
-*.c
+LICENSE
+README
+MYMETA.yml
