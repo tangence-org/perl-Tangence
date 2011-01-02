@@ -3,10 +3,9 @@
 use strict;
 use warnings;
 
-use Tangence::Connection;
+use Net::Async::Tangence::Client;
 
-use IO::Async 0.16;
-use IO::Async::Loop;
+use IO::Async::Loop 0.16;
 
 use Data::Dump;
 
@@ -44,7 +43,7 @@ my $loop = IO::Async::Loop->new();
 
 my $URL = shift @ARGV or die "Need URL as argv[1]\n";
 
-my $conn = Tangence::Connection->new(
+my $conn = Net::Async::Tangence::Client->new(
    on_closed => sub {
       print STDERR "Connection closed\n";
       exit(0);
