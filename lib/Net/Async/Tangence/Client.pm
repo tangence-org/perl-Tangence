@@ -24,34 +24,52 @@ sub new
    my $class = shift;
    my %args = @_;
 
-   my $identity = delete $args{identity};
-
-   my $on_error = delete $args{on_error} || "croak";
-   if( ref $on_error eq "CODE" ) {
-      # OK
-   }
-   elsif( $on_error eq "croak" ) {
-      $on_error = sub { croak "Received MSG_ERROR: $_[0]" };
-   }
-   elsif( $on_error eq "carp" ) {
-      $on_error = sub { carp "Received MSG_ERROR: $_[0]" };
-   }
-   else {
-      croak "Expected 'on_error' to be CODE reference or strings 'croak' or 'carp'";
-   }
-
    my $self = $class->SUPER::new( %args );
-
-   $self->{objectproxies} = {};
-   $self->{schemata}      = {};
-
-   $self->{identity} = $identity;
-   $self->{on_error} = $on_error;
 
    # It's possible a handle was passed in the constructor.
    $self->_do_initial( %args ) if defined $self->transport;
 
    return $self;
+}
+
+sub _init
+{
+   my $self = shift;
+   my ( $params ) = @_;
+
+   $self->{identity} = delete $params->{identity};
+
+   $self->{objectproxies} = {};
+   $self->{schemata}      = {};
+
+   $self->SUPER::_init( $params );
+
+   $params->{on_error} ||= "croak";
+}
+
+sub configure
+{
+   my $self = shift;
+   my %params = @_;
+
+   if( my $on_error = delete $params{on_error} ) {
+      if( ref $on_error eq "CODE" ) {
+         # OK
+      }
+      elsif( $on_error eq "croak" ) {
+         $on_error = sub { croak "Received MSG_ERROR: $_[0]" };
+      }
+      elsif( $on_error eq "carp" ) {
+         $on_error = sub { carp "Received MSG_ERROR: $_[0]" };
+      }
+      else {
+         croak "Expected 'on_error' to be CODE reference or strings 'croak' or 'carp'";
+      }
+
+      $self->{on_error} = $on_error;
+   }
+
+   $self->SUPER::configure( %params );
 }
 
 sub connect
