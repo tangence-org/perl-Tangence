@@ -53,7 +53,7 @@ wait_for { defined $result };
 
 wait_for { defined $scalar };
 
-is( $scalar, "123", 'Initial value from watch_property' );
+is( $scalar, "123", 'Initial value from watch_property "scalar"' );
 
 $obj->set_prop_scalar( "1234" );
 
@@ -94,9 +94,11 @@ $proxy->watch_property(
 undef $result;
 wait_for { defined $result };
 
+wait_for { defined $hash };
+
 is_deeply( $hash,
            { one => 1, two => 2, three => 3 },
-           'Initial value from watch_property' );
+           'Initial value from watch_property "hash"' );
 
 $obj->add_prop_hash( four => 4 );
 

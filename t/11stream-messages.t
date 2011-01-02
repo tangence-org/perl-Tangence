@@ -14,6 +14,18 @@ testing_loop( $loop );
 
 my ( $S1, $S2 ) = $loop->socketpair() or die "Cannot create socket pair - $!";
 
+{
+   my $serverstream = "";
+   sub wait_for_message
+   {
+      my $msglen;
+      wait_for_stream { length $serverstream >= 5 and
+                        length $serverstream >= ( $msglen = 5 + unpack "xN", $serverstream ) } $S2 => $serverstream;
+
+      return substr( $serverstream, 0, $msglen, "" );
+   }
+}
+
 my @calls;
 my $stream = Testing::Stream->new(
    handle => $S1,
@@ -41,14 +53,7 @@ $expect = "\1" . "\0\0\0\x09" .
           "\x02" . "\x01" .
           "\x26" . "method";
 
-my $serverstream;
-
-$serverstream = "";
-
-wait_for_stream { length $serverstream >= 5 and
-                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
-
-is_hexstr( $serverstream, $expect, 'serverstream after initial MSG_CALL' );
+is_hexstr( wait_for_message, $expect, 'serverstream after initial MSG_CALL' );
 
 $S2->syswrite( "\x82" . "\0\0\0\x09" .
                "\x28" . "response" );
@@ -74,12 +79,7 @@ $c->[0]->respond( $c->[1], $message );
 
 $expect = "\x80" . "\0\0\0\0";
 
-$serverstream = "";
-
-wait_for_stream { length $serverstream >= 5 and
-                  length $serverstream >= (unpack "xN", $serverstream)[0] } $S2 => $serverstream;
-
-is_hexstr( $serverstream, $expect, '$serverstream after response' );
+is_hexstr( wait_for_message, $expect, '$serverstream after response' );
 
 package Testing::Stream;
 

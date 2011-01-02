@@ -77,6 +77,8 @@ $proxy->watch_property(
 undef $result;
 wait_for { defined $result };
 
+wait_for { defined eval { $proxy->prop( "hash" ) } };
+
 is_deeply( $proxy->prop( "hash" ),
            { one => 1, two => 2, three => 3 },
            'hash property cache' );
@@ -91,6 +93,8 @@ $proxy->watch_property(
 
 undef $result;
 wait_for { defined $result };
+
+wait_for { defined eval { $proxy->prop( "array" ) } };
 
 is_deeply( $proxy->prop( "array" ),
            [ 1, 2, 3 ],
