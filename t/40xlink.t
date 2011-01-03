@@ -27,9 +27,10 @@ my $ball = $registry->construct(
 );
 
 my $server = Net::Async::Tangence::Server->new(
-   loop     => $loop,
    registry => $registry,
 );
+
+$loop->add( $server );
 
 my ( $S1, $S2 ) = $loop->socketpair() or die "Cannot create socket pair - $!";
 

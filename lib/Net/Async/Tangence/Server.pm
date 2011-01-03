@@ -18,20 +18,6 @@ use Scalar::Util qw( weaken );
 
 use Net::Async::Tangence::ServerProtocol;
 
-sub new
-{
-   my $class = shift;
-   my %args = @_;
-
-   my $loop = delete $args{loop};
-
-   my $self = $class->SUPER::new( %args );
-
-   $loop->add( $self ) if $loop;
-
-   return $self;
-}
-
 sub _init
 {
    my $self = shift;
