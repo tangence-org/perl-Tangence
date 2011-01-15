@@ -109,13 +109,15 @@ sub handle_request_SUBSCRIBE
       return $ctx->responderr( "No such object with id $objid" );
 
    my $id = $object->subscribe_event( $event,
-      sub {
+      $self->_capture_weakself( sub {
+         my $self = shift;
+
          my $message = $object->generate_message_EVENT( $self, $event, @_ );
          $self->request(
             request     => $message,
             on_response => sub { "IGNORE" },
          );
-      }
+      } )
    );
 
    push @{ $self->{subscriptions} }, [ $object, $event, $id ];
@@ -317,13 +319,15 @@ sub _install_watch
    my %callbacks;
    foreach my $name ( @{ CHANGETYPES->{$dim} } ) {
       my $how = $change_values{$name};
-      $callbacks{$name} = sub {
+      $callbacks{$name} = $self->_capture_weakself( sub {
+         my $self = shift;
+
          my $message = $object->generate_message_UPDATE( $self, $prop, $how, @_ );
          $self->request(
             request     => $message,
             on_response => sub { "IGNORE" },
          );
-      }
+      } );
    }
 
    my $id = $object->watch_property( $prop, %callbacks );
