@@ -6,6 +6,7 @@ use Test::More tests => 8;
 use Test::HexString;
 use IO::Async::Test;
 use IO::Async::Loop;
+use IO::Async::Stream;
 
 use Tangence::Constants;
 
@@ -27,12 +28,12 @@ my ( $S1, $S2 ) = $loop->socketpair() or die "Cannot create socket pair - $!";
 }
 
 my @calls;
-my $stream = Testing::Stream->new(
-   handle => $S1,
+my $stream = Testing::Protocol->new(
+   transport => IO::Async::Stream->new( handle => $S1 ),
 );
 
 ok( defined $stream, 'defined $stream' );
-isa_ok( $stream, "Tangence::Stream", '$stream isa Tangence::Stream' );
+isa_ok( $stream, "Tangence::Protocol", '$stream isa Tangence::Protocol' );
 
 $loop->add( $stream );
 
@@ -81,10 +82,10 @@ $expect = "\x80" . "\0\0\0\0";
 
 is_hexstr( wait_for_message, $expect, '$serverstream after response' );
 
-package Testing::Stream;
+package Testing::Protocol;
 
 use strict;
-use base qw( Tangence::Stream );
+use base qw( Tangence::Protocol );
 
 sub handle_request_EVENT
 {

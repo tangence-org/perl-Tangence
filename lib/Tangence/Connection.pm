@@ -1,14 +1,14 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2010 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2010-2011 -- leonerd@leonerd.org.uk
 
 package Tangence::Connection;
 
 use strict;
 use warnings;
 
-use base qw( Tangence::Stream );
+use base qw( Tangence::Protocol );
 
 our $VERSION = '0.02';
 
@@ -49,7 +49,7 @@ sub new
    $self->{on_error} = $on_error;
 
    # It's possible a handle was passed in the constructor.
-   $self->_do_initial( %args ) if defined $self->read_handle;
+   $self->_do_initial( %args ) if defined $self->transport;
 
    return $self;
 }
@@ -114,9 +114,11 @@ sub connect_exec
       },
    );
 
-   $self->set_handles(
-      read_handle  => $myread,
-      write_handle => $mywrite,
+   $self->configure(
+      transport => IO::Async::Stream->new(
+         read_handle  => $myread,
+         write_handle => $mywrite,
+      )
    );
 
    $args{on_connected}->( $self ) if $args{on_connected};
@@ -138,19 +140,12 @@ sub connect_tcp
 
    my ( $host, $port ) = $authority =~ m/^(.*):(.*)$/;
 
-   my $loop = $self->get_loop;
-
-   require Socket;
-
-   $loop->connect(
-      socktype => Socket::SOCK_STREAM(),
+   $self->connect(
       host     => $host,
       service  => $port,
 
       on_connected => sub {
-         my ( $sock ) = @_;
-
-         $self->set_handle( $sock );
+         my ( $self ) = @_;
 
          $args{on_connected}->( $self ) if $args{on_connected};
          $self->_do_initial( %args );
@@ -166,17 +161,13 @@ sub connect_unix
    my $self = shift;
    my ( $path, %args ) = @_;
 
-   my $loop = $self->get_loop;
-
    require Socket;
 
-   $loop->connect(
+   $self->connect(
       addr => [ Socket::AF_UNIX(), Socket::SOCK_STREAM(), 0, Socket::pack_sockaddr_un( $path ) ],
 
       on_connected => sub {
-         my ( $sock ) = @_;
-
-         $self->set_handle( $sock );
+         my ( $self ) = @_;
 
          $args{on_connected}->( $self ) if $args{on_connected};
          $self->_do_initial( %args );

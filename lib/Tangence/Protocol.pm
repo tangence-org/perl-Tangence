@@ -1,16 +1,16 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2010 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2010-2011 -- leonerd@leonerd.org.uk
 
-package Tangence::Stream;
+package Tangence::Protocol;
 
 use strict;
 use warnings;
 
 our $VERSION = '0.02';
 
-use base qw( IO::Async::Sequencer );
+use base qw( IO::Async::Protocol::Stream );
 
 use Tangence::Constants;
 use Tangence::Message;
@@ -45,27 +45,6 @@ sub new
 
    my $self = $class->SUPER::new(
       %args,
-      on_read => \&on_read,
-      marshall_request  => \&marshall_request,
-      marshall_response => \&marshall_response,
-
-      on_request => sub {
-         my ( $self, $token, $message ) = @_;
-
-         my $type = $message->type;
-
-         if( my $method = $REQ_METHOD{$type} ) {
-            if( $self->can( $method ) ) {
-               $self->$method( $token, $message );
-            }
-            else {
-               $self->respondERROR( $token, sprintf( "Cannot respond to request type 0x%02x", $type ) );
-            }
-         }
-         else {
-            $self->respondERROR( $token, sprintf( "Unrecognised request type 0x%02x", $type ) );
-         }
-      },
 
       on_closed => sub {
          my ( $self ) = @_;
@@ -75,11 +54,21 @@ sub new
             my $obj = $self->get_by_id( $id );
             $obj->unsubscribe_event( "destroy", delete $self->{peer_hasobj}->{$id} );
          }
+
+         if( my $parent = $self->parent ) {
+            $parent->remove_child( $self );
+         }
+         else {
+            $self->get_loop->remove( $self );
+         }
       },
    );
 
    $self->{peer_hasobj} = {}; # {$id} = $destroy_watch_id
    $self->{peer_hasclass} = {}; # {$classname} = [\@smashkeys];
+
+   $self->{request_queue} = [];
+   $self->{responder_queue} = [];
 
    return $self;
 }
@@ -94,14 +83,6 @@ sub marshall_message
    return $message->bytes;
 }
 
-# Use the same method for both
-{
-   no strict 'refs';
-
-   *marshall_request = \&marshall_message;
-   *marshall_response = \&marshall_message;
-}
-
 sub on_read
 {
    my $self = shift;
@@ -111,10 +92,26 @@ sub on_read
    my $type = $message->type;
 
    if( $type < 0x80 ) {
-      $self->incoming_request( $message );
+      push @{ $self->{request_queue} }, undef;
+      my $token = \$self->{request_queue}[-1];
+
+      my $type = $message->type;
+
+      if( my $method = $REQ_METHOD{$type} ) {
+         if( $self->can( $method ) ) {
+            $self->$method( $token, $message );
+         }
+         else {
+            $self->respondERROR( $token, sprintf( "Cannot respond to request type 0x%02x", $type ) );
+         }
+      }
+      else {
+         $self->respondERROR( $token, sprintf( "Unrecognised request type 0x%02x", $type ) );
+      }
    }
    else {
-      $self->incoming_response( $message );
+      my $on_response = shift @{ $self->{responder_queue} };
+      $on_response->( $message );
    }
 
    return 1;
@@ -151,6 +148,33 @@ sub object_destroyed
          }
       },
    );
+}
+
+sub request
+{
+   my $self = shift;
+   my %args = @_;
+
+   my $request = $args{request} or croak "Expected 'request'";
+   my $on_response = $args{on_response} or croak "Expected 'on_response'";
+
+   $self->write( $request->bytes );
+
+   push @{ $self->{responder_queue} }, $on_response;
+}
+
+sub respond
+{
+   my $self = shift;
+   my ( $token, $message ) = @_;
+
+   my $response = $message->bytes;
+
+   $$token = $response;
+
+   while( defined $self->{request_queue}[0] ) {
+      $self->write( shift @{ $self->{request_queue} } );
+   }
 }
 
 # Keep perl happy; keep Britain tidy

@@ -1,14 +1,14 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2010 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2010-2011 -- leonerd@leonerd.org.uk
 
 package Tangence::Server::Connection;
 
 use strict;
 use warnings;
 
-use base qw( Tangence::Stream );
+use base qw( Tangence::Protocol );
 
 our $VERSION = '0.02';
 

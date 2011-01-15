@@ -446,5 +446,5 @@ memory_cycle_ok( $ballproxy, '$ballproxy has no memory cycles' );
 # Deconfigure the connection otherwise Devel::Cycle will throw
 #   Unhandled type: GLOB at /usr/share/perl5/Devel/Cycle.pm line 107.
 # on account of filehandles
-$conn->set_handle( undef );
+$conn->configure( transport => undef );
 memory_cycle_ok( $conn, '$conn has no memory cycles' );

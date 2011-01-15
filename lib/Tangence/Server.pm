@@ -16,6 +16,8 @@ use Scalar::Util qw( weaken );
 
 use Tangence::Server::Connection;
 
+use IO::Async::Stream;
+
 sub new
 {
    my $class = shift;
@@ -52,9 +54,13 @@ sub new_conn
    my $self = shift;
    my %args = @_;
 
+   my $stream = $args{stream} ||
+                $args{handle} && IO::Async::Stream->new( handle => $args{handle} );
+
    weaken( my $weakself = $self );
 
-   my $conn = Tangence::Server::Connection->new( %args,
+   my $conn = Tangence::Server::Connection->new(
+      transport => $stream,
       registry => $self->{registry},
       on_closed => sub { $weakself->del_conn( @_ ) },
    );
