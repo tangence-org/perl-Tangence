@@ -2,8 +2,9 @@
 
 use strict;
 
-use Test::More tests => 32;
+use Test::More tests => 34;
 use Test::HexString;
+use Test::Memory::Cycle;
 use Test::Refcount;
 
 use IO::Async::Test;
@@ -296,6 +297,12 @@ is( $obj_destroyed, 1, 'object gets destroyed' );
 
 is_oneref( $bag, '$bag has refcount 1 before shutdown' );
 is_oneref( $server, '$server has refcount 1 before shutdown' );
+
+memory_cycle_ok( $bag, '$bag has no memory cycles' );
+memory_cycle_ok( $registry, '$registry has no memory cycles' );
+# Can't easily do $server yet because Devel::Cycle will throw
+#   Unhandled type: GLOB at /usr/share/perl5/Devel/Cycle.pm line 107.
+# on account of filehandles
 
 undef $server;
 

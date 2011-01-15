@@ -2,7 +2,8 @@
 
 use strict;
 
-use Test::More tests => 31;
+use Test::More tests => 32;
+use Test::Memory::Cycle;
 use Test::Refcount;
 
 use Tangence::Constants;
@@ -144,6 +145,8 @@ is( $ball->get_prop_colour, "green", 'colour is now green' );
 is( $colour, "blue", '$colour is still blue' );
 
 is_oneref( $ball, '$ball has refcount 1 just before unref' );
+
+memory_cycle_ok( $ball, '$ball has no memory cycles' );
 
 undef $ball;
 

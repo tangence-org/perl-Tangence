@@ -2,9 +2,10 @@
 
 use strict;
 
-use Test::More tests => 37;
+use Test::More tests => 39;
 use Test::Exception;
 use Test::HexString;
+use Test::Memory::Cycle;
 use IO::Async::Test;
 use IO::Async::Loop;
 
@@ -439,3 +440,11 @@ is( $proxy_destroyed, 1, 'proxy gets destroyed' );
 $expect = "\x80" . "\0\0\0\0";
 
 is_hexstr( wait_for_message, $expect, 'client stream contains MSG_OK after MSG_DESTROY' );
+
+memory_cycle_ok( $ballproxy, '$ballproxy has no memory cycles' );
+
+# Deconfigure the connection otherwise Devel::Cycle will throw
+#   Unhandled type: GLOB at /usr/share/perl5/Devel/Cycle.pm line 107.
+# on account of filehandles
+$conn->set_handle( undef );
+memory_cycle_ok( $conn, '$conn has no memory cycles' );

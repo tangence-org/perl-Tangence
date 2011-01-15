@@ -2,7 +2,8 @@
 
 use strict;
 
-use Test::More tests => 14;
+use Test::More tests => 16;
+use Test::Memory::Cycle;
 
 use Tangence::Registry;
 use t::Ball;
@@ -45,3 +46,7 @@ is( $added_object_id, "1", '$added_object_id is 1' );
 ok( $registry->get_by_id( "1" ) == $ball, '$registry->get_by_id "1"' );
 
 ok( !defined $registry->get_by_id( "2" ), '$registry->get_by_id "2"' );
+
+memory_cycle_ok( $ball, '$ball has no memory cycles' );
+
+memory_cycle_ok( $registry, '$registry has no memory cycles' );

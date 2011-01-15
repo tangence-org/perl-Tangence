@@ -2,8 +2,9 @@
 
 use strict;
 
-use Test::More tests => 17;
+use Test::More tests => 21;
 use Test::Exception;
+use Test::Memory::Cycle;
 use IO::Async::Test;
 use IO::Async::Loop;
 
@@ -191,3 +192,13 @@ is( $proxy_destroyed, 1, 'proxy gets destroyed' );
 
 wait_for { $obj_destroyed };
 is( $obj_destroyed, 1, 'object gets destroyed' );
+
+memory_cycle_ok( $ball, '$ball has no memory cycles' );
+memory_cycle_ok( $registry, '$registry has no memory cycles' );
+memory_cycle_ok( $ballproxy, '$ballproxy has no memory cycles' );
+
+# Deconfigure the connection otherwise Devel::Cycle will throw
+#   Unhandled type: GLOB at /usr/share/perl5/Devel/Cycle.pm line 107.
+# on account of filehandles
+$conn->set_handle( undef );
+memory_cycle_ok( $conn, '$conn has no memory cycles' );
