@@ -14,6 +14,8 @@ use Carp;
 
 use Tangence::Constants;
 
+use Scalar::Util qw( weaken );
+
 sub new
 {
    my $class = shift;
@@ -28,6 +30,9 @@ sub new
 
       on_error => $args{on_error},
    }, $class;
+
+   # An ObjectProxy is useless after its connection disappears
+   weaken( $self->{conn} );
 
    return $self;
 }
