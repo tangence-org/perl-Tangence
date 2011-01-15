@@ -15,6 +15,7 @@ my $build = Module::Build->new(
    build_requires => {
       'Test::Exception' => 0,
       'Test::HexString' => 0,
+      'Test::Identity' => 0,
       'Test::Memory::Cycle' => 0,
       'Test::More' => 0,
       'Test::Refcount' => 0,
