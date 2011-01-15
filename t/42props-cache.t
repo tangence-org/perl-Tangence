@@ -2,7 +2,8 @@
 
 use strict;
 
-use Test::More tests => 18;
+use Test::More tests => 21;
+use Test::Memory::Cycle;
 use IO::Async::Test;
 use IO::Async::Loop;
 
@@ -183,3 +184,7 @@ wait_for { $array_changed };
 is_deeply( $proxy->prop( "array" ),
            [ 0 .. 9 ],
            'array property cacahe after move(-2)' );
+
+memory_cycle_ok( $registry, '$registry has no memory cycles' );
+memory_cycle_ok( $obj, '$obj has no memory cycles' );
+memory_cycle_ok( $proxy, '$proxy has no memory cycles' );

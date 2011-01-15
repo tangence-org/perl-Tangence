@@ -2,7 +2,8 @@
 
 use strict;
 
-use Test::More tests => 7;
+use Test::More tests => 12;
+use Test::Memory::Cycle;
 use IO::Async::Test;
 use IO::Async::Loop;
 
@@ -134,3 +135,9 @@ undef $colour;
 wait_for { defined $colour };
 
 is( $colour, "yellow", '$colour is yellow from second object' );
+
+memory_cycle_ok( $registry, '$registry has no memory cycles' );
+memory_cycle_ok( $bag, '$bag has no memory cycles' );
+memory_cycle_ok( $bagproxy, '$bagproxy has no memory cycles' );
+memory_cycle_ok( $ball, '$ball has no memory cycles' );
+memory_cycle_ok( $ballproxy, '$ballproxy has no memory cycles' );

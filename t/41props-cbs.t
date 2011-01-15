@@ -2,7 +2,8 @@
 
 use strict;
 
-use Test::More tests => 16;
+use Test::More tests => 19;
+use Test::Memory::Cycle;
 use IO::Async::Test;
 use IO::Async::Loop;
 
@@ -190,3 +191,7 @@ wait_for { defined $m_index };
 
 is( $m_index, 1, 'move array index' );
 is( $m_delta, 3, 'move array delta' );
+
+memory_cycle_ok( $registry, '$registry has no memory cycles' );
+memory_cycle_ok( $obj, '$obj has no memory cycles' );
+memory_cycle_ok( $proxy, '$proxy has no memory cycles' );
