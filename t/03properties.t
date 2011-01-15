@@ -2,7 +2,8 @@
 
 use strict;
 
-use Test::More tests => 53;
+use Test::More tests => 57;
+use Test::Identity;
 
 use Tangence::Constants;
 use Tangence::Registry;
@@ -17,20 +18,24 @@ my $obj = $registry->construct(
 
 is( $obj->get_prop_scalar, "123", 'scalar initially' );
 
+my $cb_self;
+
 my $scalar;
 $obj->watch_property( scalar =>
-   on_set => sub { $scalar = shift },
+   on_set => sub { ( $cb_self, $scalar ) = @_ },
 );
 
 my $scalar_shadow;
 $obj->watch_property( scalar =>
-   on_updated => sub { $scalar_shadow = shift },
+   on_updated => sub { $scalar_shadow = $_[1] },
 );
 
 is( $scalar_shadow, "123", 'scalar shadow initially' );
 
 $obj->set_prop_scalar( "456" );
 is( $obj->get_prop_scalar, "456", 'scalar after set' );
+
+identical( $cb_self, $obj, '$cb_self is $obj' );
 is( $scalar, "456", '$scalar after set' );
 
 is( $scalar_shadow, "456", 'scalar shadow finally' );
@@ -40,22 +45,24 @@ is( $scalar_shadow, "456", 'scalar shadow finally' );
 is_deeply( $obj->get_prop_hash, { one => 1, two => 2, three => 3 }, 'hash initially' );
 
 my $hash;
+undef $cb_self;
 my ( $h_key, $h_value );
 $obj->watch_property( hash => 
-   on_set => sub { $hash = shift },
-   on_add => sub { ( $h_key, $h_value ) = @_ },
-   on_del => sub { ( $h_key ) = @_ },
+   on_set => sub { ( $cb_self, $hash ) = @_ },
+   on_add => sub { ( undef, $h_key, $h_value ) = @_ },
+   on_del => sub { ( undef, $h_key ) = @_ },
 );
 
 my $hash_shadow;
 $obj->watch_property( hash =>
-   on_updated => sub { $hash_shadow = shift },
+   on_updated => sub { $hash_shadow = $_[1] },
 );
 
 is_deeply( $hash_shadow, { one => 1, two => 2, three => 3 }, 'hash shadow initially' );
 
 $obj->set_prop_hash( { four => 4 } );
 is_deeply( $obj->get_prop_hash, { four => 4 }, 'hash after set' );
+identical( $cb_self, $obj, '$cb_self is $obj' );
 is_deeply( $hash, { four => "4" }, '$hash after set' );
 
 $obj->add_prop_hash( five => 5 );
@@ -79,22 +86,24 @@ is_deeply( $hash_shadow, { four => 4 }, 'hash shadow finally' );
 is_deeply( $obj->get_prop_queue, [ 1, 2, 3 ], 'queue initially' );
 
 my $queue;
+undef $cb_self;
 my ( $q_count, @q_values );
 $obj->watch_property( queue =>
-   on_set => sub { $queue = shift },
-   on_push => sub { @q_values = @_ },
-   on_shift => sub { ( $q_count ) = @_ },
+   on_set => sub { ( $cb_self, $queue ) = @_ },
+   on_push => sub { shift; @q_values = @_ },
+   on_shift => sub { ( undef, $q_count ) = @_ },
 );
 
 my $queue_shadow;
 $obj->watch_property( queue =>
-   on_updated => sub { $queue_shadow = shift },
+   on_updated => sub { $queue_shadow = $_[1] },
 );
 
 is_deeply( $queue_shadow, [ 1, 2, 3 ], 'queue shadow initially' );
 
 $obj->set_prop_queue( [ 4, 5, 6 ] );
 is_deeply( $obj->get_prop_queue, [ 4, 5, 6 ], 'queue after set' );
+identical( $cb_self, $obj, '$cb_self is $obj' );
 is_deeply( $queue, [ 4, 5, 6 ], '$queue after set' );
 
 $obj->push_prop_queue( 7 );
@@ -116,24 +125,26 @@ is_deeply( $queue_shadow, [ 7 ], 'queue shadow finally' );
 is_deeply( $obj->get_prop_array, [ 1, 2, 3 ], 'array initially' );
 
 my $array;
+undef $cb_self;
 my ( $a_index, $a_count, @a_values, $a_delta );
 $obj->watch_property( array =>
-   on_set => sub { $array = shift },
-   on_push => sub { @a_values = @_ },
-   on_shift => sub { ( $a_count ) = @_ },
-   on_splice => sub { ( $a_index, $a_count, @a_values ) = @_ },
-   on_move => sub { ( $a_index, $a_delta ) = @_ },
+   on_set => sub { ( $cb_self, $array ) = @_ },
+   on_push => sub { shift; @a_values = @_ },
+   on_shift => sub { ( undef, $a_count ) = @_ },
+   on_splice => sub { ( undef, $a_index, $a_count, @a_values ) = @_ },
+   on_move => sub { ( undef, $a_index, $a_delta ) = @_ },
 );
 
 my $array_shadow;
 $obj->watch_property( array =>
-   on_updated => sub { $array_shadow = shift },
+   on_updated => sub { $array_shadow = $_[1] },
 );
 
 is_deeply( $array_shadow, [ 1, 2, 3 ], 'array shadow initially' );
 
 $obj->set_prop_array( [ 4, 5, 6 ] );
 is_deeply( $obj->get_prop_array, [ 4, 5, 6 ], 'array after set' );
+identical( $cb_self, $obj, '$cb_self is $obj' );
 is_deeply( $array, [ 4, 5, 6 ], '$array after set' );
 
 $obj->push_prop_array( 7 );

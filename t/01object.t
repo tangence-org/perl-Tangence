@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 33;
+use Test::More tests => 34;
 use Test::Identity;
 use Test::Memory::Cycle;
 use Test::Refcount;
@@ -130,7 +130,7 @@ is( $ball->get_prop_colour, "red", 'colour is initially red' );
 
 my $colour;
 $id = $ball->watch_property( colour => 
-   on_set => sub { $colour = shift },
+   on_set => sub { ( $cb_self, $colour ) = @_ },
 );
 
 is_oneref( $ball, '$ball has refcount 1 after watch_property' );
@@ -138,7 +138,10 @@ is_oneref( $ball, '$ball has refcount 1 after watch_property' );
 $ball->set_prop_colour( "blue" );
 
 is( $ball->get_prop_colour, "blue", 'colour is now blue' );
+identical( $cb_self, $ball, '$cb_self is $ball' );
 is( $colour, "blue", '$colour is blue' );
+
+undef $cb_self;
 
 $ball->unwatch_property( colour => $id );
 

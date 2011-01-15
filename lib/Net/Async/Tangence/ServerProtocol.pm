@@ -322,6 +322,7 @@ sub _install_watch
       my $how = $change_values{$name};
       $callbacks{$name} = $self->_capture_weakself( sub {
          my $self = shift;
+         my $object = shift;
 
          my $message = $object->generate_message_UPDATE( $self, $prop, $how, @_ );
          $self->request(

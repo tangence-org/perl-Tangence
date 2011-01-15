@@ -277,7 +277,7 @@ sub watch_property
 
    push @$watchlist, $callbacks;
 
-   $on_updated->( $self->{properties}->{$prop}->[0] ) if $on_updated;
+   $on_updated->( $self, $self->{properties}->{$prop}->[0] ) if $on_updated;
 
    my $ref = \@{$watchlist}[$#$watchlist];  # reference to last element
    return $ref + 0; # force numeric context
