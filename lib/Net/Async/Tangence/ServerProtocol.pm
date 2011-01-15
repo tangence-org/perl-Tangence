@@ -111,6 +111,7 @@ sub handle_request_SUBSCRIBE
    my $id = $object->subscribe_event( $event,
       $self->_capture_weakself( sub {
          my $self = shift;
+         my $object = shift;
 
          my $message = $object->generate_message_EVENT( $self, $event, @_ );
          $self->request(

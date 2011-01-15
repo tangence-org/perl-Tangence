@@ -2,8 +2,9 @@
 
 use strict;
 
-use Test::More tests => 34;
+use Test::More tests => 35;
 use Test::HexString;
+use Test::Identity;
 use Test::Memory::Cycle;
 use Test::Refcount;
 
@@ -148,8 +149,10 @@ is_deeply( $bag->get_prop_colours,
 
 my $ball = $registry->get_by_id( 2 );
 
+my $cb_self;
 my $howhigh;
-$ball->subscribe_event( bounced => sub { $howhigh = shift } );
+
+$ball->subscribe_event( bounced => sub { ( $cb_self, $howhigh ) = @_; } );
 
 # MSG_CALL
 $S2->syswrite( "\1" . "\0\0\0\x13" .
@@ -165,7 +168,10 @@ isa_ok( $t::Ball::last_bounce_ctx, "Net::Async::Tangence::ServerContext", '$last
 
 is( $t::Ball::last_bounce_ctx->connection, $conn, '$last_bounce_ctx->connection' );
 
+identical( $cb_self, $ball, '$cb_self is $ball' );
 is( $howhigh, "20 metres", '$howhigh is 20 metres after CALL' );
+
+undef $cb_self;
 
 $expect = "\x82" . "\0\0\0\x09" .
           "\x28" . "bouncing";

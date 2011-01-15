@@ -216,7 +216,7 @@ sub fire_event
    $self->can_event( $event ) or croak "$self has no event $event";
 
    foreach my $cb ( @{ $self->{event_subs}->{$event} } ) {
-      $cb->( @args );
+      $cb->( $self, @args );
    }
 }
 

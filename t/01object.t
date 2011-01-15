@@ -2,7 +2,8 @@
 
 use strict;
 
-use Test::More tests => 32;
+use Test::More tests => 33;
+use Test::Identity;
 use Test::Memory::Cycle;
 use Test::Refcount;
 
@@ -97,12 +98,13 @@ is_deeply( $ball->smashkeys,
            '$ball->smashkeys' );
 
 my $bounces = 0;
+my $cb_self;
 my $howhigh;
 
 my $id;
 
 $id = $ball->subscribe_event( bounced => sub {
-      ( $howhigh ) = @_;
+      ( $cb_self, $howhigh ) = @_;
       $bounces++;
 } );
 
@@ -111,7 +113,10 @@ is_oneref( $ball, '$ball has refcount 1 after subscribe_event' );
 $ball->method_bounce( {}, "20 metres" );
 
 is( $bounces, 1, '$bounces is 1 after ->bounce' );
+identical( $cb_self, $ball, '$cb_self is $ball' );
 is( $howhigh, "20 metres", '$howhigh is 20 metres' );
+
+undef $cb_self;
 
 $ball->unsubscribe_event( bounced => $id );
 
