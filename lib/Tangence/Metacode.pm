@@ -13,12 +13,13 @@ our $VERSION = '0.02';
 use Carp;
 
 use Tangence::Constants;
+use Tangence::Meta::Class;
 
 sub init_class
 {
    my $class = shift;
 
-   my $meta = $class->_meta;
+   my $meta = Tangence::Meta::Class->new( $class );
 
    foreach my $superclass ( $meta->superclasses ) {
       init_class( $superclass ) unless defined &{"${superclass}::_has_Tangence"};

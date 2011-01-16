@@ -78,7 +78,7 @@ is_deeply( $ball->can_property(),
 
 is_deeply( $ball->introspect,
            {
-              isa => [qw( t::Ball Tangence::Object )],
+              isa => [qw( t::Ball Tangence::Object t::Colourable )],
               methods => {
                  bounce => { args => [qw( str )], ret => 'str' },
               },

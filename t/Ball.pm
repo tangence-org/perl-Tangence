@@ -2,7 +2,7 @@ package t::Ball;
 
 use strict;
 
-use base qw( Tangence::Object );
+use base qw( Tangence::Object t::Colourable );
 
 use Tangence::Constants;
 
@@ -20,11 +20,6 @@ our %EVENTS = (
 );
 
 our %PROPS = (
-   colour => {
-      dim  => DIM_SCALAR,
-      type => 'str',
-   },
-
    size => {
       dim  => DIM_SCALAR,
       type => 'int',

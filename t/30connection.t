@@ -112,12 +112,13 @@ is_hexstr( wait_for_message, $expect, 'client stream contains MSG_CALL' );
 
 # This long string is massive and annoying. Sorry.
 
-$S2->syswrite( "\x82" . "\0\0\0\xd2" .
+$S2->syswrite( "\x82" . "\0\0\0\xe0" .
                "\xe2" . "t::Ball\0" .
                         "\x64" . "events\0"     . "\x62" . "bounced\0" . "\x61" . "args\0" . "\x41" . "\x23" . "str" .
                                                            "destroy\0" . "\x61" . "args\0" . "\x40" .
-                                 "isa\0"        . "\x42" . "\x27" . "t::Ball" .
+                                 "isa\0"        . "\x43" . "\x27" . "t::Ball" .
                                                            "\x30" . "Tangence::Object" .
+                                                           "\x2d" . "t::Colourable" .
                                  "methods\0"    . "\x61" . "bounce\0" . "\x62" . "args\0" . "\x41" . "\x23" . "str" .
                                                                                  "ret\0" . "\x23" . "str" .
                                  "properties\0" . "\x62" . "colour\0" . "\x62" . "dim\0" . "\x21" . "1" .
