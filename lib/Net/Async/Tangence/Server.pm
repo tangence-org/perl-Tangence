@@ -8,6 +8,8 @@ package Net::Async::Tangence::Server;
 use strict;
 use warnings;
 
+use base qw( IO::Async::Listener );
+
 our $VERSION = '0.02';
 
 use Carp;
@@ -16,37 +18,33 @@ use Scalar::Util qw( weaken );
 
 use Net::Async::Tangence::ServerProtocol;
 
-use IO::Async::Stream;
-
 sub new
 {
    my $class = shift;
    my %args = @_;
 
-   my $loop     = delete $args{loop} or croak "Need a 'loop'";
-   my $registry = delete $args{registry} or croak "Need a 'registry'";
+   my $loop = delete $args{loop};
 
-   my $self = bless {
-      loop     => $loop,
-      registry => $registry,
-      conns    => [],
-   }, $class;
+   my $self = $class->SUPER::new( %args );
+
+   $loop->add( $self ) if $loop;
 
    return $self;
 }
 
-sub listen
+sub _init
 {
    my $self = shift;
-   my %listenargs = @_;
+   my ( $params ) = @_;
+   $self->SUPER::_init( $params );
 
-   my $loop = $self->{loop};
+   $params->{on_stream} = sub {
+      my ( $self, $stream ) = @_;
 
-   $loop->listen(
-      %listenargs,
+      $self->new_conn( stream => $stream );
+   };
 
-      on_accept => sub { $self->new_conn( handle => $_[0] ) },
-   );
+   $self->{registry} = delete $params->{registry} if exists $params->{registry};
 }
 
 sub new_conn
@@ -62,26 +60,14 @@ sub new_conn
    my $conn = Net::Async::Tangence::ServerProtocol->new(
       transport => $stream,
       registry => $self->{registry},
-      on_closed => sub { $weakself->del_conn( @_ ) },
+      on_closed => sub {
+         $weakself->remove_child( $_[0] );
+      },
    );
 
-   $self->{loop}->add( $conn );
-
-   push @{ $self->{conns} }, $conn;
+   $self->add_child( $conn );
 
    return $conn;
-}
-
-sub del_conn
-{
-   my $self = shift;
-   my ( $conn ) = @_;
-
-   my $conns = $self->{conns};
-   my $idx;
-   $conns->[$_] == $conn and $idx = $_, last for 0 .. $#$conns;
-
-   defined $idx and splice @$conns, $idx, 1;
 }
 
 # Keep perl happy; keep Britain tidy

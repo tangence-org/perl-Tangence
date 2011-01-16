@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 35;
+use Test::More tests => 37;
 use Test::HexString;
 use Test::Identity;
 use Test::Memory::Cycle;
@@ -33,11 +33,14 @@ my $bag = $registry->construct(
 is_oneref( $bag, '$bag has refcount 1 initially' );
 
 my $server = Net::Async::Tangence::Server->new(
-   loop     => $loop,
    registry => $registry,
 );
 
 is_oneref( $server, '$server has refcount 1 initially' );
+
+$loop->add( $server );
+
+is_refcount( $server, 2, '$server has refcount 2 after $loop->add' );
 
 my ( $S1, $S2 ) = $loop->socketpair() or die "Cannot create socket pair - $!";
 
@@ -55,7 +58,7 @@ my ( $S1, $S2 ) = $loop->socketpair() or die "Cannot create socket pair - $!";
 
 my $conn = $server->new_conn( handle => $S1 );
 
-is_oneref( $server, '$server has refcount 1 after new BE' );
+is_refcount( $server, 2, '$server has refcount 2 after new BE' );
 # Three refs: one in Server, one in IO::Async::Loop, one here
 is_refcount( $conn, 3, '$conn has refcount 3 initially' );
 
@@ -303,6 +306,11 @@ wait_for { $obj_destroyed };
 is( $obj_destroyed, 1, 'object gets destroyed' );
 
 is_oneref( $bag, '$bag has refcount 1 before shutdown' );
+
+is_refcount( $server, 2, '$server has refcount 2 before $loop->remove' );
+
+$loop->remove( $server );
+
 is_oneref( $server, '$server has refcount 1 before shutdown' );
 
 memory_cycle_ok( $bag, '$bag has no memory cycles' );

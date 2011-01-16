@@ -72,8 +72,8 @@ sub configure
          if( my $parent = $self->parent ) {
             $parent->remove_child( $self );
          }
-         else {
-            $self->get_loop->remove( $self );
+         elsif( my $loop = $self->get_loop ) {
+            $loop->remove( $self );
          }
       };
    }
