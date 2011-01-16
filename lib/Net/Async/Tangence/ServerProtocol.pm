@@ -18,21 +18,33 @@ use Tangence::Constants;
 
 use Net::Async::Tangence::ServerContext;
 
-sub new
+sub _init
 {
-   my $class = shift;
-   my %args = @_;
+   my $self = shift;
+   my ( $params ) = @_;
 
-   my $registry = delete $args{registry};
+   $self->{registry} = delete $params->{registry};
 
-   my $self = $class->SUPER::new(
-      %args,
-      on_closed => sub { my $self = shift; $self->shutdown },
-   );
+   $params->{on_closed} ||= undef;
+}
 
-   $self->{registry} = $registry;
+sub configure
+{
+   my $self = shift;
+   my %params = @_;
 
-   return $self;
+   if( exists $params{on_closed} ) {
+      my $on_closed = $params{on_closed};
+      $params{on_closed} = sub {
+         my $self = shift;
+
+         $on_closed->( $self ) if $on_closed;
+
+         $self->shutdown;
+      };
+   }
+
+   $self->SUPER::configure( %params );
 }
 
 sub shutdown
