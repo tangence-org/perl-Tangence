@@ -8,13 +8,12 @@ package Net::Async::Tangence::Server;
 use strict;
 use warnings;
 
+use IO::Async::Listener '0.36';
 use base qw( IO::Async::Listener );
 
 our $VERSION = '0.02';
 
 use Carp;
-
-use Scalar::Util qw( weaken );
 
 use Net::Async::Tangence::ServerProtocol;
 
@@ -24,31 +23,21 @@ sub _init
    my ( $params ) = @_;
    $self->SUPER::_init( $params );
 
-   $params->{on_stream} = sub {
-      my ( $self, $stream ) = @_;
-
-      $self->new_conn( stream => $stream );
-   };
-
    $self->{registry} = delete $params->{registry} if exists $params->{registry};
 }
 
-sub new_conn
+sub on_stream
 {
    my $self = shift;
-   my %args = @_;
-
-   my $stream = $args{stream} ||
-                $args{handle} && IO::Async::Stream->new( handle => $args{handle} );
-
-   weaken( my $weakself = $self );
+   my ( $stream ) = @_;
 
    my $conn = Net::Async::Tangence::ServerProtocol->new(
       transport => $stream,
       registry => $self->{registry},
-      on_closed => sub {
-         $weakself->remove_child( $_[0] );
-      },
+      on_closed => $self->_capture_weakself( sub {
+         my $self = shift;
+         $self->remove_child( $_[0] );
+      } ),
    );
 
    $self->add_child( $conn );

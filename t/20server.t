@@ -10,6 +10,7 @@ use Test::Refcount;
 
 use IO::Async::Test;
 use IO::Async::Loop;
+use IO::Async::Stream;
 
 use Tangence::Constants;
 use Tangence::Registry;
@@ -56,7 +57,7 @@ my ( $S1, $S2 ) = $loop->socketpair() or die "Cannot create socket pair - $!";
    }
 }
 
-my $conn = $server->new_conn( handle => $S1 );
+my $conn = $server->on_stream( IO::Async::Stream->new( handle => $S1 ) );
 
 is_refcount( $server, 2, '$server has refcount 2 after new BE' );
 # Three refs: one in Server, one in IO::Async::Loop, one here

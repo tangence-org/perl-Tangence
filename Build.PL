@@ -7,8 +7,10 @@ my $build = Module::Build->new(
    module_name => 'Tangence',
    requires => {
       'Encode' => 0,
-      'IO::Async::Loop' => '0.17',
+      'IO::Async::Listener' => '0.36',
+      'IO::Async::Loop' => '0.16',
       'IO::Async::Protocol::Stream' => 0,
+      'IO::Async::Stream' => 0,
       'IO::Async::Test' => 0,
       'URI::Split' => 0,
    },

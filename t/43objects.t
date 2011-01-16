@@ -6,6 +6,7 @@ use Test::More tests => 12;
 use Test::Memory::Cycle;
 use IO::Async::Test;
 use IO::Async::Loop;
+use IO::Async::Stream;
 
 use Tangence::Constants;
 use Tangence::Registry;
@@ -36,7 +37,7 @@ $loop->add( $server );
 
 my ( $S1, $S2 ) = $loop->socketpair() or die "Cannot create socket pair - $!";
 
-$server->new_conn( handle => $S1 );
+$server->on_stream( IO::Async::Stream->new( handle => $S1 ) );
 
 my $conn = Net::Async::Tangence::Client->new( handle => $S2 );
 $loop->add( $conn );
