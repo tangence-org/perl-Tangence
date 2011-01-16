@@ -122,7 +122,7 @@ sub handle_request_SUBSCRIBE
 
    my $id = $object->subscribe_event( $event,
       $self->_capture_weakself( sub {
-         my $self = shift;
+         my $self = shift or return;
          my $object = shift;
 
          my $message = $object->generate_message_EVENT( $self, $event, @_ );
@@ -333,7 +333,7 @@ sub _install_watch
    foreach my $name ( @{ CHANGETYPES->{$dim} } ) {
       my $how = $change_values{$name};
       $callbacks{$name} = $self->_capture_weakself( sub {
-         my $self = shift;
+         my $self = shift or return;
          my $object = shift;
 
          my $message = $object->generate_message_UPDATE( $self, $prop, $how, @_ );
