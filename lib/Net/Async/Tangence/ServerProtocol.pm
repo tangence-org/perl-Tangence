@@ -10,7 +10,7 @@ use warnings;
 
 use base qw( Net::Async::Tangence::Protocol );
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use Carp;
 
