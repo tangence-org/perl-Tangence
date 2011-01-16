@@ -319,7 +319,7 @@ sub pack_obj
 
          weaken( my $weakstream = $stream );
          $stream->{peer_hasobj}->{$id} = $d->subscribe_event( 
-            destroy => sub { $weakstream->object_destroyed( @_ ) },
+            destroy => sub { $weakstream->object_destroyed( @_ ) if $weakstream },
          );
       }
 
