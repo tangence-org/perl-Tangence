@@ -311,6 +311,7 @@ memory_cycle_ok( $registry, '$registry has no memory cycles' );
 #   Unhandled type: GLOB at /usr/share/perl5/Devel/Cycle.pm line 107.
 # on account of filehandles
 
+$conn->close;
 undef $server;
 
 is_oneref( $conn, '$conn has refcount 1 after shutdown' );

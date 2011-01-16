@@ -156,6 +156,7 @@ is_oneref( $ball, '$ball has refcount 1 just before unref' );
 
 memory_cycle_ok( $ball, '$ball has no memory cycles' );
 
+$ball->destroy;
 undef $ball;
 
 is( $fakereg_got_destroy, 1, 'registry acknowledges object destruction' );

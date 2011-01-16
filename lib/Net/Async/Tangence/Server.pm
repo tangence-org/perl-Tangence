@@ -84,16 +84,6 @@ sub del_conn
    defined $idx and splice @$conns, $idx, 1;
 }
 
-sub DESTROY
-{
-   my $self = shift;
-
-   foreach my $conn ( @{ $self->{conns} } ) {
-      $conn->shutdown;
-      $conn->close;
-   }
-}
-
 # Keep perl happy; keep Britain tidy
 1;
 
