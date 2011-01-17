@@ -8,9 +8,11 @@ use Tangence::Compiler::Parser;
 
 use Tangence::Constants;
 
+my $parser = Tangence::Compiler::Parser->new;
+
 my $meta;
 
-$meta = Tangence::Compiler::Parser->from_file( "t/Ball.tan" );
+$meta = $parser->from_file( "t/Ball.tan" );
 is_deeply( $meta,
    {
       't.Colourable' => {
@@ -34,7 +36,7 @@ is_deeply( $meta,
    'parsed t/Ball.tan'
 );
 
-$meta = Tangence::Compiler::Parser->from_file( "t/Bag.tan" );
+$meta = $parser->from_file( "t/Bag.tan" );
 is_deeply( $meta,
    {
       't.Colourable' => {
@@ -68,7 +70,7 @@ is_deeply( $meta,
    'parsed t/Bag.tan'
 );
 
-$meta = Tangence::Compiler::Parser->from_file( "t/TestObj.tan" );
+$meta = $parser->from_file( "t/TestObj.tan" );
 is_deeply( $meta,
    {
       't.TestObj' => {

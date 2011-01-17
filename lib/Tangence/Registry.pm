@@ -93,7 +93,7 @@ sub new
    $self->{freeids} = []; # free'd ids we can reuse
 
    if( my $tanfile = $args{tanfile} ) {
-      my $parsed = Tangence::Compiler::Parser->from_file( $tanfile );
+      my $parsed = Tangence::Compiler::Parser->new->from_file( $tanfile );
 
       $self->{classes} = { map {
          my $class = $_;

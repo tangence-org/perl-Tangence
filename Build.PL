@@ -9,6 +9,7 @@ my $build = Module::Build->new(
       'Encode' => 0,
       'Exporter' => '5.57',
       'perl' => 5.010, # pack/unpack > specifiers
+      'Parser::MGC' => '0.04',
       'URI::Split' => 0,
    },
    build_requires => {
