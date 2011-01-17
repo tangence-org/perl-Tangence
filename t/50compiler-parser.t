@@ -13,6 +13,11 @@ my $meta;
 $meta = Tangence::Compiler::Parser->from_file( "t/Ball.tan" );
 is_deeply( $meta,
    {
+      't.Colourable' => {
+         props => {
+            colour => { dim => DIM_SCALAR, type => 'str' },
+         },
+      },
       't.Ball' => {
          methods => {
             bounce => { args => [qw( str )], ret => 'str' },
@@ -21,9 +26,9 @@ is_deeply( $meta,
             bounced => { args => [qw( str )] },
          },
          props => {
-            colour => { dim => DIM_SCALAR, type => 'str' },
             size   => { dim => DIM_SCALAR, type => 'int', smash => 1 },
          },
+         isa => [qw( t.Colourable )],
       },
    },
    'parsed t/Ball.tan'
@@ -32,6 +37,11 @@ is_deeply( $meta,
 $meta = Tangence::Compiler::Parser->from_file( "t/Bag.tan" );
 is_deeply( $meta,
    {
+      't.Colourable' => {
+         props => {
+            colour => { dim => DIM_SCALAR, type => 'str' },
+         },
+      },
       't.Ball' => {
          methods => {
             bounce => { args => [qw( str )], ret => 'str' },
@@ -40,9 +50,9 @@ is_deeply( $meta,
             bounced => { args => [qw( str )] },
          },
          props => {
-            colour => { dim => DIM_SCALAR, type => 'str' },
             size   => { dim => DIM_SCALAR, type => 'int', smash => 1 },
          },
+         isa => [qw( t.Colourable )],
       },
       't.Bag' => {
          methods => {

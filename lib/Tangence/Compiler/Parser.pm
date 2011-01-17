@@ -228,7 +228,7 @@ sub parse_classblock
    my %class;
 
    while(1) {
-      given( $self->parse_kw(qw( method event prop smashed )) ) {
+      given( $self->parse_kw(qw( method event prop smashed isa )) ) {
          when( undef ) {
             last;
          }
@@ -296,6 +296,12 @@ sub parse_classblock
             $pdef->{type} = $self->parse_type;
 
             $pdef->{dim} = $dim;
+         }
+
+         when( 'isa' ) {
+            my $supername = $self->parse_ident;
+
+            push @{ $class{isa} }, $supername;
          }
       }
 
