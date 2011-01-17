@@ -16,7 +16,9 @@ use t::TestServerClient;
 # the object's property manip. methods directly
 ###
 
-my $registry = Tangence::Registry->new();
+my $registry = Tangence::Registry->new(
+   tanfile => "t/TestObj.tan",
+);
 my $obj = $registry->construct(
    "t::TestObj",
 );

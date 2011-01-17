@@ -6,27 +6,6 @@ use base qw( Tangence::Object t::Colourable );
 
 use Tangence::Constants;
 
-our %METHODS = (
-   bounce => {
-      args => [qw( str )],
-      ret  => 'str',
-   },
-);
-
-our %EVENTS = (
-   bounced => {
-      args => [qw( str )],
-   },
-);
-
-our %PROPS = (
-   size => {
-      dim  => DIM_SCALAR,
-      type => 'int',
-      smash => 1,
-   },
-);
-
 sub new
 {
    my $class = shift;

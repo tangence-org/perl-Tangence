@@ -11,7 +11,9 @@ use Tangence::Registry;
 use t::TestObj;
 use t::TestServerClient;
 
-my $registry = Tangence::Registry->new();
+my $registry = Tangence::Registry->new(
+   tanfile => "t/TestObj.tan",
+);
 my $obj = $registry->construct(
    "t::TestObj",
 );

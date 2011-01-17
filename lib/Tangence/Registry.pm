@@ -15,6 +15,8 @@ use Carp;
 
 use Tangence::Constants;
 
+use Tangence::Compiler::Parser;
+
 use Scalar::Util qw( weaken );
 
 Tangence::Meta::Class->renew(
@@ -72,6 +74,7 @@ connections to that server.
 sub new
 {
    my $class = shift;
+   my %args = @_;
 
    my $id = 0;
 
@@ -88,6 +91,20 @@ sub new
 
    $self->{nextid}  = 1;
    $self->{freeids} = []; # free'd ids we can reuse
+
+   if( my $tanfile = $args{tanfile} ) {
+      my $parsed = Tangence::Compiler::Parser->from_file( $tanfile );
+
+      $self->{classes} = { map {
+         my $class = $_;
+         $class =~ s{\.}{::}g;
+
+         $class => Tangence::Meta::Class->new( $class, %{ $parsed->{$_} } )
+      } keys %$parsed };
+   }
+   else {
+      croak "Expected 'tanfile'";
+   }
 
    return $self;
 }

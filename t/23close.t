@@ -10,7 +10,9 @@ use Tangence::Registry;
 use t::Ball;
 use t::TestServerClient;
 
-my $registry = Tangence::Registry->new();
+my $registry = Tangence::Registry->new(
+   tanfile => "t/Ball.tan",
+);
 my $ball = $registry->construct(
    "t::Ball",
    colour => "red",

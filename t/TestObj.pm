@@ -6,28 +6,6 @@ use base qw( Tangence::Object );
 
 use Tangence::Constants;
 
-our %PROPS = (
-   scalar => {
-      dim  => DIM_SCALAR,
-      type => 'int',
-   },
-
-   hash => {
-      dim  => DIM_HASH,
-      type => 'int',
-   },
-
-   queue => {
-      dim  => DIM_QUEUE,
-      type => 'int',
-   },
-
-   array => {
-      dim  => DIM_ARRAY,
-      type => 'int',
-   },
-);
-
 sub new
 {
    my $class = shift;

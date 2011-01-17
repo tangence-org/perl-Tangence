@@ -12,7 +12,9 @@ use t::Ball;
 use t::Bag;
 use t::TestServerClient;
 
-my $registry = Tangence::Registry->new();
+my $registry = Tangence::Registry->new(
+   tanfile => "t/Bag.tan",
+);
 my $bag = $registry->construct(
    "t::Bag",
    colours => [ qw( red ) ],

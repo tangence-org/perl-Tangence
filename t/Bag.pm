@@ -6,30 +6,6 @@ use base qw( Tangence::Object );
 
 use Tangence::Constants;
 
-our %METHODS = (
-   get_ball => {
-      args => [qw( str )],
-      ret  => 'obj',
-   },
-
-   pull_ball => {
-      args => [qw( str )],
-      ret  => 'obj',
-   },
-
-   add_ball => {
-      args => [qw( obj )],
-      ret  => '',
-   },
-);
-
-our %PROPS = (
-   colours => {
-      dim  => DIM_HASH,
-      type => 'int',
-   },
-);
-
 sub new
 {
    my $class = shift;
