@@ -81,22 +81,22 @@ sub configure
    $self->SUPER::configure( %params );
 }
 
-sub marshall_message
-{
-   my $self = shift;
-   my ( $message ) = @_;
-
-   croak "\$message is not a Tangence::Message" unless eval { $message->isa( "Tangence::Message" ) };
-
-   return $message->bytes;
-}
-
 sub on_read
 {
    my $self = shift;
    my ( $buffref, $closed ) = @_;
 
-   my $message = Tangence::Message->try_new_from_bytes( $self, $$buffref ) or return 0;
+   my $message;
+   $self->on_message( $message ) while $message = Tangence::Message->try_new_from_bytes( $self, $$buffref );
+
+   return 0;
+}
+
+sub on_message
+{
+   my $self = shift;
+   my ( $message ) = @_;
+
    my $type = $message->type;
 
    if( $type < 0x80 ) {
@@ -121,8 +121,6 @@ sub on_read
       my $on_response = shift @{ $self->{responder_queue} };
       $on_response->( $message );
    }
-
-   return 1;
 }
 
 sub object_destroyed
