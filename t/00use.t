@@ -1,4 +1,4 @@
-use Test::More tests => 10;
+use Test::More tests => 11;
 
 use_ok( "Tangence" );
 use_ok( "Tangence::Client" );
@@ -7,6 +7,8 @@ use_ok( "Tangence::Object" );
 use_ok( "Tangence::ObjectProxy" );
 use_ok( "Tangence::Registry" );
 use_ok( "Tangence::Stream" );
+
+use_ok( "Tangence::Server::Stream" );
 
 use_ok( "Net::Async::Tangence::Protocol" );
 use_ok( "Net::Async::Tangence::Client" );
