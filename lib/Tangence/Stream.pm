@@ -49,38 +49,30 @@ sub read_from
    my $self = shift;
 
    while( my $message = Tangence::Message->try_new_from_bytes( $self, $_[0] ) ) {
-      $self->on_message( $message );
-   }
-}
-
-sub on_message
-{
-   my $self = shift;
-   my ( $message ) = @_;
-
-   my $type = $message->type;
-
-   if( $type < 0x80 ) {
-      push @{ $self->{request_queue} }, undef;
-      my $token = \$self->{request_queue}[-1];
-
       my $type = $message->type;
 
-      if( my $method = $REQ_METHOD{$type} ) {
-         if( $self->can( $method ) ) {
-            $self->$method( $token, $message );
+      if( $type < 0x80 ) {
+         push @{ $self->{request_queue} }, undef;
+         my $token = \$self->{request_queue}[-1];
+
+         my $type = $message->type;
+
+         if( my $method = $REQ_METHOD{$type} ) {
+            if( $self->can( $method ) ) {
+               $self->$method( $token, $message );
+            }
+            else {
+               $self->respondERROR( $token, sprintf( "Cannot respond to request type 0x%02x", $type ) );
+            }
          }
          else {
-            $self->respondERROR( $token, sprintf( "Cannot respond to request type 0x%02x", $type ) );
+            $self->respondERROR( $token, sprintf( "Unrecognised request type 0x%02x", $type ) );
          }
       }
       else {
-         $self->respondERROR( $token, sprintf( "Unrecognised request type 0x%02x", $type ) );
+         my $on_response = shift @{ $self->{responder_queue} };
+         $on_response->( $message );
       }
-   }
-   else {
-      my $on_response = shift @{ $self->{responder_queue} };
-      $on_response->( $message );
    }
 }
 
