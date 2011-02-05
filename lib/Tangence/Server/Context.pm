@@ -3,7 +3,7 @@
 #
 #  (C) Paul Evans, 2010-2011 -- leonerd@leonerd.org.uk
 
-package Net::Async::Tangence::ServerContext;
+package Tangence::Server::Context;
 
 use strict;
 use warnings;
@@ -17,11 +17,11 @@ use Tangence::Constants;
 sub new
 {
    my $class = shift;
-   my ( $conn, $token ) = @_;
+   my ( $stream, $token ) = @_;
 
    return bless {
-      conn  => $conn,
-      token => $token,
+      stream => $stream,
+      token  => $token,
    }, $class;
 }
 
@@ -31,10 +31,10 @@ sub DESTROY
    $self->{responded} or croak "$self never responded";
 }
 
-sub connection
+sub stream
 {
    my $self = shift;
-   return $self->{conn};
+   return $self->{stream};
 }
 
 sub respond
@@ -44,8 +44,7 @@ sub respond
 
    $self->{responded} and croak "$self has responded once already";
 
-   my $conn = $self->{conn};
-   $conn->respond( $self->{token}, $message );
+   $self->stream->respond( $self->{token}, $message );
 
    $self->{responded} = 1;
 
@@ -57,7 +56,7 @@ sub responderr
    my $self = shift;
    my ( $msg ) = @_;
 
-   $self->respond( Tangence::Message->new( $self->{conn}, MSG_ERROR )
+   $self->respond( Tangence::Message->new( $self->stream, MSG_ERROR )
       ->pack_str( $msg )
    );
 }

@@ -169,9 +169,9 @@ wait_for { defined $howhigh };
 
 ok( defined $t::Ball::last_bounce_ctx, 'defined $last_bounce_ctx' );
 
-isa_ok( $t::Ball::last_bounce_ctx, "Net::Async::Tangence::ServerContext", '$last_bounce_ctx isa Net::Async::Tangence::ServerContext' );
+isa_ok( $t::Ball::last_bounce_ctx, "Tangence::Server::Context", '$last_bounce_ctx isa Tangence::Server::Context' );
 
-is( $t::Ball::last_bounce_ctx->connection, $conn, '$last_bounce_ctx->connection' );
+is( $t::Ball::last_bounce_ctx->stream, $conn, '$last_bounce_ctx->stream' );
 
 identical( $cb_self, $ball, '$cb_self is $ball' );
 is( $howhigh, "20 metres", '$howhigh is 20 metres after CALL' );

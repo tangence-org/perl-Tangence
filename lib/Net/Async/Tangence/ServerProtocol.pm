@@ -15,8 +15,7 @@ our $VERSION = '0.03';
 use Carp;
 
 use Tangence::Constants;
-
-use Net::Async::Tangence::ServerContext;
+use Tangence::Server::Context;
 
 sub _init
 {
@@ -92,7 +91,7 @@ sub handle_request_CALL
    
    my $objid = $message->unpack_int();
 
-   my $ctx = Net::Async::Tangence::ServerContext->new( $self, $token );
+   my $ctx = Tangence::Server::Context->new( $self, $token );
 
    my $registry = $self->{registry};
 
@@ -113,7 +112,7 @@ sub handle_request_SUBSCRIBE
    my $objid = $message->unpack_int();
    my $event = $message->unpack_str();
 
-   my $ctx = Net::Async::Tangence::ServerContext->new( $self, $token );
+   my $ctx = Tangence::Server::Context->new( $self, $token );
 
    my $registry = $self->{registry};
 
@@ -146,7 +145,7 @@ sub handle_request_UNSUBSCRIBE
    my $objid = $message->unpack_int();
    my $event = $message->unpack_str();
 
-   my $ctx = Net::Async::Tangence::ServerContext->new( $self, $token );
+   my $ctx = Tangence::Server::Context->new( $self, $token );
 
    my $registry = $self->{registry};
 
@@ -175,7 +174,7 @@ sub handle_request_GETPROP
    
    my $objid = $message->unpack_int();
 
-   my $ctx = Net::Async::Tangence::ServerContext->new( $self, $token );
+   my $ctx = Tangence::Server::Context->new( $self, $token );
 
    my $registry = $self->{registry};
 
@@ -195,7 +194,7 @@ sub handle_request_SETPROP
    
    my $objid = $message->unpack_int();
 
-   my $ctx = Net::Async::Tangence::ServerContext->new( $self, $token );
+   my $ctx = Tangence::Server::Context->new( $self, $token );
 
    my $registry = $self->{registry};
 
@@ -217,7 +216,7 @@ sub handle_request_WATCH
    my $prop  = $message->unpack_str();
    my $want_initial = $message->unpack_bool();
 
-   my $ctx = Net::Async::Tangence::ServerContext->new( $self, $token );
+   my $ctx = Tangence::Server::Context->new( $self, $token );
 
    my $registry = $self->{registry};
 
@@ -256,7 +255,7 @@ sub handle_request_UNWATCH
    my $objid = $message->unpack_int();
    my $prop  = $message->unpack_str();
 
-   my $ctx = Net::Async::Tangence::ServerContext->new( $self, $token );
+   my $ctx = Tangence::Server::Context->new( $self, $token );
 
    my $registry = $self->{registry};
 
@@ -285,7 +284,7 @@ sub handle_request_GETROOT
    
    my $identity = $message->unpack_any();
 
-   my $ctx = Net::Async::Tangence::ServerContext->new( $self, $token );
+   my $ctx = Tangence::Server::Context->new( $self, $token );
 
    my $registry = $self->{registry};
    my $root = $registry->get_by_id( 1 );
@@ -302,7 +301,7 @@ sub handle_request_GETREGISTRY
    my $self = shift;
    my ( $token ) = @_;
 
-   my $ctx = Net::Async::Tangence::ServerContext->new( $self, $token );
+   my $ctx = Tangence::Server::Context->new( $self, $token );
 
    my $registry = $self->{registry};
 

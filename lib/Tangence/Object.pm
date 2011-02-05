@@ -310,7 +310,7 @@ sub handle_request_CALL
 
    my $result = $self->$m( $ctx, @args );
 
-   my $response = Tangence::Message->new( $ctx->connection, MSG_RESULT );
+   my $response = Tangence::Message->new( $ctx->stream, MSG_RESULT );
    $response->pack_typed( $mdef->{ret}, $result ) if $mdef->{ret};
 
    return $response;
@@ -343,7 +343,7 @@ sub handle_request_GETPROP
 
    my $result = $self->$m();
 
-   return Tangence::Message->new( $ctx->connection, MSG_RESULT )
+   return Tangence::Message->new( $ctx->stream, MSG_RESULT )
       ->pack_any( $result );
 }
 
