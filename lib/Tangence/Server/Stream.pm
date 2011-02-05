@@ -20,6 +20,13 @@ use Tangence::Server::Context;
 sub subscriptions { shift->{subscriptions} ||= [] }
 sub watches       { shift->{watches} ||= [] }
 
+sub registry
+{
+   my $self = shift;
+   $self->{registry} = shift if @_;
+   return $self->{registry};
+}
+
 sub shutdown
 {
    my $self = shift;

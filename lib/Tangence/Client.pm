@@ -28,6 +28,13 @@ sub rootobj
    return $self->{rootobj};
 }
 
+sub registry
+{
+   my $self = shift;
+   $self->{registry} = shift if @_;
+   return $self->{registry};
+}
+
 sub on_error
 {
    my $self = shift;
