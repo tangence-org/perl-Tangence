@@ -43,12 +43,6 @@ sub _init
 
    $self->SUPER::_init( $params );
 
-   $self->{peer_hasobj} = {}; # {$id} = $destroy_watch_id
-   $self->{peer_hasclass} = {}; # {$classname} = [\@smashkeys];
-
-   $self->{request_queue} = [];
-   $self->{responder_queue} = [];
-
    $params->{on_closed} ||= undef;
 }
 
@@ -64,7 +58,7 @@ sub configure
          my ( $self ) = @_;
          $on_closed->( $self ) if $on_closed;
 
-         foreach my $id ( keys %{ $self->{peer_hasobj} } ) {
+         foreach my $id ( keys %{ $self->{peer_hasobj} || {} } ) {
             my $obj = $self->get_by_id( $id );
             $obj->unsubscribe_event( "destroy", delete $self->{peer_hasobj}->{$id} );
          }
