@@ -209,7 +209,9 @@ sub fire_event
 
    $self->can_event( $event ) or croak "$self has no event $event";
 
-   foreach my $cb ( @{ $self->{event_subs}->{$event} } ) {
+   my $sublist = $self->{event_subs}->{$event} or return;
+
+   foreach my $cb ( @$sublist ) {
       $cb->( $self, @args );
    }
 }
@@ -234,7 +236,7 @@ sub unsubscribe_event
    my $self = shift;
    my ( $event, $id ) = @_;
 
-   my $sublist = $self->{event_subs}->{$event};
+   my $sublist = $self->{event_subs}->{$event} or return;
 
    my $index;
    for( $index = 0; $index < @$sublist; $index++ ) {
@@ -282,7 +284,7 @@ sub unwatch_property
    my $self = shift;
    my ( $prop, $id ) = @_;
 
-   my $watchlist = $self->{properties}->{$prop}->[1];
+   my $watchlist = $self->{properties}->{$prop}->[1] or return;
 
    my $index;
    for( $index = 0; $index < @$watchlist; $index++ ) {
