@@ -63,7 +63,7 @@ mixin.
 
 =cut
 
-=head2 $stream->write( $data )
+=head2 $stream->tangence_write( $data )
 
 Write bytes of data to the connected peer. C<$data> will be a plain perl
 string.
@@ -107,7 +107,7 @@ sub _stream_closed
    }
 }
 
-=head2 $stream->read_from( $buffer )
+=head2 $stream->tangence_readfrom( $buffer )
 
 Informs the object that more data has been read from the underlying connection
 stream. Whole messages will be removed from the beginning of the C<$buffer>,
@@ -117,7 +117,7 @@ remaining that form the start of a partial message will be left in the buffer.
 
 =cut
 
-sub read_from
+sub tangence_readfrom
 {
    my $self = shift;
 
@@ -184,9 +184,9 @@ sub object_destroyed
 
 =head2 $stream->request( %args )
 
-Serialises a message object to pass to the C<write> method, then enqueues a
-response handler to be invoked when a reply arrives. Takes the following named
-arguments:
+Serialises a message object to pass to the C<tangence_write> method, then
+enqueues a response handler to be invoked when a reply arrives. Takes the
+following named arguments:
 
 =over 8
 
@@ -213,17 +213,17 @@ sub request
    my $request = $args{request} or croak "Expected 'request'";
    my $on_response = $args{on_response} or croak "Expected 'on_response'";
 
-   $self->write( $request->bytes );
+   $self->tangence_write( $request->bytes );
 
    push @{ $self->{responder_queue} }, $on_response;
 }
 
 =head2 $stream->respond( $token, $message )
 
-Serialises a message object to be sent to the C<write> method. The C<$token>
-value that was passed to the C<handle_request_> method ensures that it is sent
-at the correct position in the stream, to allow the peer to pair it with the
-corresponding request.
+Serialises a message object to be sent to the C<tangence_write> method. The
+C<$token> value that was passed to the C<handle_request_> method ensures that
+it is sent at the correct position in the stream, to allow the peer to pair it
+with the corresponding request.
 
 =cut
 
@@ -237,7 +237,7 @@ sub respond
    $$token = $response;
 
    while( defined $self->{request_queue}[0] ) {
-      $self->write( shift @{ $self->{request_queue} } );
+      $self->tangence_write( shift @{ $self->{request_queue} } );
    }
 }
 

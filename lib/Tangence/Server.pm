@@ -42,6 +42,18 @@ This class is a mixin, it cannot be directly constructed
     return $self;
  }
 
+ sub tangence_write
+ {
+    my $self = shift;
+    $self->write( $_[0] );
+ }
+
+ sub on_read
+ {
+    my $self = shift;
+    $self->tangence_readfrom( $_[0] );
+ }
+
 =head1 DESCRIPTION
 
 This module provides mixin to implement a C<Tangence> server connection. It

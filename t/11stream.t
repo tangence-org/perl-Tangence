@@ -35,7 +35,7 @@ isa_ok( $stream, "Tangence::Stream", '$stream isa Tangence::Stream' );
    my $read = "\x82" . "\0\0\0\x09" .
               "\x28" . "response";
 
-   $stream->read_from( $read );
+   $stream->tangence_readfrom( $read );
 
    is( length $read, 0, '$read completely consumed from response' );
 
@@ -48,7 +48,7 @@ isa_ok( $stream, "Tangence::Stream", '$stream isa Tangence::Stream' );
               "\x02" . "\x01" .
               "\x25" . "event";
 
-   $stream->read_from( $read );
+   $stream->tangence_readfrom( $read );
 
    is( length $read, 0, '$read completely consumed from event' );
 
@@ -75,7 +75,7 @@ sub new
    return bless {}, shift;
 }
 
-sub write
+sub tangence_write
 {
    my $self = shift;
    $written .= $_[0];

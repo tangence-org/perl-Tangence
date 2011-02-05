@@ -38,6 +38,18 @@ This class is a mixin, it cannot be directly constructed
     wait_for { defined $self->rootobj };
  }
 
+ sub tangence_write
+ {
+    my $self = shift;
+    $self->write( $_[0] );
+ }
+
+ sub on_read
+ {
+    my $self = shift;
+    $self->tangence_readfrom( $_[0] );
+ }
+
  package main;
 
  my $client = Example::Client->new;
@@ -55,8 +67,8 @@ messages between the server and the object proxies it contains.
 
 This is a subclass of L<Tangence::Stream> which provides implementations of
 the required C<handle_request_> methods. A class mixing in C<Tangence::Client>
-must still provide the C<write> method required for sending data to the
-server.
+must still provide the C<tangence_write> method required for sending data to
+the server.
 
 For an example of a class that uses this mixin, see
 L<Net::Async::Tangence::Client>.

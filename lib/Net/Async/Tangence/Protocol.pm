@@ -50,12 +50,18 @@ sub configure
    $self->SUPER::configure( %params );
 }
 
+sub tangence_write
+{
+   my $self = shift;
+   $self->write( $_[0] );
+}
+
 sub on_read
 {
    my $self = shift;
    my ( $buffref, $closed ) = @_;
 
-   $self->read_from( $$buffref );
+   $self->tangence_readfrom( $$buffref );
 
    return 0;
 }
