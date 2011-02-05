@@ -17,9 +17,67 @@ use Carp;
 use Tangence::Constants;
 use Tangence::ObjectProxy;
 
+=head1 NAME
+
+C<Tangence::Client> - mixin class for building a C<Tangence> client
+
+=head1 SYNOPSIS
+
+This class is a mixin, it cannot be directly constructed
+
+ package Example::Client;
+ use base qw( Base::Client Tangence::Client );
+
+ sub connect
+ {
+    my $self = shift;
+    $self->SUPER::connect( @_ );
+
+    $self->_do_initial;
+
+    wait_for { defined $self->rootobj };
+ }
+
+ package main;
+
+ my $client = Example::Client->new;
+ $client->connect( "server.location.here" );
+
+ my $rootobj = $client->rootobj;
+
+=head1 DESCRIPTION
+
+This module provides mixin to implement a C<Tangence> client connection. It
+should be mixed in to an object used to represent a single connection to a
+server. It provides a central location in the client to store object proxies,
+including to the root object and the registry, and coordinates passing
+messages between the server and the object proxies it contains.
+
+This is a subclass of L<Tangence::Stream> which provides implementations of
+the required C<handle_request_> methods. A class mixing in C<Tangence::Client>
+must still provide the C<write> method required for sending data to the
+server.
+
+For an example of a class that uses this mixin, see
+L<Net::Async::Tangence::Client>.
+
+=cut
+
+=head1 PROVIDED METHODS
+
+The following methods are provided by this mixin.
+
+=cut
+
 # Accessors for Tangence::Message decoupling
 sub objectproxies { shift->{objectproxies} ||= {} }
 sub schemata      { shift->{schemata} ||= {} }
+
+=head2 $rootobj = $client->rootobj
+
+Returns a L<Tangence::ObjectProxy> to the server's root object
+
+=cut
 
 sub rootobj
 {
@@ -27,6 +85,12 @@ sub rootobj
    $self->{rootobj} = shift if @_;
    return $self->{rootobj};
 }
+
+=head2 $registry = $client->registry
+
+Returns a L<Tangence::ObjectProxy> to the server's object registry
+
+=cut
 
 sub registry
 {
@@ -41,6 +105,34 @@ sub on_error
    $self->{on_error} = shift if @_;
    return $self->{on_error};
 }
+
+=head2 $client->_do_initial( %args )
+
+Once the base connection to the server has been established, this method
+should be called to perform the initial work of requesting the root object and
+the registry.
+
+It takes the following named arguments:
+
+=over 8
+
+=item on_root => CODE
+
+Optional callback to be invoked once the root object has been returned. It
+will be passed a L<Tangence::ObjectProxy> to the root object.
+
+ $on_root->( $rootobj )
+
+=item on_registry => CODE
+
+Optional callback to be invoked once the registry has been returned. It will
+be passed a L<Tangence::ObjectProxy> to the registry.
+
+ $on_registry->( $registry )
+
+=back
+
+=cut
 
 sub _do_initial
 {

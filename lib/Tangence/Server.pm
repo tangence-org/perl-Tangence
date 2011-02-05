@@ -17,8 +17,65 @@ use Carp;
 use Tangence::Constants;
 use Tangence::Server::Context;
 
+=head1 NAME
+
+C<Tangence::Server> - mixin class for building a C<Tangence> server
+
+=head1 SYNOPSIS
+
+This class is a mixin, it cannot be directly constructed
+
+ package Example::Server;
+ use base qw( Base::Server Tangence::Server );
+
+ sub new
+ {
+    my $class = shift;
+    my %args = @_;
+
+    my $registry = delete $args{registry};
+
+    my $self = $class->SUPER::new( %args );
+
+    $self->registry( $registry );
+
+    return $self;
+ }
+
+=head1 DESCRIPTION
+
+This module provides mixin to implement a C<Tangence> server connection. It
+should be mixed in to an object used to represent a single connection from a
+client. It provides a location for the objects in server to store information
+about the client connection, and coordinates passing messages between the
+client and the objects in the server.
+
+This is a subclass of L<Tangence::Stream> which provides implementations of
+the required C<handle_request_> methods. A class mixing in C<Tangence::Server>
+must still provide the C<write> method required for sending data to the
+client.
+
+For an example of a class that uses this mixin, see
+L<Net::Async::Tangence::ServerProtocol>.
+
+=cut
+
+=head1 PROVIDED METHODS
+
+The following methods are provided by this mixin.
+
+=cut
+
 sub subscriptions { shift->{subscriptions} ||= [] }
 sub watches       { shift->{watches} ||= [] }
+
+=head2 $server->registry( $registry )
+
+=head2 $registry = $server->registry
+
+Accessor to set or obtain the L<Tangence::Registry> object for the server.
+
+=cut
 
 sub registry
 {

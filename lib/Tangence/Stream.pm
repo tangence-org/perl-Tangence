@@ -34,6 +34,58 @@ my %REQ_METHOD = (
    MSG_GETREGISTRY, 'handle_request_GETREGISTRY',
 );
 
+=head1 NAME
+
+C<Tangence::Stream> - base class for C<Tangence> stream-handling mixins
+
+=head1 DESCRIPTION
+
+This module provides a base for L<Tangence::Client> and
+L<Tangence::Server::Stream>. It is not intended to be used directly by
+C<Tangence> implementation code.
+
+It provides the basic layer of message serialisation, deserialisation, and
+dispatching to methods that would handle the messages. Higher level classes
+are used to wrap this functionallity, and provide implementations of methods
+to handle the messages received.
+
+When a message is received, it will be passed to a method whose name depends
+on the type of message received. The name will be C<handle_request_>, followed
+by the name of the message type, in uppercase; for example
+C<handle_request_CALL>. 
+
+=cut
+
+=head1 REQUIRED METHODS
+
+The following methods are required to be implemented by some class using this
+mixin.
+
+=cut
+
+=head2 $stream->write( $data )
+
+Write bytes of data to the connected peer. C<$data> will be a plain perl
+string.
+
+=cut
+
+=head2 $stream->handle_request_$TYPE( $token, $message )
+
+Invoked on receipt of a given message type. C<$token> will be some opaque perl
+scalar value, and C<$message> will be an instance of L<Tangence::Message>.
+
+The value of the token has no particular meaning, other than to be passed to
+the C<respond> method.
+
+=cut
+
+=head1 PROVIDED METHODS
+
+The following methods are provided by this mixin.
+
+=cut
+
 # Accessors for Tangence::Message decoupling
 sub peer_hasobj   { shift->{peer_hasobj} ||= {} }
 sub peer_hasclass { shift->{peer_hasclass} ||= {} }
@@ -54,6 +106,16 @@ sub _stream_closed
       $obj->unsubscribe_event( "destroy", delete $self->peer_hasobj->{$id} );
    }
 }
+
+=head2 $stream->read_from( $buffer )
+
+Informs the object that more data has been read from the underlying connection
+stream. Whole messages will be removed from the beginning of the C<$buffer>,
+which should be passed as a direct scalar (because it will be modified). This
+method will invoke the required C<handle_request_*> methods. Any bytes
+remaining that form the start of a partial message will be left in the buffer.
+
+=cut
 
 sub read_from
 {
@@ -120,6 +182,29 @@ sub object_destroyed
    );
 }
 
+=head2 $stream->request( %args )
+
+Serialises a message object to pass to the C<write> method, then enqueues a
+response handler to be invoked when a reply arrives. Takes the following named
+arguments:
+
+=over 8
+
+=item request => Tangence::Message
+
+The message body
+
+=item on_response => CODE
+
+CODE reference to the callback to be invoked when a response to the message is
+received. It will be passed the response message:
+
+ $on_response->( $message )
+
+=back
+
+=cut
+
 sub request
 {
    my $self = shift;
@@ -132,6 +217,15 @@ sub request
 
    push @{ $self->{responder_queue} }, $on_response;
 }
+
+=head2 $stream->respond( $token, $message )
+
+Serialises a message object to be sent to the C<write> method. The C<$token>
+value that was passed to the C<handle_request_> method ensures that it is sent
+at the correct position in the stream, to allow the peer to pair it with the
+corresponding request.
+
+=cut
 
 sub respond
 {
