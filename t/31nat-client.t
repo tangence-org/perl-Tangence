@@ -43,8 +43,6 @@ $loop->add( $conn );
 
 is_hexstr( wait_for_message, $C2S{GETROOT}, 'client stream initially contains MSG_GETROOT' );
 
-my $expect; # TODO KILL THIS LINE
-
 is_hexstr( wait_for_message, $C2S{GETREGISTRY}, 'client stream initially contains MSG_GETREGISTRY' );
 
 $S2->syswrite( $S2C{GETROOT} );

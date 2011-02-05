@@ -71,8 +71,6 @@ is_deeply( $bag->get_prop_colours,
 
 $S2->syswrite( $C2S{GETROOT} );
 
-my $expect; # TODO KILL THIS LINE
-
 is_hexstr( wait_for_message, $S2C{GETROOT}, 'serverstream initially contains root object' );
 
 is_oneref( $bag, '$bag has refcount 1 after MSG_GETROOT' );
