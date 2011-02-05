@@ -15,6 +15,8 @@ use IO::Async::Stream;
 use Tangence::Constants;
 use Tangence::Registry;
 
+use t::Conversation;
+
 use Net::Async::Tangence::Server;
 $Tangence::Message::SORT_HASH_KEYS = 1;
 
@@ -67,86 +69,23 @@ is_deeply( $bag->get_prop_colours,
            { red => 1, blue => 1, green => 1, yellow => 1 },
            '$bag colours before pull' );
 
-# MSG_GETROOT
-$S2->syswrite( "\x40" . "\0\0\0\x0b" .
-               "\x2a" . "testscript" );
+$S2->syswrite( $C2S{GETROOT} );
 
-my $expect;
+my $expect; # TODO KILL THIS LINE
 
-# This long string is massive and annoying. Sorry.
-
-$expect = "\x82" . "\0\0\0\xcf" .
-          "\xe2" . "t::Bag\0" .
-                   "\x64" . "events\0"     . "\x61" . "destroy\0" . "\x61" . "args\0" . "\x40" .
-                            "isa\0"        . "\x42" . "\x26" . "t::Bag" .
-                                                      "\x30" . "Tangence::Object" .
-                            "methods\0"    . "\x63" . "add_ball\0"  . "\x62" . "args\0" . "\x41" . "\x23" . "obj" .
-                                                                               "ret\0"  . "\x20" .
-                                                      "get_ball\0"  . "\x62" . "args\0" . "\x41" . "\x23" . "str" .
-                                                                               "ret\0"  . "\x23" . "obj" .
-                                                      "pull_ball\0" . "\x62" . "args\0" . "\x41" . "\x23" . "str" .
-                                                                               "ret\0"  . "\x23" . "obj" .
-                            "properties\0" . "\x61" . "colours\0" . "\x62" . "dim\0"  . "\x21" . "2" .
-                                                                             "type\0" . "\x23" . "int" .
-                   "\x40" .
-          "\xe1" . "\0\0\0\1" . "t::Bag\0" . "\x40" .
-          "\x84" . "\0\0\0\1";
-
-is_hexstr( wait_for_message, $expect, 'serverstream initially contains root object' );
+is_hexstr( wait_for_message, $S2C{GETROOT}, 'serverstream initially contains root object' );
 
 is_oneref( $bag, '$bag has refcount 1 after MSG_GETROOT' );
 
 is( $conn->identity, "testscript", '$conn->identity' );
 
-# MSG_GETREGISTRY
-$S2->syswrite( "\x41" . "\0\0\0\0" );
+$S2->syswrite( $C2S{GETREGISTRY} );
 
-# This long string is massive and annoying. Sorry.
+is_hexstr( wait_for_message, $S2C{GETREGISTRY}, 'serverstream initially contains registry' );
 
-$expect = "\x82" . "\0\0\0\xf8" .
-          "\xe2" . "Tangence::Registry\0" .
-                   "\x64" . "events\0"     . "\x63" . "destroy\0"            . "\x61" . "args\0" . "\x40" .
-                                                      "object_constructed\0" . "\x61" . "args\0" . "\x41" . "\x23" . "int" .
-                                                      "object_destroyed\0"   . "\x61" . "args\0" . "\x41" . "\x23" . "int" .
-                            "isa\0"        . "\x42" . "\x32" . "Tangence::Registry" .
-                                                      "\x30" . "Tangence::Object" .
-                            "methods\0"    . "\x61" . "get_by_id\0" . "\x62" . "args\0" . "\x41" . "\x23" . "int" .
-                                                                               "ret\0"  . "\x23" . "obj" .
-                            "properties\0" . "\x61" . "objects\0" . "\x62" . "dim\0"  . "\x21" . "2" .
-                                                                             "type\0" . "\x23" . "str" .
-                   "\x40" .
-          "\xe1" . "\0\0\0\0" . "Tangence::Registry\0" . "\x40" .
-          "\x84" . "\0\0\0\0";
+$S2->syswrite( $C2S{CALL_PULL} );
 
-is_hexstr( wait_for_message, $expect, 'serverstream initially contains registry' );
-
-# MSG_CALL
-$S2->syswrite( "\1" . "\0\0\0\x10" . 
-               "\x02" . "\x01" .
-               "\x29" . "pull_ball" .
-               "\x23" . "red" );
-
-# This long string is massive and annoying. Sorry.
-
-$expect = "\x82" . "\0\0\0\xe0" .
-          "\xe2" . "t::Ball\0" .
-                   "\x64" . "events\0"     . "\x62" . "bounced\0" . "\x61" . "args\0" . "\x41" . "\x23" . "str" .
-                                                      "destroy\0" . "\x61" . "args\0" . "\x40" .
-                            "isa\0"        . "\x43" . "\x27" . "t::Ball" .
-                                                      "\x30" . "Tangence::Object" .
-                                                      "\x2d" . "t::Colourable" .
-                            "methods\0"    . "\x61" . "bounce\0" . "\x62" . "args\0" . "\x41" . "\x23" . "str" .
-                                                                            "ret\0" . "\x23" . "str" .
-                            "properties\0" . "\x62" . "colour\0" . "\x62" . "dim\0" . "\x21" . "1" .
-                                                                            "type\0" . "\x23" . "str" .
-                                                      "size\0"   . "\x63" . "dim\0" . "\x21" . "1" .
-                                                                            "smash\0" . "\x21" . "1" .
-                                                                            "type\0" . "\x23" . "int" .
-                   "\x41" . "\x24" . "size" .
-          "\xe1" . "\0\0\0\2" . "t::Ball\0" . "\x41" . "\x23" . "100" .
-          "\x84" . "\0\0\0\2";
-
-is_hexstr( wait_for_message, $expect, 'serverstream after response to CALL' );
+is_hexstr( wait_for_message, $S2C{CALL_PULL}, 'serverstream after response to CALL' );
 
 is_deeply( $bag->get_prop_colours,
            { blue => 1, green => 1, yellow => 1 },
@@ -160,10 +99,7 @@ my $howhigh;
 $ball->subscribe_event( bounced => sub { ( $cb_self, $howhigh ) = @_; } );
 
 # MSG_CALL
-$S2->syswrite( "\1" . "\0\0\0\x13" .
-               "\x02" . "\x02" .
-               "\x26" . "bounce" .
-               "\x29" . "20 metres" );
+$S2->syswrite( $C2S{CALL_BOUNCE} );
 
 wait_for { defined $howhigh };
 
@@ -178,116 +114,58 @@ is( $howhigh, "20 metres", '$howhigh is 20 metres after CALL' );
 
 undef $cb_self;
 
-$expect = "\x82" . "\0\0\0\x09" .
-          "\x28" . "bouncing";
+is_hexstr( wait_for_message, $S2C{CALL_BOUNCE}, 'serverstream after response to CALL' );
 
-is_hexstr( wait_for_message, $expect, 'serverstream after response to CALL' );
+$S2->syswrite( $C2S{SUBSCRIBE_BOUNCED} );
 
-# MSG_SUBSCRIBE
-$S2->syswrite( "\2" . "\0\0\0\x0a" .
-               "\x02" . "\x02" .
-               "\x27" . "bounced" );
-
-$expect = "\x83" . "\0\0\0\0";
-
-is_hexstr( wait_for_message, $expect, 'received MSG_SUBSCRIBED response' );
+is_hexstr( wait_for_message, $S2C{SUBSCRIBE_BOUNCED}, 'received MSG_SUBSCRIBED response' );
 
 $ball->method_bounce( {}, "10 metres" );
 
-$expect = "\4" . "\0\0\0\x14" .
-          "\x02" . "\x02" .
-          "\x27" . "bounced" .
-          "\x29" . "10 metres";
+is_hexstr( wait_for_message, $S2C{EVENT_BOUNCED}, 'received MSG_EVENT' );
 
-is_hexstr( wait_for_message, $expect, 'received MSG_EVENT' );
+$S2->syswrite( $MSG_OK );
 
-# MSG_OK
-$S2->syswrite( "\x80" . "\0\0\0\0" );
+$S2->syswrite( $C2S{GETPROP_COLOUR} );
 
-# MSG_GETPROP
-$S2->syswrite( "\5" . "\0\0\0\x09" .
-               "\x02" . "\x02" .
-               "\x26" . "colour" );
+is_hexstr( wait_for_message, $S2C{GETPROP_COLOUR_RED}, 'received property value after MSG_GETPROP' );
 
-$expect = "\x82" . "\0\0\0\4" .
-          "\x23" . "red";
+$S2->syswrite( $C2S{SETPROP_COLOUR} );
 
-is_hexstr( wait_for_message, $expect, 'received property value after MSG_GETPROP' );
-
-# MSG_SETPROP
-$S2->syswrite( "\6" . "\0\0\0\x0e" .
-               "\x02" . "\x02" .
-               "\x26" . "colour" .
-               "\x24" . "blue" );
-
-$expect = "\x80" . "\0\0\0\0";
-
-is_hexstr( wait_for_message, $expect, 'received OK after MSG_SETPROP' );
+is_hexstr( wait_for_message, $MSG_OK, 'received OK after MSG_SETPROP' );
 
 is( $ball->get_prop_colour, "blue", '$ball->colour is now blue' );
 
 # MSG_WATCH
-$S2->syswrite( "\7" . "\0\0\0\x0a" .
-               "\x02" . "\x02" .
-               "\x26" . "colour" .
-               "\x00" );
+$S2->syswrite( $C2S{WATCH_COLOUR} );
 
-$expect = "\x84" . "\0\0\0\0";
-
-is_hexstr( wait_for_message, $expect, 'received MSG_WATCHING response' );
+is_hexstr( wait_for_message, $S2C{WATCH_COLOUR}, 'received MSG_WATCHING response' );
 
 $ball->set_prop_colour( "orange" );
 
-$expect = "\x09" . "\0\0\0\x12" .
-          "\x02" . "\x02" .
-          "\x26" . "colour" .
-          "\x02" . "\x01" .
-          "\x26" . "orange";
+is_hexstr( wait_for_message, $S2C{UPDATE_COLOUR_ORANGE}, 'received property MSG_UPDATE notice' );
 
-is_hexstr( wait_for_message, $expect, 'received property MSG_UPDATE notice' );
-
-# MSG_OK
-$S2->syswrite( "\x80" . "\0\0\0\0" );
+$S2->syswrite( $MSG_OK );
 
 # Test the smashed properties
 
 $ball->set_prop_size( 200 );
 
-$expect = "\x09" . "\0\0\0\x0b" .
-          "\x02" . "\x02" .
-          "\x24" . "size" .
-          "\x02" . "\x01" .
-          "\x02" . "\xc8"; # 0xC8 == 200
+is_hexstr( wait_for_message, $S2C{UPDATE_SIZE_200}, 'received property MSG_UPDATE notice on smashed prop' );
 
-is_hexstr( wait_for_message, $expect, 'received property MSG_UPDATE notice on smashed prop' );
+$S2->syswrite( $MSG_OK );
 
-# MSG_OK
-$S2->syswrite( "\x80" . "\0\0\0\0" );
+$S2->syswrite( $C2S{CALL_ADD} );
 
-# MSG_CALL
-$S2->syswrite( "\1" . "\0\0\0\x10" . 
-               "\x02" . "\x01" .
-               "\x28" . "add_ball" .
-               "\x84" . "\0\0\0\2" );
-
-$expect = "\x82" . "\0\0\0\0";
-
-is_hexstr( wait_for_message, $expect, 'serverstream after response to "add_ball"' );
+is_hexstr( wait_for_message, $S2C{CALL_ADD}, 'serverstream after response to "add_ball"' );
 
 is_deeply( $bag->get_prop_colours,
            { blue => 1, green => 1, yellow => 1, orange => 1 },
            '$bag colours after add' );
 
-# MSG_CALL
-$S2->syswrite( "\1" . "\0\0\0\x12" .
-               "\x02" . "\x01" .
-               "\x28" . "get_ball" .
-               "\x26" . "orange" );
+$S2->syswrite( $C2S{CALL_GET} );
 
-$expect = "\x82" . "\0\0\0\5" .
-          "\x84" . "\0\0\0\2";
-
-is_hexstr( wait_for_message, $expect, 'orange ball has same identity as red one earlier' );
+is_hexstr( wait_for_message, $S2C{CALL_GET}, 'orange ball has same identity as red one earlier' );
 
 # Test object destruction
 
@@ -295,14 +173,9 @@ my $obj_destroyed = 0;
 
 $ball->destroy( on_destroyed => sub { $obj_destroyed = 1 } );
 
-# MSG_DESTROY
-$expect = "\x0a" . "\0\0\0\2" .
-          "\x02" . "\x02";
+is_hexstr( wait_for_message, $S2C{DESTROY}, 'MSG_DESTROY from server' );
 
-is_hexstr( wait_for_message, $expect, 'MSG_DESTROY from server' );
-
-# MSG_OK
-$S2->syswrite( "\x80" . "\0\0\0\0" );
+$S2->syswrite( $MSG_OK );
 
 wait_for { $obj_destroyed };
 is( $obj_destroyed, 1, 'object gets destroyed' );
