@@ -1,6 +1,7 @@
-use Test::More tests => 9;
+use Test::More tests => 10;
 
 use_ok( "Tangence" );
+use_ok( "Tangence::Client" );
 use_ok( "Tangence::Constants" );
 use_ok( "Tangence::Object" );
 use_ok( "Tangence::ObjectProxy" );
