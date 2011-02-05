@@ -3,7 +3,7 @@
 #
 #  (C) Paul Evans, 2011 -- leonerd@leonerd.org.uk
 
-package Tangence::Server::Stream;
+package Tangence::Server;
 
 use strict;
 use warnings;
