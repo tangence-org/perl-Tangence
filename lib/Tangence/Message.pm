@@ -120,7 +120,7 @@ sub _unpack_meta
       my ( $id, $class ) = unpack( "NZ*", $self->{record} ); substr( $self->{record}, 0, 5 + length $class, "" );
       my $smasharr = $self->unpack_typed( 'list(any)' );
 
-      my $smashkeys = $stream->{peer_hasclass}->{$class}->[0];
+      my $smashkeys = $stream->peer_hasclass->{$class}->[0];
 
       my $smashdata;
       $smashdata->{$smashkeys->[$_]} = $smasharr->[$_] for 0 .. $#$smasharr;
@@ -134,7 +134,7 @@ sub _unpack_meta
       $stream->make_schema( $class, $schema );
 
       my $smashkeys = $self->unpack_typed( 'list(str)' );
-      $stream->{peer_hasclass}->{$class} = [ $smashkeys ];
+      $stream->peer_hasclass->{$class} = [ $smashkeys ];
    }
    else {
       die sprintf("TODO: Data stream meta-operation 0x%02x", $num);
@@ -277,12 +277,12 @@ sub pack_obj
 
       $d->{destroyed} and croak "Cannot pack destroyed object $d";
 
-      if( !$stream->{peer_hasobj}->{$id} ) {
+      if( !$stream->peer_hasobj->{$id} ) {
          my $class = ref $d;
 
          my $smashkeys;
 
-         if( !$stream->{peer_hasclass}->{$class} ) {
+         if( !$stream->peer_hasclass->{$class} ) {
             my $schema = $class->introspect;
 
             $self->_pack_leader( DATA_META, DATAMETA_CLASS );
@@ -295,10 +295,10 @@ sub pack_obj
 
             $self->pack_typed( 'list(str)', $smashkeys );
 
-            $stream->{peer_hasclass}->{$class} = [ $smashkeys ];
+            $stream->peer_hasclass->{$class} = [ $smashkeys ];
          }
          else {
-            $smashkeys = $stream->{peer_hasclass}->{$class}->[0];
+            $smashkeys = $stream->peer_hasclass->{$class}->[0];
          }
 
          $self->_pack_leader( DATA_META, DATAMETA_CONSTRUCT );
@@ -318,7 +318,7 @@ sub pack_obj
          $self->pack_typed( 'list(any)', $smasharr );
 
          weaken( my $weakstream = $stream );
-         $stream->{peer_hasobj}->{$id} = $d->subscribe_event( 
+         $stream->peer_hasobj->{$id} = $d->subscribe_event( 
             destroy => sub { $weakstream->object_destroyed( @_ ) if $weakstream },
          );
       }

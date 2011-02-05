@@ -34,6 +34,10 @@ my %REQ_METHOD = (
    MSG_GETREGISTRY, 'handle_request_GETREGISTRY',
 );
 
+# Accessors for Tangence::Message decoupling
+sub peer_hasobj   { shift->{peer_hasobj} ||= {} }
+sub peer_hasclass { shift->{peer_hasclass} ||= {} }
+
 sub _stream_closed
 {
    my $self = shift;
