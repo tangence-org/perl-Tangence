@@ -19,7 +19,7 @@ sub _init
    my $self = shift;
    my ( $params ) = @_;
 
-   $self->{registry} = delete $params->{registry};
+   $self->registry( delete $params->{registry} );
 
    $params->{on_closed} ||= undef;
 }

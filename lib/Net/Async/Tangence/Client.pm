@@ -60,7 +60,7 @@ sub configure
          croak "Expected 'on_error' to be CODE reference or strings 'croak' or 'carp'";
       }
 
-      $self->{on_error} = $on_error;
+      $self->on_error( $on_error );
    }
 
    $self->SUPER::configure( %params );

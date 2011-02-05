@@ -38,9 +38,9 @@ $server->on_stream( IO::Async::Stream->new( handle => $S1a ) );
 my $conn1 = Net::Async::Tangence::Client->new( handle => $S1b );
 $loop->add( $conn1 );
 
-wait_for { defined $conn1->get_root };
+wait_for { defined $conn1->rootobj };
 
-my $ballproxy1 = $conn1->get_root;
+my $ballproxy1 = $conn1->rootobj;
 
 my $colour1;
 
@@ -60,9 +60,9 @@ $server->on_stream( IO::Async::Stream->new( handle => $S2a ) );
 my $conn2 = Net::Async::Tangence::Client->new( handle => $S2b );
 $loop->add( $conn2 );
 
-wait_for { defined $conn2->get_root };
+wait_for { defined $conn2->rootobj };
 
-my $ballproxy2 = $conn2->get_root;
+my $ballproxy2 = $conn2->rootobj;
 
 my $colour2;
 

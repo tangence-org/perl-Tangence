@@ -38,13 +38,27 @@ my %REQ_METHOD = (
 sub peer_hasobj   { shift->{peer_hasobj} ||= {} }
 sub peer_hasclass { shift->{peer_hasclass} ||= {} }
 
+sub identity
+{
+   my $self = shift;
+   $self->{identity} = shift if @_;
+   return $self->{identity};
+}
+
+sub registry
+{
+   my $self = shift;
+   $self->{registry} = shift if @_;
+   return $self->{registry};
+}
+
 sub _stream_closed
 {
    my $self = shift;
 
-   foreach my $id ( keys %{ $self->{peer_hasobj} } ) {
+   foreach my $id ( keys %{ $self->peer_hasobj } ) {
       my $obj = $self->get_by_id( $id );
-      $obj->unsubscribe_event( "destroy", delete $self->{peer_hasobj}->{$id} );
+      $obj->unsubscribe_event( "destroy", delete $self->peer_hasobj->{$id} );
    }
 }
 
@@ -89,7 +103,7 @@ sub object_destroyed
 
    my $objid = $obj->id;
 
-   delete $self->{peer_hasobj}->{$objid};
+   delete $self->peer_hasobj->{$objid};
 
    $self->request(
       request => Tangence::Message->new( $self, MSG_DESTROY )

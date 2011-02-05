@@ -131,7 +131,7 @@ sub _unpack_meta
       my ( $class ) = unpack( "Z*", $self->{record} ); substr( $self->{record}, 0, 1 + length $class, "" );
       my $schema = $self->unpack_typed( 'dict(any)' );
 
-      $stream->make_schema( $class, $schema );
+      $stream->schemata->{$class} = $schema;
 
       my $smashkeys = $self->unpack_typed( 'list(str)' );
       $stream->peer_hasclass->{$class} = [ $smashkeys ];

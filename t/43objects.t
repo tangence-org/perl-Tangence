@@ -42,9 +42,9 @@ $server->on_stream( IO::Async::Stream->new( handle => $S1 ) );
 my $conn = Net::Async::Tangence::Client->new( handle => $S2 );
 $loop->add( $conn );
 
-wait_for { defined $conn->get_root };
+wait_for { defined $conn->rootobj };
 
-my $bagproxy = $conn->get_root;
+my $bagproxy = $conn->rootobj;
 
 my $ballproxy;
 

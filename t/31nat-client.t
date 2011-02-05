@@ -69,7 +69,7 @@ $S2->syswrite( "\x82" . "\0\0\0\xcf" .
                "\xe1" . "\0\0\0\1" . "t::Bag\0" . "\x40" .
                "\x84" . "\0\0\0\1" );
 
-wait_for { defined $conn->get_root };
+wait_for { defined $conn->rootobj };
 
 $S2->syswrite( "\x82" . "\0\0\0\xf8" .
                "\xe2" . "Tangence::Registry\0" .
@@ -86,9 +86,9 @@ $S2->syswrite( "\x82" . "\0\0\0\xf8" .
                "\xe1" . "\0\0\0\0" . "Tangence::Registry\0" . "\x40" .
                "\x84" . "\0\0\0\0" );
 
-wait_for { defined $conn->get_registry };
+wait_for { defined $conn->registry };
 
-my $bagproxy = $conn->get_root;
+my $bagproxy = $conn->rootobj;
 
 # We'll need to wait for a result, where the result is 'undef' later... To do
 # that neatly, we'll have an array that contains one element

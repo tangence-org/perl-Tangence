@@ -17,11 +17,14 @@ use Carp;
 use Tangence::Constants;
 use Tangence::Server::Context;
 
+sub subscriptions { shift->{subscriptions} ||= [] }
+sub watches       { shift->{watches} ||= [] }
+
 sub shutdown
 {
    my $self = shift;
 
-   if( my $subscriptions = $self->{subscriptions} ) {
+   if( my $subscriptions = $self->subscriptions ) {
       foreach my $s ( @$subscriptions ) {
          my ( $object, $event, $id ) = @$s;
          $object->unsubscribe_event( $event, $id );
@@ -30,7 +33,7 @@ sub shutdown
       undef @$subscriptions;
    }
 
-   if( my $watches = $self->{watches} ) {
+   if( my $watches = $self->watches ) {
       foreach my $w ( @$watches ) {
          my ( $object, $prop, $id ) = @$w;
          $object->unwatch_property( $prop, $id );
@@ -40,19 +43,12 @@ sub shutdown
    }
 }
 
-sub identity
-{
-   my $self = shift;
-   return $self->{identity};
-}
-
 sub get_by_id
 {
    my $self = shift;
    my ( $id ) = @_;
 
-   my $registry = $self->{registry};
-   return $registry->get_by_id( $id );
+   return $self->registry->get_by_id( $id );
 }
 
 sub handle_request_CALL
@@ -64,9 +60,7 @@ sub handle_request_CALL
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
-   my $registry = $self->{registry};
-
-   my $object = $registry->get_by_id( $objid ) or
+   my $object = $self->registry->get_by_id( $objid ) or
       return $ctx->responderr( "No such object with id $objid" );
 
    my $response = eval { $object->handle_request_CALL( $ctx, $message ) };
@@ -85,9 +79,7 @@ sub handle_request_SUBSCRIBE
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
-   my $registry = $self->{registry};
-
-   my $object = $registry->get_by_id( $objid ) or
+   my $object = $self->registry->get_by_id( $objid ) or
       return $ctx->responderr( "No such object with id $objid" );
 
    my $id = $object->subscribe_event( $event,
@@ -103,7 +95,7 @@ sub handle_request_SUBSCRIBE
       } )
    );
 
-   push @{ $self->{subscriptions} }, [ $object, $event, $id ];
+   push @{ $self->subscriptions }, [ $object, $event, $id ];
 
    $ctx->respond( Tangence::Message->new( $self, MSG_SUBSCRIBED ) );
 }
@@ -118,9 +110,7 @@ sub handle_request_UNSUBSCRIBE
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
-   my $registry = $self->{registry};
-
-   my $object = $registry->get_by_id( $objid ) or
+   my $object = $self->registry->get_by_id( $objid ) or
       return $ctx->responderr( "No such object with id $objid" );
 
    my $edef = $object->can_event( $event ) or
@@ -128,8 +118,8 @@ sub handle_request_UNSUBSCRIBE
 
    # Delete from subscriptions and obtain id
    my $id;
-   @{ $self->{subscriptions} } = grep { $_->[0] == $object and $_->[1] eq $event and ( $id = $_->[2], 0 ) or 1 }
-                                 @{ $self->{subscriptions} };
+   @{ $self->subscriptions } = grep { $_->[0] == $object and $_->[1] eq $event and ( $id = $_->[2], 0 ) or 1 }
+                                 @{ $self->subscriptions };
    defined $id or
       return $ctx->responderr( "Not subscribed to $event" );
 
@@ -147,9 +137,7 @@ sub handle_request_GETPROP
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
-   my $registry = $self->{registry};
-
-   my $object = $registry->get_by_id( $objid ) or
+   my $object = $self->registry->get_by_id( $objid ) or
       return $ctx->responderr( "No such object with id $objid" );
 
    my $response = eval { $object->handle_request_GETPROP( $ctx, $message ) };
@@ -167,9 +155,7 @@ sub handle_request_SETPROP
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
-   my $registry = $self->{registry};
-
-   my $object = $registry->get_by_id( $objid ) or
+   my $object = $self->registry->get_by_id( $objid ) or
       return $ctx->responderr( "No such object with id $objid" );
 
    my $response = eval { $object->handle_request_SETPROP( $ctx, $message ) };
@@ -189,9 +175,7 @@ sub handle_request_WATCH
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
-   my $registry = $self->{registry};
-
-   my $object = $registry->get_by_id( $objid ) or
+   my $object = $self->registry->get_by_id( $objid ) or
       return $ctx->responderr( "No such object with id $objid" );
 
    my $pdef = $object->can_property( $prop ) or
@@ -228,9 +212,7 @@ sub handle_request_UNWATCH
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
-   my $registry = $self->{registry};
-
-   my $object = $registry->get_by_id( $objid ) or
+   my $object = $self->registry->get_by_id( $objid ) or
       return $ctx->responderr( "No such object with id $objid" );
 
    my $pdef = $object->can_property( $prop ) or
@@ -238,8 +220,8 @@ sub handle_request_UNWATCH
 
    # Delete from watches and obtain id
    my $id;
-   @{ $self->{watches} } = grep { $_->[0] == $object and $_->[1] eq $prop and ( $id = $_->[2], 0 ) or 1 }
-                           @{ $self->{watches} };
+   @{ $self->watches } = grep { $_->[0] == $object and $_->[1] eq $prop and ( $id = $_->[2], 0 ) or 1 }
+                         @{ $self->watches };
    defined $id or
       return $ctx->responderr( "Not watching $prop" );
 
@@ -257,10 +239,9 @@ sub handle_request_GETROOT
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
-   my $registry = $self->{registry};
-   my $root = $registry->get_by_id( 1 );
+   my $root = $self->registry->get_by_id( 1 );
 
-   $self->{identity} = $identity;
+   $self->identity( $identity );
 
    $ctx->respond( Tangence::Message->new( $self, MSG_RESULT )
       ->pack_obj( $root )
@@ -274,10 +255,8 @@ sub handle_request_GETREGISTRY
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
-   my $registry = $self->{registry};
-
    $ctx->respond( Tangence::Message->new( $self, MSG_RESULT )
-      ->pack_obj( $registry )
+      ->pack_obj( $self->registry )
    );
 }
 
@@ -316,7 +295,7 @@ sub _install_watch
 
    my $id = $object->watch_property( $prop, %callbacks );
 
-   push @{ $self->{watches} }, [ $object, $prop, $id ];
+   push @{ $self->watches }, [ $object, $prop, $id ];
 }
 
 sub object_destroyed
@@ -324,7 +303,7 @@ sub object_destroyed
    my $self = shift;
    my ( $obj ) = @_;
 
-   if( my $subs = $self->{subscriptions} ) {
+   if( my $subs = $self->subscriptions ) {
       my $i = 0;
       while( $i < @$subs ) {
          my $s = $subs->[$i];
@@ -339,7 +318,7 @@ sub object_destroyed
       }
    }
 
-   if( my $watches = $self->{watches} ) {
+   if( my $watches = $self->watches ) {
       my $i = 0;
       while( $i < @$watches ) {
          my $w = $watches->[$i];
