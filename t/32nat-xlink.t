@@ -37,12 +37,12 @@ my ( $S1, $S2 ) = $loop->socketpair() or die "Cannot create socket pair - $!";
 
 $server->on_stream( IO::Async::Stream->new( handle => $S1 ) );
 
-my $conn = Net::Async::Tangence::Client->new( handle => $S2 );
-$loop->add( $conn );
+my $client = Net::Async::Tangence::Client->new( handle => $S2 );
+$loop->add( $client );
 
-wait_for { defined $conn->rootobj };
+wait_for { defined $client->rootobj };
 
-my $ballproxy = $conn->rootobj;
+my $ballproxy = $client->rootobj;
 
 my $result;
 
@@ -204,5 +204,5 @@ memory_cycle_ok( $ballproxy, '$ballproxy has no memory cycles' );
 # Deconfigure the connection otherwise Devel::Cycle will throw
 #   Unhandled type: GLOB at /usr/share/perl5/Devel/Cycle.pm line 107.
 # on account of filehandles
-$conn->configure( transport => undef );
-memory_cycle_ok( $conn, '$conn has no memory cycles' );
+$client->configure( transport => undef );
+memory_cycle_ok( $client, '$client has no memory cycles' );

@@ -34,26 +34,26 @@ my ( $S1, $S2 ) = $loop->socketpair() or die "Cannot create socket pair - $!";
    }
 }
 
-my $conn = Net::Async::Tangence::Client->new(
+my $client = Net::Async::Tangence::Client->new(
    handle => $S1,
    on_error => sub { die "Test died early - $_[0]" },
    identity => "testscript",
 );
-$loop->add( $conn );
+$loop->add( $client );
 
 is_hexstr( wait_for_message, $C2S{GETROOT}, 'client stream initially contains MSG_GETROOT' );
 
 $S2->syswrite( $S2C{GETROOT} );
 
-wait_for { defined $conn->rootobj };
+wait_for { defined $client->rootobj };
 
 is_hexstr( wait_for_message, $C2S{GETREGISTRY}, 'client stream initially contains MSG_GETREGISTRY' );
 
 $S2->syswrite( $S2C{GETREGISTRY} );
 
-wait_for { defined $conn->registry };
+wait_for { defined $client->registry };
 
-my $bagproxy = $conn->rootobj;
+my $bagproxy = $client->rootobj;
 
 # We'll need to wait for a result, where the result is 'undef' later... To do
 # that neatly, we'll have an array that contains one element
@@ -293,8 +293,8 @@ is_hexstr( wait_for_message, $MSG_OK, 'client stream contains MSG_OK after MSG_D
 
 memory_cycle_ok( $ballproxy, '$ballproxy has no memory cycles' );
 
-# Deconfigure the connection otherwise Devel::Cycle will throw
+# Deconfigure the clientection otherwise Devel::Cycle will throw
 #   Unhandled type: GLOB at /usr/share/perl5/Devel/Cycle.pm line 107.
 # on account of filehandles
-$conn->configure( transport => undef );
-memory_cycle_ok( $conn, '$conn has no memory cycles' );
+$client->configure( transport => undef );
+memory_cycle_ok( $client, '$client has no memory cycles' );
