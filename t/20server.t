@@ -19,7 +19,9 @@ $Tangence::Message::SORT_HASH_KEYS = 1;
 use t::Ball;
 use t::Bag;
 
-my $registry = Tangence::Registry->new();
+my $registry = Tangence::Registry->new(
+   tanfile => "t/Bag.tan",
+);
 my $bag = $registry->construct(
    "t::Bag",
    colours => [ qw( red blue green yellow ) ],
