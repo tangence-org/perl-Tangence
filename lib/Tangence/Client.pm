@@ -33,7 +33,7 @@ This class is a mixin, it cannot be directly constructed
     my $self = shift;
     $self->SUPER::connect( @_ );
 
-    $self->_do_initial;
+    $self->tangence_connected;
 
     wait_for { defined $self->rootobj };
  }
@@ -118,7 +118,7 @@ sub on_error
    return $self->{on_error};
 }
 
-=head2 $client->_do_initial( %args )
+=head2 $client->tangence_connected( %args )
 
 Once the base connection to the server has been established, this method
 should be called to perform the initial work of requesting the root object and
@@ -146,7 +146,7 @@ be passed a L<Tangence::ObjectProxy> to the registry.
 
 =cut
 
-sub _do_initial
+sub tangence_connected
 {
    my $self = shift;
    my %args = @_;

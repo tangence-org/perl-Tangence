@@ -24,7 +24,7 @@ sub new
    my $self = $class->SUPER::new( %args );
 
    # It's possible a handle was passed in the constructor.
-   $self->_do_initial( %args ) if defined $self->transport;
+   $self->tangence_connected( %args ) if defined $self->transport;
 
    return $self;
 }
@@ -134,7 +134,7 @@ sub connect_exec
    );
 
    $args{on_connected}->( $self ) if $args{on_connected};
-   $self->_do_initial( %args );
+   $self->tangence_connected( %args );
 }
 
 sub connect_ssh
@@ -160,7 +160,7 @@ sub connect_tcp
          my ( $self ) = @_;
 
          $args{on_connected}->( $self ) if $args{on_connected};
-         $self->_do_initial( %args );
+         $self->tangence_connected( %args );
       },
 
       on_connect_error => sub { print STDERR "Cannot connect\n"; },
@@ -182,7 +182,7 @@ sub connect_unix
          my ( $self ) = @_;
 
          $args{on_connected}->( $self ) if $args{on_connected};
-         $self->_do_initial( %args );
+         $self->tangence_connected( %args );
       },
 
       on_connect_error => sub { print STDERR "Cannot connect\n"; },
