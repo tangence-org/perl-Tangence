@@ -8,6 +8,11 @@ package Tangence::Message;
 use strict;
 use warnings;
 
+# Currently depends on atleast Perl 5.10.0 to provide the > format modifier
+# for pack, to specify big-endian integers. If this code can be modified, this
+# restriction could be listed.
+use 5.010; 
+
 our $VERSION = '0.03';
 
 use Carp;
