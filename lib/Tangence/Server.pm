@@ -14,6 +14,8 @@ our $VERSION = '0.03';
 
 use Carp;
 
+use Scalar::Util qw( weaken );
+
 use Tangence::Constants;
 use Tangence::Server::Context;
 
@@ -158,17 +160,19 @@ sub handle_request_SUBSCRIBE
    my $object = $self->registry->get_by_id( $objid ) or
       return $ctx->responderr( "No such object with id $objid" );
 
+   weaken( my $weakself = $self );
+
    my $id = $object->subscribe_event( $event,
-      $self->_capture_weakself( sub {
-         my $self = shift or return;
+      sub {
+         $weakself or return;
          my $object = shift;
 
-         my $message = $object->generate_message_EVENT( $self, $event, @_ );
-         $self->request(
+         my $message = $object->generate_message_EVENT( $weakself, $event, @_ );
+         $weakself->request(
             request     => $message,
             on_response => sub { "IGNORE" },
          );
-      } )
+      }
    );
 
    push @{ $self->subscriptions }, [ $object, $event, $id ];
@@ -354,19 +358,21 @@ sub _install_watch
    my $pdef = $object->can_property( $prop );
    my $dim = $pdef->{dim};
 
+   weaken( my $weakself = $self );
+
    my %callbacks;
    foreach my $name ( @{ CHANGETYPES->{$dim} } ) {
       my $how = $change_values{$name};
-      $callbacks{$name} = $self->_capture_weakself( sub {
-         my $self = shift or return;
+      $callbacks{$name} = sub {
+         $weakself or return;
          my $object = shift;
 
-         my $message = $object->generate_message_UPDATE( $self, $prop, $how, @_ );
-         $self->request(
+         my $message = $object->generate_message_UPDATE( $weakself, $prop, $how, @_ );
+         $weakself->request(
             request     => $message,
             on_response => sub { "IGNORE" },
          );
-      } );
+      };
    }
 
    my $id = $object->watch_property( $prop, %callbacks );
