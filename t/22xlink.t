@@ -13,6 +13,7 @@ use Tangence::Server;
 use Tangence::Client;
 
 use t::Ball;
+use t::TestServerClient;
 
 my $registry = Tangence::Registry->new();
 my $ball = $registry->construct(
@@ -21,10 +22,8 @@ my $ball = $registry->construct(
    size   => 100,
 );
 
-my $server = TestServer->new();
+my ( $server, $client ) = make_serverclient;
 $server->registry( $registry );
-
-my $client = TestClient->new();
 $client->_do_initial;
 
 my $ballproxy = $client->rootobj;
@@ -163,42 +162,3 @@ memory_cycle_ok( $ball, '$ball has no memory cycles' );
 memory_cycle_ok( $registry, '$registry has no memory cycles' );
 memory_cycle_ok( $ballproxy, '$ballproxy has no memory cycles' );
 memory_cycle_ok( $client, '$client has no memory cycles' );
-
-package TestServer;
-
-use strict;
-use base qw( Tangence::Server );
-
-sub new
-{
-   return bless {}, shift;
-}
-
-sub tangence_write
-{
-   my $self = shift;
-   my ( $message ) = @_;
-   $client->tangence_readfrom( $message );
-   length($message) == 0 or die "Client failed to read all Server wrote";
-}
-
-package TestClient;
-
-use strict;
-use base qw( Tangence::Client );
-
-sub new
-{
-   my $self = bless {}, shift;
-   $self->identity( "testscript" );
-   $self->on_error( sub { die "Test failed early - $_[0]" } );
-   return $self;
-}
-
-sub tangence_write
-{
-   my $self = shift;
-   my ( $message ) = @_;
-   $server->tangence_readfrom( $message );
-   length($message) == 0 or die "Server failed to read all Client wrote";
-}
