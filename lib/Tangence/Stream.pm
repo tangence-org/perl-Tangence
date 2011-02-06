@@ -40,9 +40,8 @@ C<Tangence::Stream> - base class for C<Tangence> stream-handling mixins
 
 =head1 DESCRIPTION
 
-This module provides a base for L<Tangence::Client> and
-L<Tangence::Server::Stream>. It is not intended to be used directly by
-C<Tangence> implementation code.
+This module provides a base for L<Tangence::Client> and L<Tangence::Server>.
+It is not intended to be used directly by C<Tangence> implementation code.
 
 It provides the basic layer of message serialisation, deserialisation, and
 dispatching to methods that would handle the messages. Higher level classes
