@@ -98,9 +98,10 @@ sub registry
    return $self->{registry};
 }
 
-sub shutdown
+sub tangence_closed
 {
    my $self = shift;
+   $self->SUPER::tangence_closed;
 
    if( my $subscriptions = $self->subscriptions ) {
       foreach my $s ( @$subscriptions ) {

@@ -35,8 +35,6 @@ sub configure
          my $self = shift;
 
          $on_closed->( $self ) if $on_closed;
-
-         $self->shutdown;
       };
    }
 
