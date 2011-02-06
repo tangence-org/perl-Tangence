@@ -43,11 +43,11 @@ $loop->add( $conn );
 
 is_hexstr( wait_for_message, $C2S{GETROOT}, 'client stream initially contains MSG_GETROOT' );
 
-is_hexstr( wait_for_message, $C2S{GETREGISTRY}, 'client stream initially contains MSG_GETREGISTRY' );
-
 $S2->syswrite( $S2C{GETROOT} );
 
 wait_for { defined $conn->rootobj };
+
+is_hexstr( wait_for_message, $C2S{GETREGISTRY}, 'client stream initially contains MSG_GETREGISTRY' );
 
 $S2->syswrite( $S2C{GETREGISTRY} );
 
@@ -188,7 +188,6 @@ $ballproxy->watch_property(
 
 is_hexstr( wait_for_message, $C2S{WATCH_COLOUR}, 'client stream contains MSG_WATCH' );
 
-# MSG_WATCHING
 $S2->syswrite( $S2C{WATCH_COLOUR} );
 
 wait_for { $watched };
@@ -221,7 +220,6 @@ wait_for { $colourchanged };
 
 is( $secondcolour, "green", '$secondcolour is green after second watch' );
 
-# MSG_UPDATE
 $S2->syswrite( $S2C{UPDATE_COLOUR_YELLOW} );
 
 $colourchanged = 0;
@@ -253,7 +251,6 @@ is( $watched, 1, 'watch_property on smashed prop is synchronous' );
 
 is( $size, 100, 'watch_property on smashed prop gives initial value' );
 
-# MSG_UPDATE
 $S2->syswrite( $S2C{UPDATE_SIZE_200} );
 
 undef $size;
@@ -287,7 +284,6 @@ $ballproxy->subscribe_event(
    on_fire => sub { $proxy_destroyed = 1 },
 );
 
-# MSG_DESTROY
 $S2->syswrite( $S2C{DESTROY} );
 
 wait_for { $proxy_destroyed };

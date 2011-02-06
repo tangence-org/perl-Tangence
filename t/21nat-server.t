@@ -96,7 +96,6 @@ my $howhigh;
 
 $ball->subscribe_event( bounced => sub { ( $cb_self, $howhigh ) = @_; } );
 
-# MSG_CALL
 $S2->syswrite( $C2S{CALL_BOUNCE} );
 
 wait_for { defined $howhigh };
@@ -134,7 +133,6 @@ is_hexstr( wait_for_message, $MSG_OK, 'received OK after MSG_SETPROP' );
 
 is( $ball->get_prop_colour, "blue", '$ball->colour is now blue' );
 
-# MSG_WATCH
 $S2->syswrite( $C2S{WATCH_COLOUR} );
 
 is_hexstr( wait_for_message, $S2C{WATCH_COLOUR}, 'received MSG_WATCHING response' );
