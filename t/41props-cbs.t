@@ -16,9 +16,7 @@ my $obj = $registry->construct(
    "t::TestObj",
 );
 
-my ( $server, $client ) = make_serverclient;
-$server->registry( $registry );
-$client->_do_initial;
+my ( $server, $client ) = make_serverclient( $registry );
 
 my $proxy = $client->rootobj;
 

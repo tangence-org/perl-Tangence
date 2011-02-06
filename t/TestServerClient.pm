@@ -10,11 +10,17 @@ use Scalar::Util qw( weaken );
 
 sub make_serverclient
 {
+   my ( $registry ) = @_;
+
    my $server = TestServer->new();
    my $client = TestClient->new();
 
+   $server->registry( $registry );
+
    weaken( $server->{client} = $client );
    weaken( $client->{server} = $server );
+
+   $client->_do_initial;
 
    return ( $server, $client );
 }

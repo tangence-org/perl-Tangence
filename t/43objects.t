@@ -21,9 +21,7 @@ my $bag = $registry->construct(
 my $ball = $bag->get_ball( "red" );
 my $ballid = $ball->id;
 
-my ( $server, $client ) = make_serverclient;
-$server->registry( $registry );
-$client->_do_initial;
+my ( $server, $client ) = make_serverclient( $registry );
 
 my $bagproxy = $client->rootobj;
 

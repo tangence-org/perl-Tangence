@@ -22,9 +22,7 @@ my $ball = $registry->construct(
    size   => 100,
 );
 
-my ( $server, $client ) = make_serverclient;
-$server->registry( $registry );
-$client->_do_initial;
+my ( $server, $client ) = make_serverclient( $registry );
 
 my $ballproxy = $client->rootobj;
 
