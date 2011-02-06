@@ -36,7 +36,7 @@ sub configure
          my ( $self ) = @_;
          $on_closed->( $self ) if $on_closed;
 
-         $self->_stream_closed;
+         $self->tangence_closed;
 
          if( my $parent = $self->parent ) {
             $parent->remove_child( $self );

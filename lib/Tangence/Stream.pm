@@ -97,7 +97,15 @@ sub identity
    return $self->{identity};
 }
 
-sub _stream_closed
+=head2 $stream->tangence_closed
+
+Informs the object that the underlying connection has now been closed, and any
+attachments to C<Tangence::Object> or C<Tangence::ObjectProxy> instances
+should now be dropped.
+
+=cut
+
+sub tangence_closed
 {
    my $self = shift;
 
