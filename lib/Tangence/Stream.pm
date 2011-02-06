@@ -213,9 +213,9 @@ sub request
    my $request = $args{request} or croak "Expected 'request'";
    my $on_response = $args{on_response} or croak "Expected 'on_response'";
 
-   $self->tangence_write( $request->bytes );
-
    push @{ $self->{responder_queue} }, $on_response;
+
+   $self->tangence_write( $request->bytes );
 }
 
 =head2 $stream->respond( $token, $message )
