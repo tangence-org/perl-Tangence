@@ -12,7 +12,7 @@ use warnings;
 # It is provided simply to keep CPAN happy:
 #   cpan -i Tangence
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 =head1 NAME
 

@@ -1,5 +1,11 @@
 Revision history for Tangence
 
+0.04    CHANGES:
+         * Properly split out lower-level abstract Tangence code, from
+           IO::Async-based Net::Async::Tangence wrappers
+         * Added some initial documentation to Tangence::Stream, ::Client and
+           ::Server
+
 0.03    CHANGES:
          * Weaken references between objects and connections to remove
            memory cycles

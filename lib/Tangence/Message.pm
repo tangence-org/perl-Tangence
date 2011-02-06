@@ -13,7 +13,7 @@ use warnings;
 # restriction could be listed.
 use 5.010; 
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 use Carp;
 
