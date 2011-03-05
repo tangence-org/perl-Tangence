@@ -35,5 +35,4 @@ Paul Evans <leonerd@leonerd.org.uk>
 
 =cut
 
-# Keep perl happy; keep Britain tidy
-1;
+0x55AA;

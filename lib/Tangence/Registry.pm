@@ -129,11 +129,10 @@ sub get_meta_class
    return Tangence::Meta::Class->new( $class );
 }
 
-# Keep perl happy; keep Britain tidy
-1;
-
-__END__
-
 =head1 AUTHOR
 
 Paul Evans <leonerd@leonerd.org.uk>
+
+=cut
+
+0x55AA;

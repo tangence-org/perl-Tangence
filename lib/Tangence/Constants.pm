@@ -168,11 +168,10 @@ use constant DATA_META   => 7; # Meta stream operation: num=:
 use constant DATAMETA_CONSTRUCT => 1; # Construct: num(id), typenameZ
 use constant DATAMETA_CLASS     => 2; # Class: typenameZ, schema
 
-# Keep perl happy; keep Britain tidy
-1;
-
-__END__
-
 =head1 AUTHOR
 
 Paul Evans <leonerd@leonerd.org.uk>
+
+=cut
+
+0x55AA;
