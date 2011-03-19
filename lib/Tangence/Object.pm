@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2010 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2010-2011 -- leonerd@leonerd.org.uk
 
 package Tangence::Object;
 
@@ -26,6 +26,22 @@ Tangence::Meta::Class->renew(
       },
    },
 );
+
+=head1 NAME
+
+C<Tangence::Object> - base class for accessible objects in a C<Tangence> server
+
+=head1 DESCRIPTION
+
+This class acts as a base class for the accessible objects in a L<Tangence>
+server. All the objects actually created and made accessible to clients will
+be subclasses of this one, including internally-created objects such as
+L<Tangence::Registry>.
+
+These objects are not directly constructed by calling the C<new> class method;
+instead the C<Tangence::Registry> should be used to construct one.
+
+=cut
 
 sub new
 {
@@ -87,6 +103,20 @@ sub _new_property
    $self->{properties}->{$prop} = [ $initial, [] ];
 }
 
+=head1 METHODS
+
+=cut
+
+=head2 $obj->destroy
+
+Requests that the object destroy itself, informing all clients that are aware
+of it. Once they all report that they have dropped the object, the object is
+deconstructed for real.
+
+Not to be confused with Perl's own C<DESTROY> method.
+
+=cut
+
 sub destroy
 {
    my $self = shift;
@@ -125,17 +155,37 @@ sub _destroy_really
    $self->{destroyed} = 1;
 }
 
+=head2 $id = $obj->id
+
+Returns the object's C<Tangence> ID number
+
+=cut
+
 sub id
 {
    my $self = shift;
    return $self->{id};
 }
 
+=head2 $description = $obj->describe
+
+Returns a textual description of the object, for internal debugging purposes.
+Subclasses are encouraged to override this method to return something more
+descriptive within their domain of interest
+
+=cut
+
 sub describe
 {
    my $self = shift;
    return ref $self;
 }
+
+=head2 $registry = $obj->registry
+
+Returns the L<Tangence::Registry> that constructed this object.
+
+=cut
 
 sub registry
 {
@@ -200,6 +250,13 @@ sub introspect
    return $self->_meta->introspect;
 }
 
+=head2 $obj->fire_event( $event, @args )
+
+Fires the named event on the object. Each event subscription function will be
+invoked with the given arguments.
+
+=cut
+
 sub fire_event
 {
    my $self = shift;
@@ -216,6 +273,19 @@ sub fire_event
    }
 }
 
+=head2 $id = $obj->subscribe_event( $event, $callback )
+
+Subscribes an event-handling callback CODE ref to the named event. When the
+event is fired by C<fire_event> this callback will be invoked, being passed
+the object reference and the event's arguments.
+
+ $callback->( $obj, @args )
+
+Returns an opaque ID value that can be used to remove this subscription by
+calling C<unsubscribe_event>.
+
+=cut
+
 sub subscribe_event
 {
    my $self = shift;
@@ -231,6 +301,13 @@ sub subscribe_event
    return $ref + 0; # force numeric context
 }
 
+=head2 $obj->unsubscribe_event( $event, $id )
+
+Removes an event-handling callback previously registered with
+C<subscribe_event>.
+
+=cut
+
 sub unsubscribe_event
 {
    my $self = shift;
@@ -245,6 +322,48 @@ sub unsubscribe_event
 
    splice @$sublist, $index, 1, ();
 }
+
+=head2 $id = $obj->watch_property( $prop, %callbacks )
+
+Watches a named property for changes, registering a set of callback functions
+to be invoked when the property changes in certain ways. The set of callbacks
+required depends on the dimension of the property being watched.
+
+For all property types:
+
+ $on_set->( $obj, $value )
+
+For hash properties:
+
+ $on_add->( $obj, $key, $value )
+ $on_del->( $obj, $key )
+
+For queue properties:
+
+ $on_push->( $obj, @values )
+ $on_shift->( $obj, $count )
+
+For array properties:
+
+ $on_push->( $obj, @values )
+ $on_shift->( $obj, $count )
+ $on_splice->( $obj, $index, $count, @values )
+ $on_move->( $obj, $index, $delta )
+
+For objset properties:
+
+ $on_add->( $obj, $added_object )
+ $on_del->( $obj, $deleted_object_id )
+
+Alternatively, a single callback may be installed that is invoked after any
+change of the property, being passed the new value entirely:
+
+ $on_updated->( $obj, $value )
+
+Returns an opaque ID value that can be used to remove this watch by calling
+C<unwatch_property>.
+
+=cut
 
 sub watch_property
 {
@@ -278,6 +397,13 @@ sub watch_property
    my $ref = \@{$watchlist}[$#$watchlist];  # reference to last element
    return $ref + 0; # force numeric context
 }
+
+=head2 $obj->unwatch_property( $prop, $id )
+
+Removes the set of callback functions previously registered with
+C<watch_property>.
+
+=cut
 
 sub unwatch_property
 {
