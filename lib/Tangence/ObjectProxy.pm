@@ -16,6 +16,25 @@ use Tangence::Constants;
 
 use Scalar::Util qw( weaken );
 
+=head1 NAME
+
+C<Tangence::ObjectProxy> - proxy for a C<Tangence> object in a
+C<Tangence::Client>
+
+=head1 DESCRIPTION
+
+Instances in this class act as a proxy for an object in the
+L<Tangence::Server>, allowing methods to be called, events to be subscribed
+to, and properties to be watched.
+
+These objects are not directly constructed by calling the C<new> class method;
+instead they are returned by methods on L<Tangence::Client>, or by methods on
+other C<Tangence::ObjectProxy> instances. Ultimately every object proxy that a
+client uses will come from either the proxy to the registry, or the root
+object.
+
+=cut
+
 sub new
 {
    my $class = shift;
@@ -51,6 +70,10 @@ sub destroy
    $self->{destroyed} = 1;
 }
 
+=head1 METHODS
+
+=cut
+
 use overload '""' => \&STRING;
 
 sub STRING
@@ -59,11 +82,23 @@ sub STRING
    return "Tangence::ObjectProxy[id=$self->{id}]";
 }
 
+=head2 $id = $proxy->id
+
+Returns the object ID for the C<Tangence> object being proxied for.
+
+=cut
+
 sub id
 {
    my $self = shift;
    return $self->{id};
 }
+
+=head2 $classname = $proxy->class
+
+Returns the name of the class of the C<Tangence> object being proxied for.
+
+=cut
 
 sub class
 {
@@ -136,6 +171,40 @@ sub grab
    }
 }
 
+=head2 $proxy->call_method( %args )
+
+Calls the given method on the server object and invokes a callback function
+when a result is received.
+
+Takes the following named arguments:
+
+=over 8
+
+=item method => STRING
+
+The name of the method
+
+=item args => ARRAY
+
+Optional. If provided, gives positional arguments for the method.
+
+=item on_result => CODE
+
+Callback function to invoke when a result is returned
+
+ $on_result->( $result )
+
+=item on_error => CODE
+
+Optional. Callback function to invoke when an error is returned. The client's
+default will apply if not provided.
+
+ $on_error->( $error )
+
+=back
+
+=cut
+
 sub call_method
 {
    my $self = shift;
@@ -179,6 +248,46 @@ sub call_method
       },
    );
 }
+
+=head2 $proxy->subscribe_event( %args )
+
+Subscribes to the given event on the server object, installing a callback
+function which will be invoked whenever the event is fired.
+
+Takes the following named arguments:
+
+=over 8
+
+=item event => STRING
+
+Name of the event
+
+=item on_fire => CODE
+
+Callback function to invoke whenever the event is fired
+
+ $on_fire->( @args )
+
+=item on_subscribed => CODE
+
+Optional. Callback function to invoke once the event subscription is
+successfully installed by the server.
+
+ $on_subscribed->()
+
+If this is provided, it is guaranteed to be invoked before any invocation of
+the C<on_fire> event handler.
+
+=item on_error => CODE
+
+Optional. Callback function to invoke when an error is returned. The client's
+default will apply if not provided.
+
+ $on_error->( $error )
+
+=back
+
+=cut
 
 sub subscribe_event
 {
@@ -246,6 +355,36 @@ sub handle_request_EVENT
    }
 }
 
+=head2 $proxy->get_property( %args )
+
+Requests the current value of the property from the server object, and invokes
+a callback function when the value is received.
+
+Takes the following named arguments
+
+=over 8
+
+=item property => STRING
+
+The name of the property
+
+=item on_value => CODE
+
+Callback function to invoke when the value is returned
+
+ $on_value->( $value )
+
+=item on_error => CODE
+
+Optional. Callback function to invoke when an error is returned. The client's
+default will apply if not provided.
+
+ $on_error->( $error )
+
+=back
+
+=cut
+
 sub get_property
 {
    my $self = shift;
@@ -287,6 +426,13 @@ sub get_property
    );
 }
 
+=head2 $value = $proxy->prop( $property )
+
+Returns the locally-cached value of a smashed property. If the named property
+is not a smashed property, an exception is thrown.
+
+=cut
+
 sub prop
 {
    my $self = shift;
@@ -298,6 +444,40 @@ sub prop
 
    croak "$self does not have a cached property '$property'";
 }
+
+=head2 $proxy->set_property( %args )
+
+Sets the value of the property in the server object. Optionally invokes a
+callback function when complete.
+
+Takes the following named arguments
+
+=over 8
+
+=item property => STRING
+
+The name of the property
+
+=item value => SCALAR
+
+New value to set for the property
+
+=item on_done => CODE
+
+Optional. Callback function to invoke once the new value is set.
+
+ $on_done->()
+
+=item on_error => CODE
+
+Optional. Callback function to invoke when an error is returned. The client's
+default will apply if not provided.
+
+ $on_error->( $error )
+
+=back
+
+=cut
 
 sub set_property
 {
@@ -344,6 +524,59 @@ sub set_property
       },
    );
 }
+
+=head2 $proxy->watch_property( %args )
+
+Watches the given property on the server object, installing callback functions
+which will be invoked whenever the property value changes.
+
+Takes the following named arguments:
+
+=over 8
+
+=item property => STRING
+
+Name of the property
+
+=item want_initial => BOOLEAN
+
+Optional. If true, requests that the server send the current value of the
+property at the time the watch is installed, in an C<on_set> event. This is
+performed atomically with installing watch.
+
+=item on_watched => CODE
+
+Optional. Callback function to invoke once the property watch is
+successfully installed by the server.
+
+ $on_watched->()
+
+If this is provided, it is guaranteed to be invoked before any invocation of
+the value change handlers.
+
+=item on_updated => CODE
+
+Optional. Callback function to invoke whenever the property value changes.
+
+ $on_updated->( $new_value )
+
+If not provided, then individual handlers for individual change types must be
+provided.
+
+=item on_error => CODE
+
+Optional. Callback function to invoke when an error is returned. The client's
+default will apply if not provided.
+
+ $on_error->( $error )
+
+=back
+
+The set of callback functions that are required depends on the type of the
+property. These are documented in the C<watch_property> method of
+L<Tangence::Object>.
+
+=cut
 
 sub watch_property
 {
