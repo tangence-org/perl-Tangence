@@ -44,6 +44,31 @@ Tangence::Meta::Class->renew(
    },
 );
 
+=head1 NAME
+
+C<Tangence::Registry> - object manager for a C<Tangence> server
+
+=head1 DESCRIPTION
+
+This subclass of L<Tangence::Object> acts as a container for all the exposed
+objects in a L<Tangence> server. The registry is used to create exposed
+objects, and manages their lifetime. It maintains a reference to all the
+objects it creates, so it can dispatch incoming messages from clients to them.
+
+=cut
+
+=head1 CONSTRUCTOR
+
+=cut
+
+=head2 $registry = Tangence::Registry->new
+
+Returns a new instance of a C<Tangence::Registry> object. An entire server
+requires one registry object; it will be shared among all the client
+connections to that server.
+
+=cut
+
 sub new
 {
    my $class = shift;
@@ -67,6 +92,18 @@ sub new
    return $self;
 }
 
+=head1 METHODS
+
+=cut
+
+=head2 $obj = $registry->get_by_id( $id )
+
+Returns the object with the given object ID.
+
+This method is exposed to clients.
+
+=cut
+
 sub get_by_id
 {
    my $self = shift;
@@ -81,6 +118,13 @@ sub method_get_by_id
    my ( $ctx, $id ) = @_;
    return $self->get_by_id( $id );
 }
+
+=head2 $obj = $registry->construct( $type, @args )
+
+Constructs a new exposed object of the given type, and returns it. Any
+additional arguments are passed to the object's constructor.
+
+=cut
 
 sub construct
 {
