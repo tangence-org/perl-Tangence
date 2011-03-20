@@ -10,7 +10,7 @@ use warnings;
 
 use base qw( Tangence::Stream );
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 use Carp;
 

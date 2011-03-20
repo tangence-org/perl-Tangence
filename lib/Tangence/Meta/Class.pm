@@ -8,7 +8,7 @@ package Tangence::Meta::Class;
 use strict;
 use warnings;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 our %metas; # cache one per class
 

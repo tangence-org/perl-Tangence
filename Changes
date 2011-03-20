@@ -1,5 +1,9 @@
 Revision history for Tangence
 
+0.05    CHANGES:
+         * Added documentation to some of the classes
+         * Moved the Net::Async::Tangence tree into its own module
+
 0.04    CHANGES:
          * Properly split out lower-level abstract Tangence code, from
            IO::Async-based Net::Async::Tangence wrappers

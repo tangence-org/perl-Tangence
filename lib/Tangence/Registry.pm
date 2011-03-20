@@ -9,7 +9,7 @@ use strict;
 use warnings;
 use base qw( Tangence::Object );
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 use Carp;
 
