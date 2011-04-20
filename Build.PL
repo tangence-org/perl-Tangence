@@ -7,6 +7,7 @@ my $build = Module::Build->new(
    module_name => 'Tangence',
    requires => {
       'Encode' => 0,
+      'Exporter' => '5.57',
       'perl' => 5.010, # pack/unpack > specifiers
       'URI::Split' => 0,
    },
