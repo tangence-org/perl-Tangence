@@ -9,7 +9,5 @@ MANIFEST.bak
 *.tar.gz
 Build
 _build
-META.yml
 LICENSE
 README
-MYMETA.yml
