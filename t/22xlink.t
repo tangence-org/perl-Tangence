@@ -3,7 +3,7 @@
 use strict;
 
 use Test::More tests => 21;
-use Test::Exception;
+use Test::Fatal qw( dies_ok );
 use Test::Memory::Cycle;
 
 use Tangence::Constants;

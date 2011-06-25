@@ -3,7 +3,7 @@
 use strict;
 
 use Test::More tests => 162;
-use Test::Exception;
+use Test::Fatal qw( dies_ok );
 use Test::HexString;
 
 use Tangence::Message;

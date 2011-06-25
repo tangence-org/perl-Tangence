@@ -13,7 +13,7 @@ my $build = Module::Build->new(
       'URI::Split' => 0,
    },
    build_requires => {
-      'Test::Exception' => 0,
+      'Test::Fatal' => '0.006',
       'Test::HexString' => 0,
       'Test::Identity' => 0,
       'Test::Memory::Cycle' => 0,
