@@ -14,6 +14,43 @@ use Tangence::Constants;
 # Parsing is simpler if we treat Package.Name as a simple identifier
 use constant pattern_ident => qr/[[:alnum:]_][\w.]*/;
 
+=head1 NAME
+
+C<Tangence::Compiler::Parser> - parse C<Tangence> interface definition files
+
+=head1 DESCRIPTION
+
+This subclass of L<Parser::MGC> parses a L<Tangence> interface definition and
+returns a metadata tree.
+
+=cut
+
+=head1 GRAMMAR
+
+The top level of an interface definition file contains C<include> directives
+and C<class> definitions.
+
+=head2 include
+
+An C<include> directive imports the definitions from another file, named
+relative to the current file.
+
+ include "filename.tan"
+
+=head2 class
+
+A C<class> definition defines the set of methods, events and properties
+defined by a named class.
+
+ class Name {
+    ...
+ }
+
+The contents of the class block will be a list of C<method>, C<event>, C<prop>
+and C<isa> declarations.
+
+=cut
+
 sub parse
 {
    my $self = shift;
@@ -55,6 +92,39 @@ sub parse
 
    return \%package;
 }
+
+=head2 method
+
+A C<method> declaration defines one method in the class, giving its name,
+types of its arguments, and return type.
+
+ method name(type, type, ...) -> type;
+
+=head2 event
+
+An C<event> declaration defines one event raised by the class, giving its name
+and types of its arguments.
+
+ event name(type, type, ...);
+
+=head2 prop
+
+A C<prop> declaration defines one property supported by the class, giving its
+name, dimension and type. It may be declared as a C<smashed> property.
+
+ [smashed] prop name = dimension of type;
+
+Scalar properties may omit the C<scalar of>, by supplying just the type
+
+ [smashed] prop name = type;
+
+=head2 isa
+
+An C<isa> declaration declares a superclass of the class, by its name
+
+ isa superclass;
+
+=cut
 
 sub parse_classblock
 {
@@ -148,6 +218,15 @@ sub parse_typelist
    );
 }
 
+=head2 Types
+
+The following basic type names are recognised
+
+ bool int str obj any
+ s8 s16 s32 s64 u8 u16 u32 u64
+
+=cut
+
 my @basic_types = qw(
    bool
    int
@@ -185,5 +264,11 @@ sub parse_dim
 
    return $dimensions{$dimname};
 }
+
+=head1 AUTHOR
+
+Paul Evans <leonerd@leonerd.org.uk>
+
+=cut
 
 0x55AA;
