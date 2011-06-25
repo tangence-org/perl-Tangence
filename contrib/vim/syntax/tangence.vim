@@ -21,6 +21,7 @@ syntax keyword TangenceKeyword prop   nextgroup=TangenceIdentifier skipwhite
 
 syntax keyword TangenceDim  scalar hash queue array objset
 syntax keyword TangenceType bool int str obj any
+syntax keyword TangenceType list dict
 
 syntax region TangenceClassBlock start="{" end="}" fold transparent
 

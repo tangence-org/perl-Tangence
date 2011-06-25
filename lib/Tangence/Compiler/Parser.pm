@@ -230,6 +230,10 @@ The following basic type names are recognised
  bool int str obj any
  s8 s16 s32 s64 u8 u16 u32 u64
 
+Aggregate types may be formed by
+
+ list(type) dict(type)
+
 =cut
 
 my @basic_types = qw(
@@ -245,12 +249,25 @@ sub parse_type
 {
    my $self = shift;
 
-   my $typename = $self->token_ident;
+   $self->any_of(
+      sub {
+         my $aggregate = $self->token_kw(qw( list dict ));
 
-   grep { $_ eq $typename } @basic_types or
-      $self->fail( "'$typename' is not a typename" );
+         $self->commit;
 
-   return $typename;
+         my $membertype = $self->scope_of( "(", \&parse_type, ")" );
+
+         return "$aggregate($membertype)";
+      },
+      sub {
+         my $typename = $self->token_ident;
+
+         grep { $_ eq $typename } @basic_types or
+            $self->fail( "'$typename' is not a typename" );
+
+         return $typename;
+      },
+   );
 }
 
 my %dimensions = (
