@@ -1,5 +1,10 @@
 Revision history for Tangence
 
+0.06    CHANGES:
+         * Look up Tangence interface metadata from a specified file, rather
+           than per-class package variables.
+         * Added Tangence::Compiler::Parser
+
 0.05    CHANGES:
          * Added documentation to some of the classes
          * Moved the Net::Async::Tangence tree into its own module
