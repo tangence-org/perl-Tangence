@@ -47,7 +47,7 @@ relative to the current file.
 A C<class> definition defines the set of methods, events and properties
 defined by a named class.
 
- class Name {
+ class N {
     ...
  }
 
@@ -100,34 +100,35 @@ sub parse
 
 =head2 method
 
-A C<method> declaration defines one method in the class, giving its name,
-types of its arguments, and return type.
+A C<method> declaration defines one method in the class, giving its name (N)
+and types of its arguments and and return (T).
 
- method name(type, type, ...) -> type;
+ method N(T, T, ...) -> T;
 
 =head2 event
 
 An C<event> declaration defines one event raised by the class, giving its name
-and types of its arguments.
+(N) and types of its arguments (T).
 
- event name(type, type, ...);
+ event N(T, T, ...);
 
 =head2 prop
 
 A C<prop> declaration defines one property supported by the class, giving its
-name, dimension and type. It may be declared as a C<smashed> property.
+name (N), dimension (D) and type (T). It may be declared as a C<smashed>
+property.
 
- [smashed] prop name = dimension of type;
+ [smashed] prop N = D of T;
 
 Scalar properties may omit the C<scalar of>, by supplying just the type
 
- [smashed] prop name = type;
+ [smashed] prop N = T;
 
 =head2 isa
 
-An C<isa> declaration declares a superclass of the class, by its name
+An C<isa> declaration declares a superclass of the class, by its name (C)
 
- isa superclass;
+ isa C;
 
 =cut
 
@@ -230,9 +231,9 @@ The following basic type names are recognised
  bool int str obj any
  s8 s16 s32 s64 u8 u16 u32 u64
 
-Aggregate types may be formed by
+Aggregate types may be formed of any type (T) by
 
- list(type) dict(type)
+ list(T) dict(T)
 
 =cut
 
