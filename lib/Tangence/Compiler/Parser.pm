@@ -186,4 +186,4 @@ sub parse_dim
    return $dimensions{$dimname};
 }
 
-1;
+0x55AA;
