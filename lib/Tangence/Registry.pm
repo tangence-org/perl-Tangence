@@ -150,6 +150,8 @@ sub construct
 
    my $id = shift @{ $self->{freeids} } || ( $self->{nextid}++ );
 
+   exists $self->{classes}{$type} or croak "Registry cannot construct a '$type' as no class definition exists";
+
    eval { $type->can( "new" ) } or croak "Registry cannot construct a '$type' as it has no ->new() method";
 
    my $obj = $type->new(
