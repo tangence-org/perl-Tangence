@@ -62,7 +62,10 @@ sub superclasses
 sub supermetas
 {
    my $self = shift;
-   return map { Tangence::Meta::Class->new( $_ ) } $self->superclasses;
+   my @supers = $self->superclasses;
+   # If I have no superclasses, then use Tangence::Object instead
+   @supers = "Tangence::Object" if !@supers and $self->{name} ne "Tangence::Object";
+   return map { Tangence::Meta::Class->new( $_ ) } @supers;
 }
 
 sub can_method
