@@ -19,6 +19,8 @@ use Tangence::Constants;
 # Parsing is simpler if we treat Package.Name as a simple identifier
 use constant pattern_ident => qr/[[:alnum:]_][\w.]*/;
 
+use constant pattern_comment => qr/#.*\n/;
+
 =head1 NAME
 
 C<Tangence::Compiler::Parser> - parse C<Tangence> interface definition files
@@ -60,7 +62,7 @@ sub parse
 {
    my $self = shift;
 
-   my %package;
+   local $self->{package} = \my %package;
 
    while( !$self->at_eos ) {
       given( $self->token_kw(qw( class include )) ) {
@@ -203,6 +205,9 @@ sub parse_classblock
 
          when( 'isa' ) {
             my $supername = $self->token_ident;
+
+            exists $self->{package}{$supername} or
+               $self->fail( "Unrecognised superclass $supername" );
 
             push @{ $class{isa} }, $supername;
          }
