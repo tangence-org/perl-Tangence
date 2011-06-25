@@ -1,3 +1,8 @@
+#  You may distribute under the terms of either the GNU General Public License
+#  or the Artistic License (the same terms as Perl itself)
+#
+#  (C) Paul Evans, 2011 -- leonerd@leonerd.org.uk
+
 package Tangence::Compiler::Parser;
 
 use strict;
