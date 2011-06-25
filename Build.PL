@@ -20,6 +20,7 @@ my $build = Module::Build->new(
       'Test::More' => 0,
       'Test::Refcount' => 0,
    },
+   auto_configure_requires => 0, # Don't add M::B to configure_requires
    license => 'perl',
    create_makefile_pl => 'traditional',
    create_license => 1,
