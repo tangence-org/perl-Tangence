@@ -43,7 +43,8 @@ Name of the class
 =item props => HASH
 
 Optional HASH references containing metadata about methods, events and
-properties.
+properties, as instances of L<Tangence::Compiler::Method>,
+L<Tangence::Compiler::Event> or L<Tangence::Compiler::Property>.
 
 =item supers => ARRAY
 
@@ -95,7 +96,8 @@ sub supers
 
 =head2 $methods = $class->methods
 
-Return the methods as a HASH reference
+Return the methods as a HASH reference mapping names to
+L<Tangence::Compiler::Method> instances.
 
 =cut
 
@@ -107,7 +109,8 @@ sub methods
 
 =head2 $events = $class->events
 
-Return the events as a HASH reference
+Return the events as a HASH reference mapping names to
+L<Tangence::Compiler::Event> instances.
 
 =cut
 
@@ -119,7 +122,8 @@ sub events
 
 =head2 $props = $class->props
 
-Return the props as a HASH reference
+Return the props as a HASH reference mapping names to
+L<Tangence::Compiler::Property> instances.
 
 =cut
 

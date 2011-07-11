@@ -15,6 +15,9 @@ use feature qw( switch ); # we like given/when
 use File::Basename qw( dirname );
 
 use Tangence::Compiler::Class;
+use Tangence::Compiler::Method;
+use Tangence::Compiler::Event;
+use Tangence::Compiler::Property;
 
 use Tangence::Constants;
 
@@ -152,17 +155,20 @@ sub parse_classblock
             exists $methods{$methodname} and
                $self->fail( "Already have a method called $methodname" );
 
-            my $mdef = $methods{$methodname} = {};
-
-            $mdef->{args} = $self->parse_typelist;
-
-            $mdef->{ret} = "";
+            my $args = $self->parse_typelist;
+            my $ret;
 
             $self->maybe( sub {
                $self->expect( '->' );
 
-               $mdef->{ret} = $self->parse_type;
+               $ret = $self->parse_type;
             } );
+
+            $methods{$methodname} = Tangence::Compiler::Method->new(
+               name => $methodname,
+               args => $args,
+               ret  => $ret,
+            );
          }
 
          when( 'event' ) {
@@ -171,9 +177,12 @@ sub parse_classblock
             exists $events{$eventname} and
                $self->fail( "Already have an event called $eventname" );
 
-            my $edef = $events{$eventname} = {};
+            my $args = $self->parse_typelist;
 
-            $edef->{args} = $self->parse_typelist;
+            $events{$eventname} = Tangence::Compiler::Event->new(
+               name => $eventname,
+               args => $args,
+            );
          }
 
          my $smashed = 0;
@@ -190,10 +199,6 @@ sub parse_classblock
             exists $props{$propname} and
                $self->fail( "Already have a property called $propname" );
 
-            my $pdef = $props{$propname} = {};
-
-            $pdef->{smash}++ if $smashed;
-
             $self->expect( '=' );
 
             my $dim = DIM_SCALAR;
@@ -202,9 +207,14 @@ sub parse_classblock
                $self->expect( 'of' );
             } );
 
-            $pdef->{type} = $self->parse_type;
+            my $type = $self->parse_type;
 
-            $pdef->{dim} = $dim;
+            $props{$propname} = Tangence::Compiler::Property->new(
+               name       => $propname,
+               smashed    => $smashed,
+               dimension  => $dim,
+               type       => $type,
+            );
          }
 
          when( 'isa' ) {
