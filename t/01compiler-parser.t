@@ -23,7 +23,7 @@ my $colourable = $meta->{'t.Colourable'};
 isa_ok( $colourable, "Tangence::Compiler::Class", 't.Colourable meta' );
 is( $colourable->name, "t.Colourable", 't.Colourable name' );
 
-$props = $colourable->props;
+$props = $colourable->properties;
 
 isa_ok( $props->{colour}, "Tangence::Compiler::Property", 't.Colourable prop colour' );
 is( $props->{colour}->name, "colour", 't.Colourable prop colour name' );
@@ -47,7 +47,7 @@ isa_ok( $events->{bounced}, "Tangence::Compiler::Event", 't.Ball event bounced' 
 is( $events->{bounced}->name, "bounced", 't.Ball event bounced name' );
 is_deeply( [ $events->{bounced}->args ], [qw( str )], 't.Ball event bounced args' );
 
-$props = $ball->props;
+$props = $ball->properties;
 
 is( $props->{size}->name, "size", 't.Ball prop size name' );
 is( $props->{size}->dimension, DIM_SCALAR, 't.Ball prop size dimension' );
@@ -59,7 +59,7 @@ is_deeply( [ map { $_->name } $ball->supers ], [qw( t.Colourable )], 't.Ball met
 $meta = $parser->from_file( "t/TestObj.tan" );
 my $testobj = $meta->{'t.TestObj'};
 
-$props = $testobj->props;
+$props = $testobj->properties;
 
 is( $props->{array}->dimension, DIM_ARRAY, 't.TestObj prop array dimension' );
 is( $props->{array}->type, "int", 't.TestObj prop array type' );

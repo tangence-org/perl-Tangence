@@ -144,7 +144,7 @@ sub parse_classblock
 
    my %methods;
    my %events;
-   my %props;
+   my %properties;
    my @supers;
 
    while( !$self->at_eos ) {
@@ -196,7 +196,7 @@ sub parse_classblock
          when( 'prop' ) {
             my $propname = $self->token_ident;
 
-            exists $props{$propname} and
+            exists $properties{$propname} and
                $self->fail( "Already have a property called $propname" );
 
             $self->expect( '=' );
@@ -209,7 +209,7 @@ sub parse_classblock
 
             my $type = $self->parse_type;
 
-            $props{$propname} = Tangence::Compiler::Property->new(
+            $properties{$propname} = Tangence::Compiler::Property->new(
                name       => $propname,
                smashed    => $smashed,
                dimension  => $dim,
@@ -231,11 +231,11 @@ sub parse_classblock
    }
 
    return Tangence::Compiler::Class->new(
-      name    => $classname,
-      methods => \%methods,
-      events  => \%events,
-      props   => \%props,
-      supers  => \@supers,
+      name       => $classname,
+      methods    => \%methods,
+      events     => \%events,
+      properties => \%properties,
+      supers     => \@supers,
    );
 }
 

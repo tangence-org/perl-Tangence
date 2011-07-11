@@ -117,7 +117,7 @@ sub new
             type    => $_->type,
             dim     => $_->dimension,
             $_->smashed ? ( smash => 1 ) : (),
-         } for values %{ $class->props };
+         } for values %{ $class->properties };
 
          $name => Tangence::Meta::Class->new( $name,
             methods => \%methods,
