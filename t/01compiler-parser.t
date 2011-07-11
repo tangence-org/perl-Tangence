@@ -46,7 +46,7 @@ is_deeply( $ball->props,
    't.Ball meta props'
 );
 
-is_deeply( [ $ball->supers ], [qw( t.Colourable )], 't.Ball meta supers' );
+is_deeply( [ map { $_->name } $ball->supers ], [qw( t.Colourable )], 't.Ball meta supers' );
 
 $meta = $parser->from_file( "t/TestObj.tan" );
 my $testobj = $meta->{'t.TestObj'};

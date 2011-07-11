@@ -47,7 +47,8 @@ properties.
 
 =item supers => ARRAY
 
-Optional ARRAY reference containing names of superclasses.
+Optional ARRAY reference containing superclasses as
+C<Tangence::Compiler::Class> references.
 
 =back
 
@@ -82,7 +83,7 @@ sub name
 
 =head2 @supers = $class->supers
 
-Return the names of the superclasses in a list
+Return the superclasses in a list of C<Tangence::Compiler::Class> references.
 
 =cut
 

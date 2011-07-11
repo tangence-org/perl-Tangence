@@ -210,10 +210,10 @@ sub parse_classblock
          when( 'isa' ) {
             my $supername = $self->token_ident;
 
-            exists $self->{package}{$supername} or
+            my $super = $self->{package}{$supername} or
                $self->fail( "Unrecognised superclass $supername" );
 
-            push @supers, $supername;
+            push @supers, $super;
          }
       }
 
