@@ -96,10 +96,16 @@ sub new
       my $parsed = Tangence::Compiler::Parser->new->from_file( $tanfile );
 
       $self->{classes} = { map {
-         my $class = $_;
-         $class =~ s{\.}{::}g;
+         my $name = $_;
+         $name =~ s{\.}{::}g;
 
-         $class => Tangence::Meta::Class->new( $class, %{ $parsed->{$_} } )
+         my $class = $parsed->{$_};
+
+         $name => Tangence::Meta::Class->new( $name,
+            methods => $class->methods,
+            events  => $class->events,
+            props   => $class->props,
+         );
       } keys %$parsed };
    }
    else {

@@ -14,6 +14,8 @@ use feature qw( switch ); # we like given/when
 
 use File::Basename qw( dirname );
 
+use Tangence::Compiler::Class;
+
 use Tangence::Constants;
 
 # Parsing is simpler if we treat Package.Name as a simple identifier
@@ -72,11 +74,9 @@ sub parse
             exists $package{$classname} and
                $self->fail( "Already have a class called $classname" );
 
-            $self->scope_of(
-               '{', 
-               sub { $package{$classname} = $self->parse_classblock },
-               '}'
-            );
+            my $class = $self->scope_of( '{', sub { $self->parse_classblock( $classname ) }, '}' );
+
+            $package{$classname} = $class;
          }
          when( 'include' ) {
             my $filename = dirname($self->{filename}) . "/" . $self->token_string;
@@ -137,18 +137,22 @@ An C<isa> declaration declares a superclass of the class, by its name (C)
 sub parse_classblock
 {
    my $self = shift;
+   my ( $classname ) = @_;
 
-   my %class;
+   my %methods;
+   my %events;
+   my %props;
+   my @supers;
 
    while( !$self->at_eos ) {
       given( $self->token_kw(qw( method event prop smashed isa )) ) {
          when( 'method' ) {
             my $methodname = $self->token_ident;
 
-            exists $class{methods}{$methodname} and
+            exists $methods{$methodname} and
                $self->fail( "Already have a method called $methodname" );
 
-            my $mdef = $class{methods}{$methodname} = {};
+            my $mdef = $methods{$methodname} = {};
 
             $mdef->{args} = $self->parse_typelist;
 
@@ -164,10 +168,10 @@ sub parse_classblock
          when( 'event' ) {
             my $eventname = $self->token_ident;
 
-            exists $class{events}{$eventname} and
+            exists $events{$eventname} and
                $self->fail( "Already have an event called $eventname" );
 
-            my $edef = $class{events}{$eventname} = {};
+            my $edef = $events{$eventname} = {};
 
             $edef->{args} = $self->parse_typelist;
          }
@@ -183,10 +187,10 @@ sub parse_classblock
          when( 'prop' ) {
             my $propname = $self->token_ident;
 
-            exists $class{props}{$propname} and
+            exists $props{$propname} and
                $self->fail( "Already have a property called $propname" );
 
-            my $pdef = $class{props}{$propname} = {};
+            my $pdef = $props{$propname} = {};
 
             $pdef->{smash}++ if $smashed;
 
@@ -209,14 +213,20 @@ sub parse_classblock
             exists $self->{package}{$supername} or
                $self->fail( "Unrecognised superclass $supername" );
 
-            push @{ $class{isa} }, $supername;
+            push @supers, $supername;
          }
       }
 
       $self->expect( ';' );
    }
 
-   return \%class;
+   return Tangence::Compiler::Class->new(
+      name    => $classname,
+      methods => \%methods,
+      events  => \%events,
+      props   => \%props,
+      supers  => \@supers,
+   );
 }
 
 sub parse_typelist
