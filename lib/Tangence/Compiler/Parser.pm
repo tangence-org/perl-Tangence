@@ -140,7 +140,7 @@ sub parse_classblock
    my %methods;
    my %events;
    my %properties;
-   my @supers;
+   my @superclasses;
 
    while( !$self->at_eos ) {
       given( $self->token_kw(qw( method event prop smashed isa )) ) {
@@ -218,7 +218,7 @@ sub parse_classblock
             my $super = $self->{package}{$supername} or
                $self->fail( "Unrecognised superclass $supername" );
 
-            push @supers, $super;
+            push @superclasses, $super;
          }
       }
 
@@ -226,11 +226,11 @@ sub parse_classblock
    }
 
    return $self->make_class(
-      name       => $classname,
-      methods    => \%methods,
-      events     => \%events,
-      properties => \%properties,
-      supers     => \@supers,
+      name         => $classname,
+      methods      => \%methods,
+      events       => \%events,
+      properties   => \%properties,
+      superclasses => \@superclasses,
    );
 }
 

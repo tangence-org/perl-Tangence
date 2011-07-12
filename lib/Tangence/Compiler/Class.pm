@@ -46,7 +46,7 @@ Optional HASH references containing metadata about methods, events and
 properties, as instances of L<Tangence::Compiler::Method>,
 L<Tangence::Compiler::Event> or L<Tangence::Compiler::Property>.
 
-=item supers => ARRAY
+=item superclasses => ARRAY
 
 Optional ARRAY reference containing superclasses as
 C<Tangence::Compiler::Class> references.
@@ -59,10 +59,10 @@ sub new
 {
    my $class = shift;
    my %args = @_;
-   $args{supers}  ||= [];
-   $args{methods} ||= {};
-   $args{events}  ||= {};
-   $args{properties} ||= {};
+   $args{superclasses} ||= [];
+   $args{methods}      ||= {};
+   $args{events}       ||= {};
+   $args{properties}   ||= {};
    bless \%args, $class;
 }
 
@@ -82,16 +82,16 @@ sub name
    return $self->{name};
 }
 
-=head2 @supers = $class->supers
+=head2 @superclasses = $class->superclasses
 
 Return the superclasses in a list of C<Tangence::Compiler::Class> references.
 
 =cut
 
-sub supers
+sub superclasses
 {
    my $self = shift;
-   return @{ $self->{supers} };
+   return @{ $self->{superclasses} };
 }
 
 =head2 $methods = $class->methods

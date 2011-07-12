@@ -54,7 +54,7 @@ is( $props->{size}->dimension, DIM_SCALAR, 't.Ball prop size dimension' );
 is( $props->{size}->type, "int", 't.Ball prop size type' );
 ok( $props->{size}->smashed, 't.Ball prop size smashed' );
 
-is_deeply( [ map { $_->name } $ball->supers ], [qw( t.Colourable )], 't.Ball meta supers' );
+is_deeply( [ map { $_->name } $ball->superclasses ], [qw( t.Colourable )], 't.Ball meta superclasses' );
 
 $meta = $parser->from_file( "t/TestObj.tan" );
 my $testobj = $meta->{'t.TestObj'};
