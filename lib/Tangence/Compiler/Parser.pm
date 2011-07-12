@@ -14,11 +14,6 @@ use feature qw( switch ); # we like given/when
 
 use File::Basename qw( dirname );
 
-use Tangence::Compiler::Class;
-use Tangence::Compiler::Method;
-use Tangence::Compiler::Event;
-use Tangence::Compiler::Property;
-
 use Tangence::Constants;
 
 # Parsing is simpler if we treat Package.Name as a simple identifier
@@ -164,7 +159,7 @@ sub parse_classblock
                $ret = $self->parse_type;
             } );
 
-            $methods{$methodname} = Tangence::Compiler::Method->new(
+            $methods{$methodname} = $self->make_method(
                name => $methodname,
                args => $args,
                ret  => $ret,
@@ -179,7 +174,7 @@ sub parse_classblock
 
             my $args = $self->parse_typelist;
 
-            $events{$eventname} = Tangence::Compiler::Event->new(
+            $events{$eventname} = $self->make_event(
                name => $eventname,
                args => $args,
             );
@@ -209,7 +204,7 @@ sub parse_classblock
 
             my $type = $self->parse_type;
 
-            $properties{$propname} = Tangence::Compiler::Property->new(
+            $properties{$propname} = $self->make_property(
                name       => $propname,
                smashed    => $smashed,
                dimension  => $dim,
@@ -230,7 +225,7 @@ sub parse_classblock
       $self->expect( ';' );
    }
 
-   return Tangence::Compiler::Class->new(
+   return $self->make_class(
       name       => $classname,
       methods    => \%methods,
       events     => \%events,
@@ -311,6 +306,58 @@ sub parse_dim
    my $dimname = $self->token_kw( keys %dimensions );
 
    return $dimensions{$dimname};
+}
+
+=head1 SUBCLASS METHODS
+
+If this class is subclassed, the following methods may be overridden to
+customise the behaviour. They allow the subclass to return different objects
+in the syntax tree.
+
+=head2 $class = $parser->make_class( %args )
+
+Return a new instance of L<Tangence::Compiler::Class> to go in a package.
+
+=cut
+
+sub make_class
+{
+   shift;
+   require Tangence::Compiler::Class;
+   return Tangence::Compiler::Class->new( @_ );
+}
+
+=head2 $method = $parser->make_method( %args )
+
+=head2 $event = $parser->make_event( %args )
+
+=head2 $property = $parser->make_property( %args )
+
+Return a new instance of L<Tangence::Compiler::Method>,
+L<Tangence::Compiler::Event> or L<Tangence::Compiler::Property> to go in a
+class.
+
+=cut
+
+sub make_method
+{
+   shift;
+   require Tangence::Compiler::Method;
+   return Tangence::Compiler::Method->new( @_ );
+}
+
+sub make_event
+{
+   shift;
+   require Tangence::Compiler::Event;
+   return Tangence::Compiler::Event->new( @_ );
+}
+
+sub make_property
+{
+   shift;
+   require Tangence::Compiler::Property;
+   return Tangence::Compiler::Property->new( @_ );
 }
 
 =head1 AUTHOR
