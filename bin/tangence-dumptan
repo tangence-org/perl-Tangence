@@ -21,10 +21,10 @@ sub as_text
    my $self = shift;
    join "\n",
       "class ".$self->name." {",
-      ( map { "  isa ".$_->name.";" } $self->superclasses ),
-      ( map { "  " . $_->as_text } _vals $self->methods ),
-      ( map { "  " . $_->as_text } _vals $self->events ),
-      ( map { "  " . $_->as_text } _vals $self->properties ),
+      ( map { "  isa ".$_->name.";" } $self->direct_superclasses ),
+      ( map { "  " . $_->as_text } _vals $self->direct_methods ),
+      ( map { "  " . $_->as_text } _vals $self->direct_events ),
+      ( map { "  " . $_->as_text } _vals $self->direct_properties ),
       "}\n";
 }
 
