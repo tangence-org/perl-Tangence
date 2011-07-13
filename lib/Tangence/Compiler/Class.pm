@@ -82,52 +82,56 @@ sub name
    return $self->{name};
 }
 
-=head2 @superclasses = $class->superclasses
+=head2 @superclasses = $class->direct_superclasses
 
-Return the superclasses in a list of C<Tangence::Compiler::Class> references.
+Return the direct superclasses in a list of C<Tangence::Compiler::Class>
+references.
 
 =cut
 
-sub superclasses
+sub direct_superclasses
 {
    my $self = shift;
    return @{ $self->{superclasses} };
 }
 
-=head2 $methods = $class->methods
+=head2 $methods = $class->direct_methods
 
-Return the methods as a HASH reference mapping names to
+Return the methods that this class directly defines (rather than inheriting
+from superclasses) as a HASH reference mapping names to
 L<Tangence::Compiler::Method> instances.
 
 =cut
 
-sub methods
+sub direct_methods
 {
    my $self = shift;
    return $self->{methods};
 }
 
-=head2 $events = $class->events
+=head2 $events = $class->direct_events
 
-Return the events as a HASH reference mapping names to
+Return the events that this class directly defines (rather than inheriting
+from superclasses) as a HASH reference mapping names to
 L<Tangence::Compiler::Event> instances.
 
 =cut
 
-sub events
+sub direct_events
 {
    my $self = shift;
    return $self->{events};
 }
 
-=head2 $properties = $class->properties
+=head2 $properties = $class->direct_properties
 
-Return the properties as a HASH reference mapping names to
+Return the properties that this class directly defines (rather than inheriting
+from superclasses) as a HASH reference mapping names to
 L<Tangence::Compiler::Property> instances.
 
 =cut
 
-sub properties
+sub direct_properties
 {
    my $self = shift;
    return $self->{properties};

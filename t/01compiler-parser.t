@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 31;
+use Test::More tests => 35;
 
 use Tangence::Compiler::Parser;
 
@@ -23,7 +23,9 @@ my $colourable = $meta->{'t.Colourable'};
 isa_ok( $colourable, "Tangence::Compiler::Class", 't.Colourable meta' );
 is( $colourable->name, "t.Colourable", 't.Colourable name' );
 
-$props = $colourable->properties;
+$props = $colourable->direct_properties;
+
+is_deeply( [ sort keys %$props ], [qw( colour )], 't.Colourable direct props' );
 
 isa_ok( $props->{colour}, "Tangence::Compiler::Property", 't.Colourable prop colour' );
 is( $props->{colour}->name, "colour", 't.Colourable prop colour name' );
@@ -34,32 +36,38 @@ ok( !$props->{colour}->smashed, 't.Colourable prop colour !smashed' );
 my $ball = $meta->{'t.Ball'};
 isa_ok( $ball, "Tangence::Compiler::Class", 't.Ball meta' );
 
-$methods = $ball->methods;
+$methods = $ball->direct_methods;
+
+is_deeply( [ sort keys %$methods ], [qw( bounce )], 't.Ball direct methods' );
 
 isa_ok( $methods->{bounce}, "Tangence::Compiler::Method", 't.Ball method bounce' );
 is( $methods->{bounce}->name, "bounce", 't.Ball method bounce name' );
 is_deeply( [ $methods->{bounce}->args ], [qw( str )], 't.Ball method bounce args' );
 is( $methods->{bounce}->ret,  "str", 't.Ball method bounce ret' );
 
-$events = $ball->events;
+$events = $ball->direct_events;
+
+is_deeply( [ sort keys %$events ], [qw( bounced )], 't.Ball direct events' );
 
 isa_ok( $events->{bounced}, "Tangence::Compiler::Event", 't.Ball event bounced' );
 is( $events->{bounced}->name, "bounced", 't.Ball event bounced name' );
 is_deeply( [ $events->{bounced}->args ], [qw( str )], 't.Ball event bounced args' );
 
-$props = $ball->properties;
+$props = $ball->direct_properties;
+
+is_deeply( [ sort keys %$props ], [qw( size )], 't.Ball direct props' );
 
 is( $props->{size}->name, "size", 't.Ball prop size name' );
 is( $props->{size}->dimension, DIM_SCALAR, 't.Ball prop size dimension' );
 is( $props->{size}->type, "int", 't.Ball prop size type' );
 ok( $props->{size}->smashed, 't.Ball prop size smashed' );
 
-is_deeply( [ map { $_->name } $ball->superclasses ], [qw( t.Colourable )], 't.Ball meta superclasses' );
+is_deeply( [ map { $_->name } $ball->direct_superclasses ], [qw( t.Colourable )], 't.Ball direct superclasses' );
 
 $meta = $parser->from_file( "t/TestObj.tan" );
 my $testobj = $meta->{'t.TestObj'};
 
-$props = $testobj->properties;
+$props = $testobj->direct_properties;
 
 is( $props->{array}->dimension, DIM_ARRAY, 't.TestObj prop array dimension' );
 is( $props->{array}->type, "int", 't.TestObj prop array type' );
