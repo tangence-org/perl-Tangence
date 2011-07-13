@@ -137,6 +137,83 @@ sub direct_properties
    return $self->{properties};
 }
 
+=head1 AGGREGATE ACCESSORS
+
+The following accessors inspect the full inheritance tree of this class and
+all its superclasses
+
+=cut
+
+=head2 @superclasses = $class->superclasses
+
+Return all the superclasses in a list of unique C<Tangence::Compiler::Class>
+references.
+
+=cut
+
+sub superclasses
+{
+   my $self = shift;
+   # This algorithm doesn't have to be particularly good, C3 or whatever.
+   # We're not really forming a search order, mearly uniq'ifying
+   my %seen;
+   return grep { !$seen{$_}++ } map { $_, $_->superclasses } $self->direct_superclasses;
+}
+
+=head2 $methods = $class->methods
+
+Return all the methods available to this class as a HASH reference mapping
+names to L<Tangence::Compiler::Method> instances.
+
+=cut
+
+sub methods
+{
+   my $self = shift;
+   my %methods;
+   foreach ( $self, $self->superclasses ) {
+      my $m = $_->direct_methods;
+      $methods{$_} ||= $m->{$_} for keys %$m;
+   }
+   return \%methods;
+}
+
+=head2 $events = $class->events
+
+Return all the events available to this class as a HASH reference mapping
+names to L<Tangence::Compiler::Event> instances.
+
+=cut
+
+sub events
+{
+   my $self = shift;
+   my %events;
+   foreach ( $self, $self->superclasses ) {
+      my $e = $_->direct_events;
+      $events{$_} ||= $e->{$_} for keys %$e;
+   }
+   return \%events;
+}
+
+=head2 $properties = $class->properties
+
+Return all the properties available to this class as a HASH reference mapping
+names to L<Tangence::Compiler::Property> instances.
+
+=cut
+
+sub properties
+{
+   my $self = shift;
+   my %properties;
+   foreach ( $self, $self->superclasses ) {
+      my $p = $_->direct_properties;
+      $properties{$_} ||= $p->{$_} for keys %$p;
+   }
+   return \%properties;
+}
+
 =head1 AUTHOR
 
 Paul Evans <leonerd@leonerd.org.uk>

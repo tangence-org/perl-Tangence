@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 35;
+use Test::More tests => 40;
 
 use Tangence::Compiler::Parser;
 
@@ -33,6 +33,8 @@ is( $props->{colour}->dimension, DIM_SCALAR, 't.Colourable prop colour dimension
 is( $props->{colour}->type, "str", 't.Colourable prop colour type' );
 ok( !$props->{colour}->smashed, 't.Colourable prop colour !smashed' );
 
+is_deeply( [ sort keys %{ $colourable->properties } ], [qw( colour )], 't.Colourable props' );
+
 my $ball = $meta->{'t.Ball'};
 isa_ok( $ball, "Tangence::Compiler::Class", 't.Ball meta' );
 
@@ -45,6 +47,8 @@ is( $methods->{bounce}->name, "bounce", 't.Ball method bounce name' );
 is_deeply( [ $methods->{bounce}->args ], [qw( str )], 't.Ball method bounce args' );
 is( $methods->{bounce}->ret,  "str", 't.Ball method bounce ret' );
 
+is_deeply( [ sort keys %{ $ball->methods } ], [qw( bounce )], 't.Ball methods' );
+
 $events = $ball->direct_events;
 
 is_deeply( [ sort keys %$events ], [qw( bounced )], 't.Ball direct events' );
@@ -52,6 +56,8 @@ is_deeply( [ sort keys %$events ], [qw( bounced )], 't.Ball direct events' );
 isa_ok( $events->{bounced}, "Tangence::Compiler::Event", 't.Ball event bounced' );
 is( $events->{bounced}->name, "bounced", 't.Ball event bounced name' );
 is_deeply( [ $events->{bounced}->args ], [qw( str )], 't.Ball event bounced args' );
+
+is_deeply( [ sort keys %{ $ball->events } ], [qw( bounced )], 't.Ball events' );
 
 $props = $ball->direct_properties;
 
@@ -62,7 +68,10 @@ is( $props->{size}->dimension, DIM_SCALAR, 't.Ball prop size dimension' );
 is( $props->{size}->type, "int", 't.Ball prop size type' );
 ok( $props->{size}->smashed, 't.Ball prop size smashed' );
 
+is_deeply( [ sort keys %{ $ball->properties } ], [qw( colour size )], 't.Ball props' );
+
 is_deeply( [ map { $_->name } $ball->direct_superclasses ], [qw( t.Colourable )], 't.Ball direct superclasses' );
+is_deeply( [ map { $_->name } $ball->superclasses ], [qw( t.Colourable )], 't.Ball superclasses' );
 
 $meta = $parser->from_file( "t/TestObj.tan" );
 my $testobj = $meta->{'t.TestObj'};
