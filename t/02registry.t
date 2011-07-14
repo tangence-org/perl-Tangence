@@ -69,11 +69,11 @@ is_deeply( $ball->can_method( "bounce" ),
 is_deeply( $ball->can_method( "fly" ),
            undef, '$ball->can_method "fly" is undef' );
 
-is_deeply( $ball->can_method(),
+is_deeply( $ball->_meta->methods,
            { 
               bounce => { args => [qw( str )], ret => 'str' },
            },
-           '$ball->can_method() yields all' );
+           '$ball->_meta->methods yields all' );
 
 is_deeply( $ball->can_event( "bounced" ),
            { args => [qw( str )] }, '$ball->can_event "bounced"' );
@@ -84,12 +84,12 @@ is_deeply( $ball->can_event( "destroy" ),
 is_deeply( $ball->can_event( "flew" ),
            undef, '$ball->can_event "flew" is undef' );
 
-is_deeply( $ball->can_event(),
+is_deeply( $ball->_meta->events,
            {
               bounced => { args => [qw( str )] },
               destroy => { args => [] },
            },
-           '$ball->can_event() yields all' );
+           '$ball->_meta->events yields all' );
 
 is_deeply( $ball->can_property( "colour" ),
            { dim => DIM_SCALAR, type => 'str' }, '$ball->can_property "colour"' );
@@ -97,12 +97,12 @@ is_deeply( $ball->can_property( "colour" ),
 is_deeply( $ball->can_property( "style" ),
            undef, '$ball->can_property "style" is undef' );
 
-is_deeply( $ball->can_property(),
+is_deeply( $ball->_meta->properties,
            {
               colour => { dim => DIM_SCALAR, type => 'str' },
               size   => { dim => DIM_SCALAR, type => 'int', smash => 1 },
            },
-           '$ball->can_property() yields all' );
+           '$ball->_meta->properties yields all' );
 
 is_deeply( $ball->introspect,
            {

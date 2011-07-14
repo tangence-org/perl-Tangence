@@ -63,7 +63,7 @@ sub new
       properties => {}, # {$prop} => [ $value, \@callbacks ]
    }, $class;
 
-   my $properties = $self->can_property();
+   my $properties = $self->_meta->properties;
    foreach my $prop ( keys %$properties ) {
       $self->_new_property( $prop, $properties->{$prop} );
    }
@@ -223,19 +223,19 @@ sub _meta
 sub can_method
 {
    my $self = shift;
-   return $self->_meta->can_method( @_ );
+   return $self->_meta->method( @_ );
 }
 
 sub can_event
 {
    my $self = shift;
-   return $self->_meta->can_event( @_ );
+   return $self->_meta->event( @_ );
 }
 
 sub can_property
 {
    my $self = shift;
-   return $self->_meta->can_property( @_ );
+   return $self->_meta->property( @_ );
 }
 
 sub smashkeys

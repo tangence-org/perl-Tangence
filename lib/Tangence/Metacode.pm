@@ -29,7 +29,7 @@ sub init_class
       _has_Tangence => sub() { 1 },
    );
 
-   my $props = $meta->can_property;
+   my $props = $meta->properties;
 
    foreach my $prop ( keys %$props ) {
       my $pdef = $props->{$prop};

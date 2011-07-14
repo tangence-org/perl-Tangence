@@ -77,75 +77,67 @@ sub supermetas
    return map { Tangence::Meta::Class->for_perlname( $_ ) } @supers;
 }
 
-sub can_method
+sub methods
 {
    my $self = shift;
-   my ( $method ) = @_;
-
-   return $self->{methods}{$method} if defined $method and exists $self->{methods}{$method};
 
    my %methods = %{ $self->{methods} };
 
    foreach my $supermeta ( $self->supermetas ) {
-      my $m = $supermeta->can_method( $method );
-      if( defined $method ) {
-         return $m if $m;
-      }
-      else {
-         exists $methods{$_} or $methods{$_} = $m->{$_} for keys %$m;
-      }
+      my $m = $supermeta->methods;
+      exists $methods{$_} or $methods{$_} = $m->{$_} for keys %$m;
    }
 
-   return \%methods unless defined $method;
-   return undef;
+   return \%methods;
 }
 
-sub can_event
+sub method
 {
    my $self = shift;
-   my ( $event ) = @_;
+   my ( $name ) = @_;
+   return $self->methods->{$name};
+}
 
-   return $self->{events}{$event} if defined $event and exists $self->{events}{$event};
+sub events
+{
+   my $self = shift;
 
    my %events = %{ $self->{events} };
 
    foreach my $supermeta ( $self->supermetas ) {
-      my $e = $supermeta->can_event( $event );
-      if( defined $event ) {
-         return $e if $e;
-      }
-      else {
-         exists $events{$_} or $events{$_} = $e->{$_} for keys %$e;
-      }
+      my $e = $supermeta->events;
+      exists $events{$_} or $events{$_} = $e->{$_} for keys %$e;
    }
 
-   return \%events unless defined $event;
-   return undef;
+   return \%events;
 }
 
-sub can_property
+sub event
 {
    my $self = shift;
-   my ( $prop ) = @_;
+   my ( $name ) = @_;
+   return $self->events->{$name};
+}
 
-   return $self->{props}{$prop} if defined $prop and exists $self->{props}{$prop};
+sub properties
+{
+   my $self = shift;
 
    my %props = %{ $self->{props} };
 
-   return $props{$prop} if defined $prop and exists $props{$prop};
-
    foreach my $supermeta ( $self->supermetas ) {
-      my $p = $supermeta->can_property( $prop );
-      if( defined $prop ) {
-         return $p if $p;
-      }
-      else {
-         exists $props{$_} or $props{$_} = $p->{$_} for keys %$p;
-      }
+      my $p = $supermeta->properties;
+      exists $props{$_} or $props{$_} = $p->{$_} for keys %$p;
    }
 
-   return \%props unless defined $prop;
-   return undef;
+   return \%props;
+}
+
+sub property
+{
+   my $self = shift;
+   my ( $name ) = @_;
+   return $self->properties->{$name};
 }
 
 sub smashkeys
@@ -173,9 +165,9 @@ sub introspect
    my $self = shift;
 
    my $ret = {
-      methods    => $self->can_method,
-      events     => $self->can_event,
-      properties => $self->can_property,
+      methods    => $self->methods,
+      events     => $self->events,
+      properties => $self->properties,
       isa        => [ $self->{name}, $self->superclasses ],
    };
 
