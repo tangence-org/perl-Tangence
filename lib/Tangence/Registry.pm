@@ -76,6 +76,9 @@ sub new
    my $class = shift;
    my %args = @_;
 
+   my $tanfile = $args{tanfile};
+   croak "Expected 'tanfile'" unless defined $tanfile;
+
    my $id = 0;
 
    my $self = $class->SUPER::new(
@@ -92,42 +95,39 @@ sub new
    $self->{nextid}  = 1;
    $self->{freeids} = []; # free'd ids we can reuse
 
-   if( my $tanfile = $args{tanfile} ) {
-      my $parsed = Tangence::Compiler::Parser->new->from_file( $tanfile );
+   my $parsed = Tangence::Compiler::Parser->new->from_file( $tanfile );
 
-      $self->{classes} = { map {
-         my $name = $_;
-         $name =~ s{\.}{::}g;
+   $self->{classes} = \my %classes;
 
-         my $class = $parsed->{$_};
+   foreach ( keys %$parsed ) {
+      my $name = $_;
+      $name =~ s{\.}{::}g;
 
-         my %methods;
-         $methods{$_->name} = {
-            args => [ $_->args ],
-            ret  => $_->ret || "",
-         } for values %{ $class->direct_methods };
+      my $class = $parsed->{$_};
 
-         my %events;
-         $events{$_->name} = {
-            args => [ $_->args ],
-         } for values %{ $class->direct_events };
+      my %methods;
+      $methods{$_->name} = {
+         args => [ $_->args ],
+         ret  => $_->ret || "",
+      } for values %{ $class->direct_methods };
 
-         my %props;
-         $props{$_->name} = {
-            type    => $_->type,
-            dim     => $_->dimension,
-            $_->smashed ? ( smash => 1 ) : (),
-         } for values %{ $class->direct_properties };
+      my %events;
+      $events{$_->name} = {
+         args => [ $_->args ],
+      } for values %{ $class->direct_events };
 
-         $name => Tangence::Meta::Class->new( $name,
-            methods => \%methods,
-            events  => \%events,
-            props   => \%props,
-         );
-      } keys %$parsed };
-   }
-   else {
-      croak "Expected 'tanfile'";
+      my %props;
+      $props{$_->name} = {
+         type    => $_->type,
+         dim     => $_->dimension,
+         $_->smashed ? ( smash => 1 ) : (),
+      } for values %{ $class->direct_properties };
+
+      $classes{$name} = Tangence::Meta::Class->new( $name,
+         methods => \%methods,
+         events  => \%events,
+         props   => \%props,
+      );
    }
 
    return $self;
