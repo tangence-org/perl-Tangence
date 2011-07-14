@@ -19,7 +19,7 @@ sub init_class
 {
    my $class = shift;
 
-   my $meta = Tangence::Meta::Class->new( $class );
+   my $meta = Tangence::Meta::Class->for_perlname( $class );
 
    foreach my $superclass ( $meta->superclasses ) {
       init_class( $superclass ) unless defined &{"${superclass}::_has_Tangence"};

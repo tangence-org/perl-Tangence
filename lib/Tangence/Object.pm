@@ -17,7 +17,7 @@ use Tangence::Metacode;
 
 use Tangence::Meta::Class;
 
-Tangence::Meta::Class->renew(
+Tangence::Meta::Class->declare(
    __PACKAGE__,
 
    events => {
@@ -56,7 +56,7 @@ sub new
    my $self = bless {
       id => $id,
       registry => $registry,
-      meta => $args{meta} || $registry->get_meta_class( $class ),
+      meta => $args{meta} || Tangence::Meta::Class->for_perlname( $class ),
 
       event_subs => {},   # {$event} => [ @cbs ]
 
@@ -217,7 +217,7 @@ sub smash
 sub _meta
 {
    my $self = shift;
-   return ref $self ? $self->{meta} : Tangence::Meta::Class->new( $self );
+   return ref $self ? $self->{meta} : Tangence::Meta::Class->for_perlname( $self );
 }
 
 sub can_method

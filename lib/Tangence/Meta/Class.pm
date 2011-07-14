@@ -8,6 +8,8 @@ package Tangence::Meta::Class;
 use strict;
 use warnings;
 
+use Carp;
+
 our $VERSION = '0.06';
 
 our %metas; # cache one per class
@@ -35,7 +37,7 @@ sub new
    return $self;
 }
 
-sub renew
+sub declare
 {
    my $class = shift;
    my ( $name ) = @_;
@@ -53,6 +55,13 @@ sub renew
    }
 }
 
+sub for_perlname
+{
+   shift;
+   my ( $perlname ) = @_;
+   return $metas{$perlname} or croak "Unknown Tangence::Meta::Class for '$perlname'";
+}
+
 sub superclasses
 {
    my $self = shift;
@@ -65,7 +74,7 @@ sub supermetas
    my @supers = $self->superclasses;
    # If I have no superclasses, then use Tangence::Object instead
    @supers = "Tangence::Object" if !@supers and $self->{name} ne "Tangence::Object";
-   return map { Tangence::Meta::Class->new( $_ ) } @supers;
+   return map { Tangence::Meta::Class->for_perlname( $_ ) } @supers;
 }
 
 sub can_method

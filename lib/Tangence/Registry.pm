@@ -19,7 +19,7 @@ use Tangence::Compiler::Parser;
 
 use Scalar::Util qw( weaken );
 
-Tangence::Meta::Class->renew(
+Tangence::Meta::Class->declare(
    __PACKAGE__,
 
    methods => {
@@ -84,7 +84,7 @@ sub new
    my $self = $class->SUPER::new(
       id => $id,
       registry => "BOOTSTRAP",
-      meta => Tangence::Meta::Class->new( $class ),
+      meta => Tangence::Meta::Class->for_perlname( $class ),
    );
    weaken( $self->{registry} = $self );
    
@@ -206,14 +206,6 @@ sub destroy_object
    $self->fire_event( "object_destroyed", $id );
 
    push @{ $self->{freeids} }, $id; # Recycle the ID
-}
-
-sub get_meta_class
-{
-   my $self = shift;
-   my ( $class ) = @_;
-
-   return Tangence::Meta::Class->new( $class );
 }
 
 =head1 AUTHOR
