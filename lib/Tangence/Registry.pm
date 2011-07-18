@@ -105,28 +105,10 @@ sub new
 
       my $class = $parsed->{$_};
 
-      my %methods;
-      $methods{$_->name} = {
-         args => [ $_->args ],
-         ret  => $_->ret || "",
-      } for values %{ $class->direct_methods };
-
-      my %events;
-      $events{$_->name} = {
-         args => [ $_->args ],
-      } for values %{ $class->direct_events };
-
-      my %props;
-      $props{$_->name} = {
-         type    => $_->type,
-         dim     => $_->dimension,
-         $_->smashed ? ( smash => 1 ) : (),
-      } for values %{ $class->direct_properties };
-
       $classes{$name} = Tangence::Meta::Class->new( $name,
-         methods => \%methods,
-         events  => \%events,
-         props   => \%props,
+         methods => $class->direct_methods,
+         events  => $class->direct_events,
+         props   => $class->direct_properties,
       );
    }
 

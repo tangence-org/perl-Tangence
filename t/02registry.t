@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 46;
+use Test::More tests => 54;
 use Test::Identity;
 use Test::Memory::Cycle;
 use Test::Refcount;
@@ -63,45 +63,44 @@ ok( !defined $registry->get_by_id( "2" ), '$registry->get_by_id "2"' );
 
 is( $ball->describe, 't::Ball[colour="red"]', '$ball->describe' );
 
-is_deeply( $ball->can_method( "bounce" ),
-           { args => [qw( str )], ret => 'str' }, '$ball->can_method "bounce"' );
+my $mdef = $ball->can_method( "bounce" );
+isa_ok( $mdef, "Tangence::Compiler::Method", '$ball->can_method "bounce"' );
+is( $mdef->name, "bounce", 'can_method "bounce" name' );
+is_deeply( [ $mdef->args ], [qw( str )], 'can_method "bounce" args' );
+is( $mdef->ret, "str", 'can_method "bounce" ret' );
 
-is_deeply( $ball->can_method( "fly" ),
-           undef, '$ball->can_method "fly" is undef' );
+ok( !$ball->can_method( "fly" ), '$ball->can_method "fly" is undef' );
 
-is_deeply( $ball->_meta->methods,
-           { 
-              bounce => { args => [qw( str )], ret => 'str' },
-           },
+my $methods = $ball->_meta->methods;
+is_deeply( [ sort keys %$methods ],
+           [qw( bounce )],
            '$ball->_meta->methods yields all' );
 
-is_deeply( $ball->can_event( "bounced" ),
-           { args => [qw( str )] }, '$ball->can_event "bounced"' );
+my $edef = $ball->can_event( "bounced" );
+isa_ok( $edef, "Tangence::Compiler::Event", '$ball->can_event "bounced"' );
+is( $edef->name, "bounced", 'can_event "bounced" name' );
+is_deeply( [ $edef->args ], [qw( str )], 'can_event "bounced" args' );
 
-is_deeply( $ball->can_event( "destroy" ),
-           { args => [] }, '$ball->can_event "destroy"' );
+ok( $ball->can_event( "destroy" ), '$ball->can_event "destroy"' );
 
-is_deeply( $ball->can_event( "flew" ),
-           undef, '$ball->can_event "flew" is undef' );
+ok( !$ball->can_event( "flew" ), '$ball->can_event "flew" is undef' );
 
-is_deeply( $ball->_meta->events,
-           {
-              bounced => { args => [qw( str )] },
-              destroy => { args => [] },
-           },
+my $events = $ball->_meta->events;
+is_deeply( [ sort keys %$events ],
+           [qw( bounced destroy )],
            '$ball->_meta->events yields all' );
 
-is_deeply( $ball->can_property( "colour" ),
-           { dim => DIM_SCALAR, type => 'str' }, '$ball->can_property "colour"' );
+my $pdef = $ball->can_property( "colour" );
+isa_ok( $pdef, "Tangence::Compiler::Property", '$ball->can_property "colour"' );
+is( $pdef->name, "colour", 'can_property "colour" name' );
+is( $pdef->dimension, DIM_SCALAR, 'can_property "colour" dimension' );
+is( $pdef->type, "str", 'can_property "colour" type' );
 
-is_deeply( $ball->can_property( "style" ),
-           undef, '$ball->can_property "style" is undef' );
+ok( !$ball->can_property( "style" ), '$ball->can_property "style" is undef' );
 
-is_deeply( $ball->_meta->properties,
-           {
-              colour => { dim => DIM_SCALAR, type => 'str' },
-              size   => { dim => DIM_SCALAR, type => 'int', smash => 1 },
-           },
+my $properties = $ball->_meta->properties;
+is_deeply( [ sort keys %$properties ],
+           [qw( colour size )],
            '$ball->_meta->properties yields all' );
 
 is_deeply( $ball->introspect,

@@ -8,11 +8,24 @@ package Tangence::Meta::Class;
 use strict;
 use warnings;
 
+use Tangence::Constants;
+
+use Tangence::Compiler::Method;
+use Tangence::Compiler::Event;
+use Tangence::Compiler::Property;
+
 use Carp;
 
 our $VERSION = '0.06';
 
 our %metas; # cache one per class
+
+# It would be really useful to put this in List::Utils or somesuch
+sub pairmap(&@)
+{
+   my $code = shift;
+   return map { $code->( local $a = shift, local $b = shift ) } 0 .. @_/2-1;
+}
 
 sub new
 {
@@ -40,18 +53,50 @@ sub new
 sub declare
 {
    my $class = shift;
-   my ( $name ) = @_;
+   my ( $name, %args ) = @_;
+
+   my %methods;
+   foreach ( keys %{ $args{methods} } ) {
+      $methods{$_} = Tangence::Compiler::Method->new(
+         name => $_,
+         %{ $args{methods}{$_} },
+      );
+   }
+
+   my %events;
+   foreach ( keys %{ $args{events} } ) {
+      $events{$_} = Tangence::Compiler::Event->new(
+         name => $_,
+         %{ $args{events}{$_} },
+      );
+   }
+
+   my %properties;
+   foreach ( keys %{ $args{props} } ) {
+      $properties{$_} = Tangence::Compiler::Property->new(
+         name => $_,
+         %{ $args{props}{$_} },
+         dimension => $args{props}{$_}{dim} || DIM_SCALAR,
+      );
+   }
+
+   my @args = (
+      $name,
+      methods => \%methods,
+      events  => \%events,
+      props   => \%properties,
+   );
 
    if( exists $metas{$name} ) {
       my $oldself = $metas{$name};
       local $metas{$name};
 
-      my $newself = $class->new( @_ );
+      my $newself = $class->new( @args );
 
       %$oldself = %$newself;
    }
    else {
-      $class->new( @_ );
+      $class->new( @args );
    }
 }
 
@@ -148,7 +193,7 @@ sub smashkeys
 
    my %smash;
 
-   $props{$_}->{smash} and $smash{$_} = 1 for keys %props;
+   $props{$_}->smashed and $smash{$_} = 1 for keys %props;
 
    foreach my $supermeta ( $self->supermetas ) {
       my $supkeys = $supermeta->smashkeys;
@@ -165,9 +210,21 @@ sub introspect
    my $self = shift;
 
    my $ret = {
-      methods    => $self->methods,
-      events     => $self->events,
-      properties => $self->properties,
+      methods    => { 
+         pairmap {
+            $a => { args => [ $b->args ], ret => $b->ret || "" }
+         } %{ $self->methods }
+      },
+      events     => {
+         pairmap {
+            $a => { args => [ $b->args ] }
+         } %{ $self->events }
+      },
+      properties => {
+         pairmap {
+            $a => { type => $b->type, dim => $b->dimension, $b->smashed ? ( smash => 1 ) : () }
+         } %{ $self->properties }
+      },
       isa        => [ $self->{name}, $self->superclasses ],
    };
 

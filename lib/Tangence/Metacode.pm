@@ -63,7 +63,7 @@ sub init_class_property
                        : $_->{on_set}->( $self, $newval ) for @$cbs;
    };
 
-   my $dim = $pdef->{dim};
+   my $dim = $pdef->dimension;
 
    my $dimname = DIMNAMES->[$dim];
    if( my $code = __PACKAGE__->can( "init_class_property_$dimname" ) ) {

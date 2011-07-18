@@ -76,7 +76,7 @@ sub _new_property
    my $self = shift;
    my ( $prop, $pdef ) = @_;
 
-   my $dim = $pdef->{dim};
+   my $dim = $pdef->dimension;
 
    my $initial;
 
@@ -382,7 +382,7 @@ sub watch_property
       $callbacks->{on_updated} = $on_updated;
    }
    else {
-      foreach my $name ( @{ CHANGETYPES->{$pdef->{dim}} } ) {
+      foreach my $name ( @{ CHANGETYPES->{$pdef->dimension} } ) {
          ref( $callbacks->{$name} = delete $callbacks{$name} ) eq "CODE"
             or croak "Expected '$name' as a CODE ref";
       }
@@ -434,12 +434,12 @@ sub handle_request_CALL
    my $m = "method_$method";
    $self->can( $m ) or die "Object cannot run method $method\n";
 
-   my @args = $message->unpack_all_typed( $mdef->{args} );
+   my @args = $message->unpack_all_typed( [ $mdef->args ] );
 
    my $result = $self->$m( $ctx, @args );
 
    my $response = Tangence::Message->new( $ctx->stream, MSG_RESULT );
-   $response->pack_typed( $mdef->{ret}, $result ) if $mdef->{ret};
+   $response->pack_typed( $mdef->ret, $result ) if $mdef->ret;
 
    return $response;
 }
@@ -454,7 +454,7 @@ sub generate_message_EVENT
    return Tangence::Message->new( $conn, MSG_EVENT )
       ->pack_int( $self->id )
       ->pack_str( $event )
-      ->pack_all_typed( $edef->{args}, @args );
+      ->pack_all_typed( [ $edef->args ], @args );
 }
 
 sub handle_request_GETPROP
@@ -499,7 +499,7 @@ sub generate_message_UPDATE
    my ( $conn, $prop, $how, @args ) = @_;
 
    my $pdef = $self->can_property( $prop ) or die "Object does not have property $prop\n";
-   my $dim = $pdef->{dim};
+   my $dim = $pdef->dimension;
 
    my $message = Tangence::Message->new( $conn, MSG_UPDATE )
       ->pack_int( $self->id )
@@ -508,7 +508,7 @@ sub generate_message_UPDATE
 
    my $dimname = DIMNAMES->[$dim];
    if( my $code = $self->can( "_generate_message_UPDATE_$dimname" ) ) {
-      $code->( $self, $message, $how, $pdef->{type}, @args );
+      $code->( $self, $message, $how, $pdef->type, @args );
    }
    else {
       croak "Unrecognised property dimension $dim for $prop";
