@@ -7,6 +7,7 @@ package Tangence::Meta::Class;
 
 use strict;
 use warnings;
+use base qw( Tangence::Compiler::Class );
 
 use Tangence::Constants;
 
@@ -18,7 +19,7 @@ use Carp;
 
 our $VERSION = '0.06';
 
-our %metas; # cache one per class
+our %metas; # cache one per class, keyed by _Tangence_ class name
 
 # It would be really useful to put this in List::Utils or somesuch
 sub pairmap(&@)
@@ -30,30 +31,18 @@ sub pairmap(&@)
 sub new
 {
    my $class = shift;
-   my ( $name, %args ) = @_;
+   my %args = @_;
+   my $name = $args{name};
 
-   return $metas{$name} if exists $metas{$name};
-
-   my $self = $metas{$name} = bless {
-      name => $name,
-   }, $class;
-
-   no strict 'refs';
-   no warnings 'once'; # In case these vars are not defined
-
-   $self->{superclasses} = [ @{"$self->{name}::ISA"}     ];
-
-   $self->{methods}      = $args{methods} || {};
-   $self->{events}       = $args{events}  || {};
-   $self->{props}        = $args{props}   || {};
-
-   return $self;
+   return $metas{$name} ||= $class->SUPER::new( @_ );
 }
 
 sub declare
 {
    my $class = shift;
-   my ( $name, %args ) = @_;
+   my ( $perlname, %args ) = @_;
+
+   ( my $name = $perlname ) =~ s{::}{.}g;
 
    my %methods;
    foreach ( keys %{ $args{methods} } ) {
@@ -81,10 +70,10 @@ sub declare
    }
 
    my @args = (
-      $name,
-      methods => \%methods,
-      events  => \%events,
-      props   => \%properties,
+      name       => $name,
+      methods    => \%methods,
+      events     => \%events,
+      properties => \%properties,
    );
 
    if( exists $metas{$name} ) {
@@ -102,38 +91,31 @@ sub declare
 
 sub for_perlname
 {
-   shift;
+   my $class = shift;
    my ( $perlname ) = @_;
-   return $metas{$perlname} or croak "Unknown Tangence::Meta::Class for '$perlname'";
+
+   ( my $name = $perlname ) =~ s{::}{.}g;
+   return $metas{$name} or croak "Unknown Tangence::Meta::Class for '$perlname'";
+}
+
+sub perlname
+{
+   my $self = shift;
+   ( my $perlname = $self->name ) =~ s{\.}{::}g; # s///rg in 5.14
+   return $perlname;
 }
 
 sub superclasses
 {
    my $self = shift;
-   return @{ $self->{superclasses} };
-}
 
-sub supermetas
-{
-   my $self = shift;
-   my @supers = $self->superclasses;
-   # If I have no superclasses, then use Tangence::Object instead
-   @supers = "Tangence::Object" if !@supers and $self->{name} ne "Tangence::Object";
-   return map { Tangence::Meta::Class->for_perlname( $_ ) } @supers;
-}
+   my @supers = $self->SUPER::superclasses;
 
-sub methods
-{
-   my $self = shift;
-
-   my %methods = %{ $self->{methods} };
-
-   foreach my $supermeta ( $self->supermetas ) {
-      my $m = $supermeta->methods;
-      exists $methods{$_} or $methods{$_} = $m->{$_} for keys %$m;
+   if( !@supers and $self->perlname ne "Tangence::Object" ) {
+      @supers = Tangence::Meta::Class->for_perlname( "Tangence::Object" );
    }
 
-   return \%methods;
+   return @supers;
 }
 
 sub method
@@ -143,39 +125,11 @@ sub method
    return $self->methods->{$name};
 }
 
-sub events
-{
-   my $self = shift;
-
-   my %events = %{ $self->{events} };
-
-   foreach my $supermeta ( $self->supermetas ) {
-      my $e = $supermeta->events;
-      exists $events{$_} or $events{$_} = $e->{$_} for keys %$e;
-   }
-
-   return \%events;
-}
-
 sub event
 {
    my $self = shift;
    my ( $name ) = @_;
    return $self->events->{$name};
-}
-
-sub properties
-{
-   my $self = shift;
-
-   my %props = %{ $self->{props} };
-
-   foreach my $supermeta ( $self->supermetas ) {
-      my $p = $supermeta->properties;
-      exists $props{$_} or $props{$_} = $p->{$_} for keys %$p;
-   }
-
-   return \%props;
 }
 
 sub property
@@ -188,20 +142,8 @@ sub property
 sub smashkeys
 {
    my $self = shift;
-
-   my %props = %{ $self->{props} };
-
    my %smash;
-
-   $props{$_}->smashed and $smash{$_} = 1 for keys %props;
-
-   foreach my $supermeta ( $self->supermetas ) {
-      my $supkeys = $supermeta->smashkeys;
-
-      # Merge keys we don't yet have
-      $smash{$_} = 1 for keys %$supkeys;
-   }
-
+   $smash{$_->name} = 1 for grep { $_->smashed } values %{ $self->properties };
    return \%smash;
 }
 
@@ -226,7 +168,7 @@ sub introspect
          } %{ $self->properties }
       },
       isa        => [
-         grep { $_ ne "Tangence::Object" } $self->{name}, $self->superclasses
+         grep { $_ ne "Tangence::Object" } $self->perlname, map { $_->perlname } $self->superclasses
       ],
    };
 

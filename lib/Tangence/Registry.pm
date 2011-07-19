@@ -95,21 +95,12 @@ sub new
    $self->{nextid}  = 1;
    $self->{freeids} = []; # free'd ids we can reuse
 
-   my $parsed = Tangence::Compiler::Parser->new->from_file( $tanfile );
+   my $parsed = Tangence::Registry::Parser->new->from_file( $tanfile );
 
    $self->{classes} = \my %classes;
 
-   foreach ( keys %$parsed ) {
-      my $name = $_;
-      $name =~ s{\.}{::}g;
-
-      my $class = $parsed->{$_};
-
-      $classes{$name} = Tangence::Meta::Class->new( $name,
-         methods => $class->direct_methods,
-         events  => $class->direct_events,
-         props   => $class->direct_properties,
-      );
+   foreach ( values %$parsed ) {
+      $classes{$_->perlname} = $_;
    }
 
    return $self;
@@ -188,6 +179,15 @@ sub destroy_object
    $self->fire_event( "object_destroyed", $id );
 
    push @{ $self->{freeids} }, $id; # Recycle the ID
+}
+
+package Tangence::Registry::Parser;
+use base qw( Tangence::Compiler::Parser );
+
+sub make_class
+{
+   my $self = shift;
+   return Tangence::Meta::Class->new( @_ );
 }
 
 =head1 AUTHOR

@@ -21,8 +21,9 @@ sub init_class
 
    my $meta = Tangence::Meta::Class->for_perlname( $class );
 
-   foreach my $superclass ( $meta->superclasses ) {
-      init_class( $superclass ) unless defined &{"${superclass}::_has_Tangence"};
+   foreach my $superclass ( $meta->direct_superclasses ) {
+      my $name = $superclass->name;
+      init_class( $name ) unless defined &{"${name}::_has_Tangence"};
    }
 
    my %subs = (
