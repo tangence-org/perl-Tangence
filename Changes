@@ -1,5 +1,12 @@
 Revision history for Tangence
 
+0.07    CHANGES:
+         * Redesign of metadata layer to use real objects rather than
+           unblessed hashrefs for structural information
+         * Optionally parse (but currently ignore) argument names in methods
+           and events
+         * Created a parse+dump script to test the parser
+
 0.06    CHANGES:
          * Look up Tangence interface metadata from a specified file, rather
            than per-class package variables.

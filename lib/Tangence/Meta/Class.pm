@@ -17,7 +17,7 @@ use Tangence::Compiler::Property;
 
 use Carp;
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 our %metas; # cache one per class, keyed by _Tangence_ class name
 
