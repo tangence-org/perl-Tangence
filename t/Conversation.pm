@@ -29,11 +29,10 @@ $C2S{GETROOT} =
    "\x40" . "\0\0\0\x0b" .
    "\x2a" . "testscript";
 $S2C{GETROOT} =
-   "\x82" . "\0\0\0\xcf" .
+   "\x82" . "\0\0\0\xbe" .
    "\xe2" . "t::Bag\0" .
             "\x64" . "events\0"     . "\x61" . "destroy\0" . "\x61" . "args\0" . "\x40" .
-                     "isa\0"        . "\x42" . "\x26" . "t::Bag" .
-                                               "\x30" . "Tangence::Object" .
+                     "isa\0"        . "\x41" . "\x26" . "t::Bag" .
                      "methods\0"    . "\x63" . "add_ball\0"  . "\x62" . "args\0" . "\x41" . "\x23" . "obj" .
                                                                         "ret\0"  . "\x20" .
                                                "get_ball\0"  . "\x62" . "args\0" . "\x41" . "\x23" . "str" .
@@ -50,13 +49,12 @@ $S2C{GETROOT} =
 $C2S{GETREGISTRY} =
    "\x41" . "\0\0\0\0";
 $S2C{GETREGISTRY} =
-   "\x82" . "\0\0\0\xf8" .
+   "\x82" . "\0\0\0\xe7" .
    "\xe2" . "Tangence::Registry\0" .
             "\x64" . "events\0"     . "\x63" . "destroy\0"            . "\x61" . "args\0" . "\x40" .
                                                "object_constructed\0" . "\x61" . "args\0" . "\x41" . "\x23" . "int" .
                                                "object_destroyed\0"   . "\x61" . "args\0" . "\x41" . "\x23" . "int" .
-                     "isa\0"        . "\x42" . "\x32" . "Tangence::Registry" .
-                                               "\x30" . "Tangence::Object" .
+                     "isa\0"        . "\x41" . "\x32" . "Tangence::Registry" .
                      "methods\0"    . "\x61" . "get_by_id\0" . "\x62" . "args\0" . "\x41" . "\x23" . "int" .
                                                                         "ret\0"  . "\x23" . "obj" .
                      "properties\0" . "\x61" . "objects\0" . "\x62" . "dim\0"  . "\x21" . "2" .
@@ -73,12 +71,11 @@ $C2S{CALL_PULL} =
    "\x23" . "red";
 # MSG_RESULT
 $S2C{CALL_PULL} =
-   "\x82" . "\0\0\0\xe0" .
+   "\x82" . "\0\0\0\xcf" .
    "\xe2" . "t::Ball\0" .
             "\x64" . "events\0"     . "\x62" . "bounced\0" . "\x61" . "args\0" . "\x41" . "\x23" . "str" .
                                                "destroy\0" . "\x61" . "args\0" . "\x40" .
-                     "isa\0"        . "\x43" . "\x27" . "t::Ball" .
-                                               "\x30" . "Tangence::Object" .
+                     "isa\0"        . "\x42" . "\x27" . "t::Ball" .
                                                "\x2d" . "t::Colourable" .
                      "methods\0"    . "\x61" . "bounce\0" . "\x62" . "args\0" . "\x41" . "\x23" . "str" .
                                                                      "ret\0" . "\x23" . "str" .

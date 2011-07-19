@@ -225,7 +225,9 @@ sub introspect
             $a => { type => $b->type, dim => $b->dimension, $b->smashed ? ( smash => 1 ) : () }
          } %{ $self->properties }
       },
-      isa        => [ $self->{name}, $self->superclasses ],
+      isa        => [
+         grep { $_ ne "Tangence::Object" } $self->{name}, $self->superclasses
+      ],
    };
 
    return $ret;

@@ -105,7 +105,7 @@ is_deeply( [ sort keys %$properties ],
 
 is_deeply( $ball->introspect,
            {
-              isa => [qw( t::Ball Tangence::Object t::Colourable )],
+              isa => [qw( t::Ball t::Colourable )],
               methods => {
                  bounce => { args => [qw( str )], ret => 'str' },
               },
