@@ -44,7 +44,7 @@ is_deeply( [ sort keys %$methods ], [qw( bounce )], 't.Ball direct methods' );
 
 isa_ok( $methods->{bounce}, "Tangence::Compiler::Method", 't.Ball method bounce' );
 is( $methods->{bounce}->name, "bounce", 't.Ball method bounce name' );
-is_deeply( [ $methods->{bounce}->args ], [qw( str )], 't.Ball method bounce args' );
+is_deeply( [ $methods->{bounce}->argtypes ], [qw( str )], 't.Ball method bounce argtypes' );
 is( $methods->{bounce}->ret,  "str", 't.Ball method bounce ret' );
 
 is_deeply( [ sort keys %{ $ball->methods } ], [qw( bounce )], 't.Ball methods' );
@@ -55,7 +55,7 @@ is_deeply( [ sort keys %$events ], [qw( bounced )], 't.Ball direct events' );
 
 isa_ok( $events->{bounced}, "Tangence::Compiler::Event", 't.Ball event bounced' );
 is( $events->{bounced}->name, "bounced", 't.Ball event bounced name' );
-is_deeply( [ $events->{bounced}->args ], [qw( str )], 't.Ball event bounced args' );
+is_deeply( [ $events->{bounced}->argtypes ], [qw( str )], 't.Ball event bounced argtypes' );
 
 is_deeply( [ sort keys %{ $ball->events } ], [qw( bounced )], 't.Ball events' );
 

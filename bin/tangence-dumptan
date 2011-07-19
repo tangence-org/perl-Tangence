@@ -38,7 +38,7 @@ sub as_text
       "method ",
       $self->name,
       "(",
-      join( ",", map { $_ } $self->args ),
+      join( ",", map { $_ } $self->argtypes ),
       ")",
       defined $self->ret ? ( " -> ", $self->ret ) : (),
       ";";
@@ -54,7 +54,7 @@ sub as_text
       "event ",
       $self->name,
       "(",
-      join( ",", map { $_ } $self->args ),
+      join( ",", map { $_ } $self->argtypes ),
       ");",
 }
 

@@ -36,7 +36,7 @@ Returns a new instance initialised by the given arguments.
 
 Name of the event
 
-=item args => ARRAY
+=item argtypes => ARRAY
 
 Optional ARRAY reference containing argument types as strings.
 
@@ -48,7 +48,7 @@ sub new
 {
    my $class = shift;
    my %args = @_;
-   $args{args} ||= [];
+   $args{argtypes} ||= [];
    bless \%args, $class;
 }
 
@@ -68,16 +68,16 @@ sub name
    return $self->{name};
 }
 
-=head2 @args = $event->args
+=head2 @argtypes = $event->argtypes
 
 Return the argument types in a list of strings.
 
 =cut
 
-sub args
+sub argtypes
 {
    my $self = shift;
-   return @{ $self->{args} };
+   return @{ $self->{argtypes} };
 }
 
 =head1 AUTHOR

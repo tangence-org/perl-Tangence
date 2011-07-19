@@ -66,7 +66,7 @@ is( $ball->describe, 't::Ball[colour="red"]', '$ball->describe' );
 my $mdef = $ball->can_method( "bounce" );
 isa_ok( $mdef, "Tangence::Compiler::Method", '$ball->can_method "bounce"' );
 is( $mdef->name, "bounce", 'can_method "bounce" name' );
-is_deeply( [ $mdef->args ], [qw( str )], 'can_method "bounce" args' );
+is_deeply( [ $mdef->argtypes ], [qw( str )], 'can_method "bounce" argtypes' );
 is( $mdef->ret, "str", 'can_method "bounce" ret' );
 
 ok( !$ball->can_method( "fly" ), '$ball->can_method "fly" is undef' );
@@ -79,7 +79,7 @@ is_deeply( [ sort keys %$methods ],
 my $edef = $ball->can_event( "bounced" );
 isa_ok( $edef, "Tangence::Compiler::Event", '$ball->can_event "bounced"' );
 is( $edef->name, "bounced", 'can_event "bounced" name' );
-is_deeply( [ $edef->args ], [qw( str )], 'can_event "bounced" args' );
+is_deeply( [ $edef->argtypes ], [qw( str )], 'can_event "bounced" argtypes' );
 
 ok( $ball->can_event( "destroy" ), '$ball->can_event "destroy"' );
 

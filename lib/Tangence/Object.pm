@@ -434,7 +434,7 @@ sub handle_request_CALL
    my $m = "method_$method";
    $self->can( $m ) or die "Object cannot run method $method\n";
 
-   my @args = $message->unpack_all_typed( [ $mdef->args ] );
+   my @args = $message->unpack_all_typed( [ $mdef->argtypes ] );
 
    my $result = $self->$m( $ctx, @args );
 
@@ -454,7 +454,7 @@ sub generate_message_EVENT
    return Tangence::Message->new( $conn, MSG_EVENT )
       ->pack_int( $self->id )
       ->pack_str( $event )
-      ->pack_all_typed( [ $edef->args ], @args );
+      ->pack_all_typed( [ $edef->argtypes ], @args );
 }
 
 sub handle_request_GETPROP

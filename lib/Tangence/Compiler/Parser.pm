@@ -161,7 +161,7 @@ sub parse_classblock
 
             $methods{$methodname} = $self->make_method(
                name => $methodname,
-               args => $args,
+               argtypes => $args,
                ret  => $ret,
             );
          }
@@ -176,7 +176,7 @@ sub parse_classblock
 
             $events{$eventname} = $self->make_event(
                name => $eventname,
-               args => $args,
+               argtypes => $args,
             );
          }
 

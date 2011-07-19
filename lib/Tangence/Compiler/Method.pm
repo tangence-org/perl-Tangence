@@ -36,7 +36,7 @@ Returns a new instance initialised by the given arguments.
 
 Name of the method
 
-=item args => ARRAY
+=item argtypes => ARRAY
 
 Optional ARRAY reference containing argument types as strings.
 
@@ -52,7 +52,7 @@ sub new
 {
    my $class = shift;
    my %args = @_;
-   $args{args} ||= [];
+   $args{argtypes} ||= [];
    bless \%args, $class;
 }
 
@@ -72,16 +72,16 @@ sub name
    return $self->{name};
 }
 
-=head2 @args = $method->args
+=head2 @argtypes = $method->argtypes
 
 Return the argument types in a list of strings.
 
 =cut
 
-sub args
+sub argtypes
 {
    my $self = shift;
-   return @{ $self->{args} };
+   return @{ $self->{argtypes} };
 }
 
 =head2 $ret = $method->ret

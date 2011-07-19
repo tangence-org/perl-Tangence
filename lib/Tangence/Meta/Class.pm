@@ -49,6 +49,7 @@ sub declare
       $methods{$_} = Tangence::Compiler::Method->new(
          name => $_,
          %{ $args{methods}{$_} },
+         argtypes => $args{methods}{$_}{args},
       );
    }
 
@@ -57,6 +58,7 @@ sub declare
       $events{$_} = Tangence::Compiler::Event->new(
          name => $_,
          %{ $args{events}{$_} },
+         argtypes => $args{events}{$_}{args},
       );
    }
 
@@ -154,12 +156,12 @@ sub introspect
    my $ret = {
       methods    => { 
          pairmap {
-            $a => { args => [ $b->args ], ret => $b->ret || "" }
+            $a => { args => [ $b->argtypes ], ret => $b->ret || "" }
          } %{ $self->methods }
       },
       events     => {
          pairmap {
-            $a => { args => [ $b->args ] }
+            $a => { args => [ $b->argtypes ] }
          } %{ $self->events }
       },
       properties => {
