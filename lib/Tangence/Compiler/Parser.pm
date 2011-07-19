@@ -150,7 +150,7 @@ sub parse_classblock
             exists $methods{$methodname} and
                $self->fail( "Already have a method called $methodname" );
 
-            my $args = $self->parse_typelist;
+            my $args = $self->parse_arglist;
             my $ret;
 
             $self->maybe( sub {
@@ -172,7 +172,7 @@ sub parse_classblock
             exists $events{$eventname} and
                $self->fail( "Already have an event called $eventname" );
 
-            my $args = $self->parse_typelist;
+            my $args = $self->parse_arglist;
 
             $events{$eventname} = $self->make_event(
                name => $eventname,
@@ -234,14 +234,25 @@ sub parse_classblock
    );
 }
 
-sub parse_typelist
+sub parse_arglist
 {
    my $self = shift;
    return $self->scope_of(
       "(",
-      sub { $self->list_of( ",", \&parse_type ) },
+      sub { $self->list_of( ",", \&parse_arg ) },
       ")",
    );
+}
+
+sub parse_arg
+{
+   my $self = shift;
+   my $type = $self->parse_type;
+   $self->maybe( sub {
+      # Ignore it for now
+      $self->token_ident;
+   } );
+   return $type;
 }
 
 =head2 Types

@@ -15,13 +15,15 @@ syntax match TangenceIdentifier /\i\+/ contained
 
 syntax keyword TangenceKeyword isa nextgroup=TangenceType skipwhite
 
-syntax keyword TangenceKeyword method nextgroup=TangenceIdentifier skipwhite
-syntax keyword TangenceKeyword event  nextgroup=TangenceIdentifier skipwhite
+syntax keyword TangenceKeyword method nextgroup=TangenceIdentifier,TangenceArglist skipwhite
+syntax keyword TangenceKeyword event  nextgroup=TangenceIdentifier,TangenceArglist skipwhite
 syntax keyword TangenceKeyword prop   nextgroup=TangenceIdentifier skipwhite
 
 syntax keyword TangenceDim  scalar hash queue array objset
 syntax keyword TangenceType bool int str obj any
-syntax keyword TangenceType list dict
+syntax region  TangenceType start=/\(list\|dict\)(/ end=/)/ contains=TangenceType
+
+syntax region TangenceArglist start="(" end=")" contains=TangenceType,TangenceIdentifier skipwhite
 
 syntax region TangenceClassBlock start="{" end="}" fold transparent
 

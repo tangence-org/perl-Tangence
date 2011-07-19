@@ -1,9 +1,9 @@
 include "Ball.tan"
 
 class t.Bag {
-  method get_ball (str) -> obj;
-  method pull_ball(str) -> obj;
-  method add_ball (obj);
+  method get_ball (str colour) -> obj;
+  method pull_ball(str colour) -> obj;
+  method add_ball (obj ball);
 
   prop colours = hash of int;
 }
