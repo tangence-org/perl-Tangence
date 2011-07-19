@@ -325,6 +325,8 @@ If this class is subclassed, the following methods may be overridden to
 customise the behaviour. They allow the subclass to return different objects
 in the syntax tree.
 
+=cut
+
 =head2 $class = $parser->make_class( %args )
 
 Return a new instance of L<Tangence::Compiler::Class> to go in a package.
