@@ -181,7 +181,8 @@ sub destroy_object
    push @{ $self->{freeids} }, $id; # Recycle the ID
 }
 
-package Tangence::Registry::Parser;
+package # hide from CPAN
+   Tangence::Registry::Parser;
 use base qw( Tangence::Compiler::Parser );
 
 sub make_class
