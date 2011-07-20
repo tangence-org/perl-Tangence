@@ -7,10 +7,11 @@ package Tangence::Compiler::Parser;
 
 use strict;
 use warnings;
-
 use base qw( Parser::MGC );
 
 use feature qw( switch ); # we like given/when
+
+our $VERSION = '0.07';
 
 use File::Basename qw( dirname );
 
