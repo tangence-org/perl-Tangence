@@ -14,6 +14,7 @@ use Tangence::Constants;
 use Tangence::Compiler::Method;
 use Tangence::Compiler::Event;
 use Tangence::Compiler::Property;
+use Tangence::Compiler::Argument;
 
 use Carp;
 
@@ -49,7 +50,9 @@ sub declare
       $methods{$_} = Tangence::Compiler::Method->new(
          name => $_,
          %{ $args{methods}{$_} },
-         argtypes => $args{methods}{$_}{args},
+         arguments => [ map {
+            Tangence::Compiler::Argument->new( name => $_->[0], type => $_->[1] )
+         } @{ $args{methods}{$_}{args} } ],
       );
    }
 
@@ -58,7 +61,9 @@ sub declare
       $events{$_} = Tangence::Compiler::Event->new(
          name => $_,
          %{ $args{events}{$_} },
-         argtypes => $args{events}{$_}{args},
+         arguments => [ map {
+            Tangence::Compiler::Argument->new( name => $_->[0], type => $_->[1] )
+         } @{ $args{events}{$_}{args} } ],
       );
    }
 

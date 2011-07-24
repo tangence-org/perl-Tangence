@@ -24,17 +24,17 @@ Tangence::Meta::Class->declare(
 
    methods => {
       get_by_id => {
-         args => [qw( int )],
+         args => [ [ id => 'int' ] ],
          ret  => 'obj',
       },
    },
 
    events => {
       object_constructed => {
-         args => [qw( int )],
+         args => [ [ id => 'int' ] ],
       },
       object_destroyed => {
-         args => [qw( int )],
+         args => [ [ id => 'int' ] ],
       },
    },
 

@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 40;
+use Test::More tests => 46;
 
 use Tangence::Compiler::Parser;
 
@@ -18,6 +18,7 @@ is_deeply( [ sort keys %$meta ], [sort qw( t.Colourable t.Ball )], 'keys of t/Ba
 my $methods;
 my $events;
 my $props;
+my @args;
 
 my $colourable = $meta->{'t.Colourable'};
 isa_ok( $colourable, "Tangence::Compiler::Class", 't.Colourable meta' );
@@ -44,6 +45,10 @@ is_deeply( [ sort keys %$methods ], [qw( bounce )], 't.Ball direct methods' );
 
 isa_ok( $methods->{bounce}, "Tangence::Compiler::Method", 't.Ball method bounce' );
 is( $methods->{bounce}->name, "bounce", 't.Ball method bounce name' );
+@args = $methods->{bounce}->arguments;
+is( scalar @args, 1, 't.Ball method bounce has 1 argument' );
+is( $args[0]->name, "howhigh", 't.Ball method bounce arg[0] name' );
+is( $args[0]->type, "str",     't.Ball method bounce arg[0] type' );
 is_deeply( [ $methods->{bounce}->argtypes ], [qw( str )], 't.Ball method bounce argtypes' );
 is( $methods->{bounce}->ret,  "str", 't.Ball method bounce ret' );
 
@@ -55,6 +60,10 @@ is_deeply( [ sort keys %$events ], [qw( bounced )], 't.Ball direct events' );
 
 isa_ok( $events->{bounced}, "Tangence::Compiler::Event", 't.Ball event bounced' );
 is( $events->{bounced}->name, "bounced", 't.Ball event bounced name' );
+@args = $events->{bounced}->arguments;
+is( scalar @args, 1, 't.Ball event bounced has 1 argument' );
+is( $args[0]->name, "howhigh", 't.Ball event bounced arg[0] name' );
+is( $args[0]->type, "str",     't.Ball event bounced arg[0] type' );
 is_deeply( [ $events->{bounced}->argtypes ], [qw( str )], 't.Ball event bounced argtypes' );
 
 is_deeply( [ sort keys %{ $ball->events } ], [qw( bounced )], 't.Ball events' );

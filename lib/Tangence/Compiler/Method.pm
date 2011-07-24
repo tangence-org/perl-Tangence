@@ -36,9 +36,10 @@ Returns a new instance initialised by the given arguments.
 
 Name of the method
 
-=item argtypes => ARRAY
+=item args => ARRAY
 
-Optional ARRAY reference containing argument types as strings.
+Optional ARRAY reference containing arguments as
+L<Tangence::Compiler::Argument> references.
 
 =item ret => STRING
 
@@ -52,7 +53,7 @@ sub new
 {
    my $class = shift;
    my %args = @_;
-   $args{argtypes} ||= [];
+   $args{arguments} ||= [];
    bless \%args, $class;
 }
 
@@ -72,6 +73,18 @@ sub name
    return $self->{name};
 }
 
+=head2 @arguments = $method->arguments
+
+Return the arguments in a list of L<Tangence::Compiler::Argument> references.
+
+=cut
+
+sub arguments
+{
+   my $self = shift;
+   return @{ $self->{arguments} };
+}
+
 =head2 @argtypes = $method->argtypes
 
 Return the argument types in a list of strings.
@@ -81,7 +94,7 @@ Return the argument types in a list of strings.
 sub argtypes
 {
    my $self = shift;
-   return @{ $self->{argtypes} };
+   return map { $_->type } $self->arguments;
 }
 
 =head2 $ret = $method->ret

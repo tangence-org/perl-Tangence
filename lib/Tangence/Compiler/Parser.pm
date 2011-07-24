@@ -162,7 +162,7 @@ sub parse_classblock
 
             $methods{$methodname} = $self->make_method(
                name => $methodname,
-               argtypes => $args,
+               arguments => $args,
                ret  => $ret,
             );
          }
@@ -177,7 +177,7 @@ sub parse_classblock
 
             $events{$eventname} = $self->make_event(
                name => $eventname,
-               argtypes => $args,
+               arguments => $args,
             );
          }
 
@@ -248,12 +248,12 @@ sub parse_arglist
 sub parse_arg
 {
    my $self = shift;
+   my $name;
    my $type = $self->parse_type;
    $self->maybe( sub {
-      # Ignore it for now
-      $self->token_ident;
+      $name = $self->token_ident;
    } );
-   return $type;
+   return $self->make_argument( name => $name, type => $type );
 }
 
 =head2 Types
@@ -372,6 +372,20 @@ sub make_property
    shift;
    require Tangence::Compiler::Property;
    return Tangence::Compiler::Property->new( @_ );
+}
+
+=head2 $argument = $parser->make_argument( %args )
+
+Return a new instance of L<Tangence::Compiler::Argument> to use for a method
+or event argument.
+
+=cut
+
+sub make_argument
+{
+   my $self = shift;
+   require Tangence::Compiler::Argument;
+   return Tangence::Compiler::Argument->new( @_ );
 }
 
 =head1 AUTHOR
