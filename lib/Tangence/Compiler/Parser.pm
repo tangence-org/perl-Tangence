@@ -143,6 +143,8 @@ sub parse_classblock
    my %properties;
    my @superclasses;
 
+   my $class = $self->make_class( name => $classname );
+
    while( !$self->at_eos ) {
       given( $self->token_kw(qw( method event prop smashed isa )) ) {
          when( 'method' ) {
@@ -226,13 +228,14 @@ sub parse_classblock
       $self->expect( ';' );
    }
 
-   return $self->make_class(
-      name         => $classname,
+   $class->define(
       methods      => \%methods,
       events       => \%events,
       properties   => \%properties,
       superclasses => \@superclasses,
    );
+
+   return $class;
 }
 
 sub parse_arglist
@@ -328,9 +331,10 @@ in the syntax tree.
 
 =cut
 
-=head2 $class = $parser->make_class( %args )
+=head2 $class = $parser->make_class( name => $name )
 
-Return a new instance of L<Tangence::Compiler::Class> to go in a package.
+Return a new instance of L<Tangence::Compiler::Class> to go in a package. The
+parser will call C<define> on it.
 
 =cut
 

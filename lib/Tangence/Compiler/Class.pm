@@ -8,6 +8,8 @@ package Tangence::Compiler::Class;
 use strict;
 use warnings;
 
+use Carp;
+
 our $VERSION = '0.07';
 
 =head1 NAME
@@ -17,8 +19,8 @@ C<Tangence::Compiler::Class> - structure representing one C<Tangence> class
 =head1 DESCRIPTION
 
 This data structure object stores information about one L<Tangence> class, as
-parsed by L<Tangence::Compiler::Parser>. Once constructed, such objects are
-immutable.
+parsed by L<Tangence::Compiler::Parser>. Once constructed and defined, such
+objects are immutable.
 
 =cut
 
@@ -26,15 +28,25 @@ immutable.
 
 =cut
 
-=head2 $class = Tangence::Compiler::Class->new( %args )
+=head2 $class = Tangence::Compiler::Class->new( name => $name )
 
-Returns a new instance initialised by the given arguments.
+Returns a new instance representing the given name.
+
+=cut
+
+sub new
+{
+   my $class = shift;
+   my %args = @_;
+   my $self = bless { name => delete $args{name} }, $class;
+   return $self;
+}
+
+=head2 $class->define( %args )
+
+Provides a definition for the class.
 
 =over 8
-
-=item name => STRING
-
-Name of the class
 
 =item methods => HASH
 
@@ -55,20 +67,35 @@ C<Tangence::Compiler::Class> references.
 
 =cut
 
-sub new
+sub define
 {
-   my $class = shift;
+   my $self = shift;
    my %args = @_;
+
+   $self->defined and croak "Cannot define ".$self->name." twice";
+
    $args{superclasses} ||= [];
    $args{methods}      ||= {};
    $args{events}       ||= {};
    $args{properties}   ||= {};
-   bless \%args, $class;
+   $self->{$_} = $args{$_} for keys %args;
 }
 
 =head1 ACCESSORS
 
 =cut
+
+=head2 $defined = $class->defined
+
+Returns true if a definintion for the class has been provided using C<define>.
+
+=cut
+
+sub defined
+{
+   my $self = shift;
+   return exists $self->{superclasses};
+}
 
 =head2 $name = $class->name
 
@@ -92,6 +119,7 @@ references.
 sub direct_superclasses
 {
    my $self = shift;
+   $self->defined or croak $self->name . " is not yet defined";
    return @{ $self->{superclasses} };
 }
 
@@ -106,6 +134,7 @@ L<Tangence::Compiler::Method> instances.
 sub direct_methods
 {
    my $self = shift;
+   $self->defined or croak $self->name . " is not yet defined";
    return $self->{methods};
 }
 
@@ -120,6 +149,7 @@ L<Tangence::Compiler::Event> instances.
 sub direct_events
 {
    my $self = shift;
+   $self->defined or croak $self->name . " is not yet defined";
    return $self->{events};
 }
 
@@ -134,6 +164,7 @@ L<Tangence::Compiler::Property> instances.
 sub direct_properties
 {
    my $self = shift;
+   $self->defined or croak $self->name . " is not yet defined";
    return $self->{properties};
 }
 

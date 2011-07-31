@@ -45,6 +45,19 @@ sub declare
 
    ( my $name = $perlname ) =~ s{::}{.}g;
 
+   my $self;
+   if( exists $metas{$name} ) {
+      $self = $metas{$name};
+      local $metas{$name};
+
+      my $newself = $class->new( name => $name );
+
+      %$self = %$newself;
+   }
+   else {
+      $self = $class->new( name => $name );
+   }
+
    my %methods;
    foreach ( keys %{ $args{methods} } ) {
       $methods{$_} = Tangence::Compiler::Method->new(
@@ -76,24 +89,11 @@ sub declare
       );
    }
 
-   my @args = (
-      name       => $name,
+   $self->define(
       methods    => \%methods,
       events     => \%events,
       properties => \%properties,
    );
-
-   if( exists $metas{$name} ) {
-      my $oldself = $metas{$name};
-      local $metas{$name};
-
-      my $newself = $class->new( @args );
-
-      %$oldself = %$newself;
-   }
-   else {
-      $class->new( @args );
-   }
 }
 
 sub for_perlname
