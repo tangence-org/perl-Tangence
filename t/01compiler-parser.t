@@ -2,7 +2,8 @@
 
 use strict;
 
-use Test::More tests => 46;
+use Test::More tests => 49;
+use Test::Identity;
 
 use Tangence::Compiler::Parser;
 
@@ -44,6 +45,7 @@ $methods = $ball->direct_methods;
 is_deeply( [ sort keys %$methods ], [qw( bounce )], 't.Ball direct methods' );
 
 isa_ok( $methods->{bounce}, "Tangence::Compiler::Method", 't.Ball method bounce' );
+identical( $methods->{bounce}->class, $ball, 't.Ball method bounce class' );
 is( $methods->{bounce}->name, "bounce", 't.Ball method bounce name' );
 @args = $methods->{bounce}->arguments;
 is( scalar @args, 1, 't.Ball method bounce has 1 argument' );
@@ -59,6 +61,7 @@ $events = $ball->direct_events;
 is_deeply( [ sort keys %$events ], [qw( bounced )], 't.Ball direct events' );
 
 isa_ok( $events->{bounced}, "Tangence::Compiler::Event", 't.Ball event bounced' );
+identical( $events->{bounced}->class, $ball, 't.Ball event bounced class' );
 is( $events->{bounced}->name, "bounced", 't.Ball event bounced name' );
 @args = $events->{bounced}->arguments;
 is( scalar @args, 1, 't.Ball event bounced has 1 argument' );
@@ -72,6 +75,7 @@ $props = $ball->direct_properties;
 
 is_deeply( [ sort keys %$props ], [qw( size )], 't.Ball direct props' );
 
+identical( $props->{size}->class, $ball, 't.Ball prop size class' );
 is( $props->{size}->name, "size", 't.Ball prop size name' );
 is( $props->{size}->dimension, DIM_SCALAR, 't.Ball prop size dimension' );
 is( $props->{size}->type, "int", 't.Ball prop size type' );

@@ -163,9 +163,10 @@ sub parse_classblock
             } );
 
             $methods{$methodname} = $self->make_method(
-               name => $methodname,
+               class     => $class,
+               name      => $methodname,
                arguments => $args,
-               ret  => $ret,
+               ret       => $ret,
             );
          }
 
@@ -178,7 +179,8 @@ sub parse_classblock
             my $args = $self->parse_arglist;
 
             $events{$eventname} = $self->make_event(
-               name => $eventname,
+               class     => $class,
+               name      => $eventname,
                arguments => $args,
             );
          }
@@ -208,6 +210,7 @@ sub parse_classblock
             my $type = $self->parse_type;
 
             $properties{$propname} = $self->make_property(
+               class      => $class,
                name       => $propname,
                smashed    => $smashed,
                dimension  => $dim,

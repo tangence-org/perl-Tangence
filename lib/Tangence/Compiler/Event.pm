@@ -10,6 +10,8 @@ use warnings;
 
 our $VERSION = '0.07';
 
+use Scalar::Util qw( weaken );
+
 =head1 NAME
 
 C<Tangence::Compiler::Event> - structure representing one C<Tangence> event
@@ -32,6 +34,10 @@ Returns a new instance initialised by the given arguments.
 
 =over 8
 
+=item class => Tangence::Compiler::Class
+
+Reference to the containing class
+
 =item name => STRING
 
 Name of the event
@@ -50,12 +56,26 @@ sub new
    my $class = shift;
    my %args = @_;
    $args{arguments} ||= [];
-   bless \%args, $class;
+   my $self = bless \%args, $class;
+   weaken $self->{class};
+   return $self;
 }
 
 =head1 ACCESSORS
 
 =cut
+
+=head2 $class = $event->class
+
+Returns the class the event is a member of
+
+=cut
+
+sub class
+{
+   my $self = shift;
+   return $self->{class};
+}
 
 =head2 $name = $event->name
 
