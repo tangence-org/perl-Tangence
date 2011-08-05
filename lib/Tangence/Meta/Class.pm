@@ -97,6 +97,26 @@ sub declare
    );
 }
 
+sub define
+{
+   my $self = shift;
+   $self->SUPER::define( @_ );
+
+   my $class = $self->perlname;
+
+   my %subs;
+
+   foreach my $prop ( values %{ $self->direct_properties } ) {
+      $prop->build_subs( \%subs );
+   }
+
+   no strict 'refs';
+   foreach my $name ( keys %subs ) {
+      next if defined &{"${class}::${name}"};
+      *{"${class}::${name}"} = $subs{$name};
+   }
+}
+
 sub for_perlname
 {
    my $class = shift;
