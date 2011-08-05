@@ -19,6 +19,16 @@ use Tangence::Meta::Property;
 
 use Carp;
 
+BEGIN {
+   if( eval { require Sub::Name } ) {
+      Sub::Name->import(qw( subname ));
+   }
+   else {
+      # Emulate it by just returning the CODEref and ignoring setting the name
+      *subname = sub { $_[1] };
+   }
+}
+
 our $VERSION = '0.07';
 
 our %metas; # cache one per class, keyed by _Tangence_ class name
@@ -113,7 +123,7 @@ sub define
    no strict 'refs';
    foreach my $name ( keys %subs ) {
       next if defined &{"${class}::${name}"};
-      *{"${class}::${name}"} = $subs{$name};
+      *{"${class}::${name}"} = subname "${class}::${name}" => $subs{$name};
    }
 }
 
