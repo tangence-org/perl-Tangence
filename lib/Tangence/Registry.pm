@@ -185,10 +185,18 @@ package # hide from CPAN
    Tangence::Registry::Parser;
 use base qw( Tangence::Compiler::Parser );
 
+use Tangence::Meta::Property;
+
 sub make_class
 {
    my $self = shift;
    return Tangence::Meta::Class->new( @_ );
+}
+
+sub make_property
+{
+   my $self = shift;
+   return Tangence::Meta::Property->new( @_ );
 }
 
 =head1 AUTHOR

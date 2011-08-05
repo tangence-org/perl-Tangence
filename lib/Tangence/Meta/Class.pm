@@ -13,8 +13,9 @@ use Tangence::Constants;
 
 use Tangence::Compiler::Method;
 use Tangence::Compiler::Event;
-use Tangence::Compiler::Property;
 use Tangence::Compiler::Argument;
+
+use Tangence::Meta::Property;
 
 use Carp;
 
@@ -82,7 +83,7 @@ sub declare
 
    my %properties;
    foreach ( keys %{ $args{props} } ) {
-      $properties{$_} = Tangence::Compiler::Property->new(
+      $properties{$_} = Tangence::Meta::Property->new(
          name => $_,
          %{ $args{props}{$_} },
          dimension => $args{props}{$_}{dim} || DIM_SCALAR,
