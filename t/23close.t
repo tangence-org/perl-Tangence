@@ -19,37 +19,34 @@ my $ball = $registry->construct(
    size   => 100,
 );
 
-my ( $server1, $client1 ) = make_serverclient( $registry );
+my ( $conn1, $conn2 ) = map {
+   my ( $server, $client ) = make_serverclient( $registry );
 
-my $ballproxy1 = $client1->rootobj;
+   my $ballproxy = $client->rootobj;
 
-my $colour1;
+   my $conn = {
+      server    => $server,
+      client    => $client,
+      ballproxy => $ballproxy,
+   };
 
-$ballproxy1->watch_property(
-   property => "colour",
-   on_set => sub { $colour1 = shift },
-);
+   $ballproxy->watch_property(
+      property => "colour",
+      on_set => sub { $conn->{colour} = shift },
+   );
 
-my ( $server2, $client2 ) = make_serverclient( $registry );
-
-my $ballproxy2 = $client2->rootobj;
-
-my $colour2;
-
-$ballproxy2->watch_property(
-   property => "colour",
-   on_set => sub { $colour2 = shift },
-);
+   $conn
+} 1 .. 2;
 
 $ball->set_prop_colour( "green" );
 
-is( $colour1, "green", '$colour is green from connection 1' );
-is( $colour2, "green", '$colour is green from connection 2' );
+is( $conn1->{colour}, "green", '$colour is green from connection 1' );
+is( $conn2->{colour}, "green", '$colour is green from connection 2' );
 
-$client1->tangence_closed;
-$server1->tangence_closed;
+$conn1->{server}->tangence_closed;
+$conn1->{client}->tangence_closed;
 
 $ball->set_prop_colour( "blue" );
 
-is( $colour1, "green", '$colour is still green from (closed) connection 1' );
-is( $colour2, "blue", '$colour is blue from connection 2' );
+is( $conn1->{colour}, "green", '$colour is still green from (closed) connection 1' );
+is( $conn2->{colour}, "blue", '$colour is blue from connection 2' );
