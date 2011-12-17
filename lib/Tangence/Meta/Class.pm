@@ -29,7 +29,7 @@ BEGIN {
    }
 }
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 our %metas; # cache one per class, keyed by _Tangence_ class name
 

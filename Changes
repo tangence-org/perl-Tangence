@@ -1,5 +1,10 @@
 Revision history for Tangence
 
+0.08    CHANGES:
+         * Optionally use Sub::Name to name generated property
+           accessor/mutator methods
+         * Further improvements to metadata layer
+
 0.07    CHANGES:
          * Redesign of metadata layer to use real objects rather than
            unblessed hashrefs for structural information

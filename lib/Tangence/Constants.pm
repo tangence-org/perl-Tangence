@@ -8,7 +8,7 @@ package Tangence::Constants;
 use strict;
 use warnings;
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 use Exporter 'import';
 our @EXPORT = qw(
