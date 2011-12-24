@@ -3,7 +3,7 @@
 #
 #  (C) Paul Evans, 2011 -- leonerd@leonerd.org.uk
 
-package Tangence::Compiler::Class;
+package Tangence::Meta::Class;
 
 use strict;
 use warnings;
@@ -14,13 +14,12 @@ our $VERSION = '0.08';
 
 =head1 NAME
 
-C<Tangence::Compiler::Class> - structure representing one C<Tangence> class
+C<Tangence::Meta::Class> - structure representing one C<Tangence> class
 
 =head1 DESCRIPTION
 
-This data structure object stores information about one L<Tangence> class, as
-parsed by L<Tangence::Compiler::Parser>. Once constructed and defined, such
-objects are immutable.
+This data structure object stores information about one L<Tangence> class.
+Once constructed and defined, such objects are immutable.
 
 =cut
 
@@ -28,7 +27,7 @@ objects are immutable.
 
 =cut
 
-=head2 $class = Tangence::Compiler::Class->new( name => $name )
+=head2 $class = Tangence::Meta::Class->new( name => $name )
 
 Returns a new instance representing the given name.
 
@@ -55,13 +54,13 @@ Provides a definition for the class.
 =item properties => HASH
 
 Optional HASH references containing metadata about methods, events and
-properties, as instances of L<Tangence::Compiler::Method>,
-L<Tangence::Compiler::Event> or L<Tangence::Compiler::Property>.
+properties, as instances of L<Tangence::Meta::Method>,
+L<Tangence::Meta::Event> or L<Tangence::Meta::Property>.
 
 =item superclasses => ARRAY
 
 Optional ARRAY reference containing superclasses as
-C<Tangence::Compiler::Class> references.
+C<Tangence::Meta::Class> references.
 
 =back
 
@@ -111,7 +110,7 @@ sub name
 
 =head2 @superclasses = $class->direct_superclasses
 
-Return the direct superclasses in a list of C<Tangence::Compiler::Class>
+Return the direct superclasses in a list of C<Tangence::Meta::Class>
 references.
 
 =cut
@@ -127,7 +126,7 @@ sub direct_superclasses
 
 Return the methods that this class directly defines (rather than inheriting
 from superclasses) as a HASH reference mapping names to
-L<Tangence::Compiler::Method> instances.
+L<Tangence::Meta::Method> instances.
 
 =cut
 
@@ -142,7 +141,7 @@ sub direct_methods
 
 Return the events that this class directly defines (rather than inheriting
 from superclasses) as a HASH reference mapping names to
-L<Tangence::Compiler::Event> instances.
+L<Tangence::Meta::Event> instances.
 
 =cut
 
@@ -157,7 +156,7 @@ sub direct_events
 
 Return the properties that this class directly defines (rather than inheriting
 from superclasses) as a HASH reference mapping names to
-L<Tangence::Compiler::Property> instances.
+L<Tangence::Meta::Property> instances.
 
 =cut
 
@@ -177,7 +176,7 @@ all its superclasses
 
 =head2 @superclasses = $class->superclasses
 
-Return all the superclasses in a list of unique C<Tangence::Compiler::Class>
+Return all the superclasses in a list of unique C<Tangence::Meta::Class>
 references.
 
 =cut
@@ -194,7 +193,7 @@ sub superclasses
 =head2 $methods = $class->methods
 
 Return all the methods available to this class as a HASH reference mapping
-names to L<Tangence::Compiler::Method> instances.
+names to L<Tangence::Meta::Method> instances.
 
 =cut
 
@@ -212,7 +211,7 @@ sub methods
 =head2 $events = $class->events
 
 Return all the events available to this class as a HASH reference mapping
-names to L<Tangence::Compiler::Event> instances.
+names to L<Tangence::Meta::Event> instances.
 
 =cut
 
@@ -230,7 +229,7 @@ sub events
 =head2 $properties = $class->properties
 
 Return all the properties available to this class as a HASH reference mapping
-names to L<Tangence::Compiler::Property> instances.
+names to L<Tangence::Meta::Property> instances.
 
 =cut
 

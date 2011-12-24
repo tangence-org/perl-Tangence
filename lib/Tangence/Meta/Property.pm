@@ -3,7 +3,7 @@
 #
 #  (C) Paul Evans, 2011 -- leonerd@leonerd.org.uk
 
-package Tangence::Compiler::Property;
+package Tangence::Meta::Property;
 
 use strict;
 use warnings;
@@ -14,13 +14,12 @@ use Scalar::Util qw( weaken );
 
 =head1 NAME
 
-C<Tangence::Compiler::Property> - structure representing one C<Tangence> property
+C<Tangence::Meta::Property> - structure representing one C<Tangence> property
 
 =head1 DESCRIPTION
 
 This data structure object stores information about one L<Tangence> class
-property, as parsed by L<Tangence::Compiler::Parser>. Once constructed, such
-objects are immutable.
+property. Once constructed, such objects are immutable.
 
 =cut
 
@@ -28,13 +27,13 @@ objects are immutable.
 
 =cut
 
-=head2 $property = Tangence::Compiler::Property->new( %args )
+=head2 $property = Tangence::Meta::Property->new( %args )
 
 Returns a new instance initialised by the given arguments.
 
 =over 8
 
-=item class => Tangence::Compiler::Class
+=item class => Tangence::Meta::Class
 
 Reference to the containing class
 

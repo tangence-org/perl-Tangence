@@ -3,7 +3,7 @@
 #
 #  (C) Paul Evans, 2011 -- leonerd@leonerd.org.uk
 
-package Tangence::Compiler::Event;
+package Tangence::Meta::Method;
 
 use strict;
 use warnings;
@@ -14,13 +14,12 @@ use Scalar::Util qw( weaken );
 
 =head1 NAME
 
-C<Tangence::Compiler::Event> - structure representing one C<Tangence> event
+C<Tangence::Meta::Method> - structure representing one C<Tangence> method
 
 =head1 DESCRIPTION
 
 This data structure object stores information about one L<Tangence> class
-event, as parsed by L<Tangence::Compiler::Parser>. Once constructed, such
-objects are immutable.
+method. Once constructed, such objects are immutable.
 
 =cut
 
@@ -28,24 +27,28 @@ objects are immutable.
 
 =cut
 
-=head2 $event = Tangence::Compiler::Event->new( %args )
+=head2 $method = Tangence::Meta::Method->new( %args )
 
 Returns a new instance initialised by the given arguments.
 
 =over 8
 
-=item class => Tangence::Compiler::Class
+=item class => Tangence::Meta::Class
 
 Reference to the containing class
 
 =item name => STRING
 
-Name of the event
+Name of the method
 
-=item argtypes => ARRAY
+=item args => ARRAY
 
 Optional ARRAY reference containing arguments as
-L<Tangence::Compiler::Argument> references.
+L<Tangence::Meta::Argument> references.
+
+=item ret => STRING
+
+Optional string giving the return value type as a string.
 
 =back
 
@@ -65,9 +68,9 @@ sub new
 
 =cut
 
-=head2 $class = $event->class
+=head2 $class = $method->class
 
-Returns the class the event is a member of
+Returns the class the method is a member of
 
 =cut
 
@@ -77,7 +80,7 @@ sub class
    return $self->{class};
 }
 
-=head2 $name = $event->name
+=head2 $name = $method->name
 
 Returns the name of the class
 
@@ -89,9 +92,9 @@ sub name
    return $self->{name};
 }
 
-=head2 @arguments = $event->arguments
+=head2 @arguments = $method->arguments
 
-Return the arguments in a list of L<Tangence::Compiler::Argument> references.
+Return the arguments in a list of L<Tangence::Meta::Argument> references.
 
 =cut
 
@@ -101,7 +104,7 @@ sub arguments
    return @{ $self->{arguments} };
 }
 
-=head2 @argtypes = $event->argtypes
+=head2 @argtypes = $method->argtypes
 
 Return the argument types in a list of strings.
 
@@ -113,6 +116,19 @@ sub argtypes
    return map { $_->type } $self->arguments;
 }
 
+=head2 $ret = $method->ret
+
+Returns the return type as a string, or C<undef> if the method does not return
+a value.
+
+=cut
+
+sub ret
+{
+   my $self = shift;
+   return $self->{ret};
+}
+
 =head1 AUTHOR
 
 Paul Evans <leonerd@leonerd.org.uk>
@@ -120,4 +136,3 @@ Paul Evans <leonerd@leonerd.org.uk>
 =cut
 
 0x55AA;
-

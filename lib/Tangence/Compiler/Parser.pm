@@ -336,7 +336,7 @@ in the syntax tree.
 
 =head2 $class = $parser->make_class( name => $name )
 
-Return a new instance of L<Tangence::Compiler::Class> to go in a package. The
+Return a new instance of L<Tangence::Meta::Class> to go in a package. The
 parser will call C<define> on it.
 
 =cut
@@ -344,8 +344,8 @@ parser will call C<define> on it.
 sub make_class
 {
    shift;
-   require Tangence::Compiler::Class;
-   return Tangence::Compiler::Class->new( @_ );
+   require Tangence::Meta::Class;
+   return Tangence::Meta::Class->new( @_ );
 }
 
 =head2 $method = $parser->make_method( %args )
@@ -354,36 +354,35 @@ sub make_class
 
 =head2 $property = $parser->make_property( %args )
 
-Return a new instance of L<Tangence::Compiler::Method>,
-L<Tangence::Compiler::Event> or L<Tangence::Compiler::Property> to go in a
-class.
+Return a new instance of L<Tangence::Meta::Method>, L<Tangence::Meta::Event>
+or L<Tangence::Meta::Property> to go in a class.
 
 =cut
 
 sub make_method
 {
    shift;
-   require Tangence::Compiler::Method;
-   return Tangence::Compiler::Method->new( @_ );
+   require Tangence::Meta::Method;
+   return Tangence::Meta::Method->new( @_ );
 }
 
 sub make_event
 {
    shift;
-   require Tangence::Compiler::Event;
-   return Tangence::Compiler::Event->new( @_ );
+   require Tangence::Meta::Event;
+   return Tangence::Meta::Event->new( @_ );
 }
 
 sub make_property
 {
    shift;
-   require Tangence::Compiler::Property;
-   return Tangence::Compiler::Property->new( @_ );
+   require Tangence::Meta::Property;
+   return Tangence::Meta::Property->new( @_ );
 }
 
 =head2 $argument = $parser->make_argument( %args )
 
-Return a new instance of L<Tangence::Compiler::Argument> to use for a method
+Return a new instance of L<Tangence::Meta::Argument> to use for a method
 or event argument.
 
 =cut
@@ -391,8 +390,8 @@ or event argument.
 sub make_argument
 {
    my $self = shift;
-   require Tangence::Compiler::Argument;
-   return Tangence::Compiler::Argument->new( @_ );
+   require Tangence::Meta::Argument;
+   return Tangence::Meta::Argument->new( @_ );
 }
 
 =head1 AUTHOR

@@ -22,14 +22,14 @@ my $props;
 my @args;
 
 my $colourable = $meta->{'t.Colourable'};
-isa_ok( $colourable, "Tangence::Compiler::Class", 't.Colourable meta' );
+isa_ok( $colourable, "Tangence::Meta::Class", 't.Colourable meta' );
 is( $colourable->name, "t.Colourable", 't.Colourable name' );
 
 $props = $colourable->direct_properties;
 
 is_deeply( [ sort keys %$props ], [qw( colour )], 't.Colourable direct props' );
 
-isa_ok( $props->{colour}, "Tangence::Compiler::Property", 't.Colourable prop colour' );
+isa_ok( $props->{colour}, "Tangence::Meta::Property", 't.Colourable prop colour' );
 is( $props->{colour}->name, "colour", 't.Colourable prop colour name' );
 is( $props->{colour}->dimension, DIM_SCALAR, 't.Colourable prop colour dimension' );
 is( $props->{colour}->type, "str", 't.Colourable prop colour type' );
@@ -38,13 +38,13 @@ ok( !$props->{colour}->smashed, 't.Colourable prop colour !smashed' );
 is_deeply( [ sort keys %{ $colourable->properties } ], [qw( colour )], 't.Colourable props' );
 
 my $ball = $meta->{'t.Ball'};
-isa_ok( $ball, "Tangence::Compiler::Class", 't.Ball meta' );
+isa_ok( $ball, "Tangence::Meta::Class", 't.Ball meta' );
 
 $methods = $ball->direct_methods;
 
 is_deeply( [ sort keys %$methods ], [qw( bounce )], 't.Ball direct methods' );
 
-isa_ok( $methods->{bounce}, "Tangence::Compiler::Method", 't.Ball method bounce' );
+isa_ok( $methods->{bounce}, "Tangence::Meta::Method", 't.Ball method bounce' );
 identical( $methods->{bounce}->class, $ball, 't.Ball method bounce class' );
 is( $methods->{bounce}->name, "bounce", 't.Ball method bounce name' );
 @args = $methods->{bounce}->arguments;
@@ -60,7 +60,7 @@ $events = $ball->direct_events;
 
 is_deeply( [ sort keys %$events ], [qw( bounced )], 't.Ball direct events' );
 
-isa_ok( $events->{bounced}, "Tangence::Compiler::Event", 't.Ball event bounced' );
+isa_ok( $events->{bounced}, "Tangence::Meta::Event", 't.Ball event bounced' );
 identical( $events->{bounced}->class, $ball, 't.Ball event bounced class' );
 is( $events->{bounced}->name, "bounced", 't.Ball event bounced name' );
 @args = $events->{bounced}->arguments;

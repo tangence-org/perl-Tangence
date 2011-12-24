@@ -3,7 +3,7 @@
 #
 #  (C) Paul Evans, 2011 -- leonerd@leonerd.org.uk
 
-package Tangence::Compiler::Argument;
+package Tangence::Meta::Argument;
 
 use strict;
 use warnings;
@@ -12,14 +12,14 @@ our $VERSION = '0.08';
 
 =head1 NAME
 
-C<Tangence::Compiler::Argument> - structure representing one C<Tangence>
+C<Tangence::Meta::Argument> - structure representing one C<Tangence>
 method or event argument
 
 =head1 DESCRIPTION
 
 This data structure object stores information about one argument to a
-L<Tangence> class method or event, as parsed by L<Tangence::Compiler::Parser>.
-Once constructed, such objects are immutable.
+L<Tangence> class method or event. Once constructed, such objects are
+immutable.
 
 =cut
 
@@ -27,7 +27,7 @@ Once constructed, such objects are immutable.
 
 =cut
 
-=head2 $argument = Tangence::Compiler::Argument->new( %args )
+=head2 $argument = Tangence::Meta::Argument->new( %args )
 
 Returns a new instance initialised by the given arguments.
 

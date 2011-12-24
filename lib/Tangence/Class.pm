@@ -7,14 +7,14 @@ package Tangence::Class;
 
 use strict;
 use warnings;
-use base qw( Tangence::Compiler::Class );
+use base qw( Tangence::Meta::Class );
 
 use Tangence::Constants;
 
-use Tangence::Compiler::Method;
-use Tangence::Compiler::Event;
-use Tangence::Compiler::Property;
-use Tangence::Compiler::Argument;
+use Tangence::Meta::Method;
+use Tangence::Meta::Event;
+use Tangence::Meta::Property;
+use Tangence::Meta::Argument;
 
 use Carp;
 
@@ -70,29 +70,29 @@ sub declare
 
    my %methods;
    foreach ( keys %{ $args{methods} } ) {
-      $methods{$_} = Tangence::Compiler::Method->new(
+      $methods{$_} = Tangence::Meta::Method->new(
          name => $_,
          %{ $args{methods}{$_} },
          arguments => [ map {
-            Tangence::Compiler::Argument->new( name => $_->[0], type => $_->[1] )
+            Tangence::Meta::Argument->new( name => $_->[0], type => $_->[1] )
          } @{ $args{methods}{$_}{args} } ],
       );
    }
 
    my %events;
    foreach ( keys %{ $args{events} } ) {
-      $events{$_} = Tangence::Compiler::Event->new(
+      $events{$_} = Tangence::Meta::Event->new(
          name => $_,
          %{ $args{events}{$_} },
          arguments => [ map {
-            Tangence::Compiler::Argument->new( name => $_->[0], type => $_->[1] )
+            Tangence::Meta::Argument->new( name => $_->[0], type => $_->[1] )
          } @{ $args{events}{$_}{args} } ],
       );
    }
 
    my %properties;
    foreach ( keys %{ $args{props} } ) {
-      $properties{$_} = Tangence::Compiler::Property->new(
+      $properties{$_} = Tangence::Meta::Property->new(
          name => $_,
          %{ $args{props}{$_} },
          dimension => $args{props}{$_}{dim} || DIM_SCALAR,
