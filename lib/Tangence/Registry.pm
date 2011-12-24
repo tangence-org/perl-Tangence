@@ -14,12 +14,13 @@ our $VERSION = '0.08';
 use Carp;
 
 use Tangence::Constants;
+use Tangence::Class;
 
 use Tangence::Compiler::Parser;
 
 use Scalar::Util qw( weaken );
 
-Tangence::Meta::Class->declare(
+Tangence::Class->declare(
    __PACKAGE__,
 
    methods => {
@@ -84,7 +85,7 @@ sub new
    my $self = $class->SUPER::new(
       id => $id,
       registry => "BOOTSTRAP",
-      meta => Tangence::Meta::Class->for_perlname( $class ),
+      meta => Tangence::Class->for_perlname( $class ),
    );
    weaken( $self->{registry} = $self );
    
@@ -190,7 +191,7 @@ use Tangence::Meta::Property;
 sub make_class
 {
    my $self = shift;
-   return Tangence::Meta::Class->new( @_ );
+   return Tangence::Class->new( @_ );
 }
 
 sub make_property

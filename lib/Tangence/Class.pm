@@ -3,7 +3,7 @@
 #
 #  (C) Paul Evans, 2010-2011 -- leonerd@leonerd.org.uk
 
-package Tangence::Meta::Class;
+package Tangence::Class;
 
 use strict;
 use warnings;
@@ -133,7 +133,7 @@ sub for_perlname
    my ( $perlname ) = @_;
 
    ( my $name = $perlname ) =~ s{::}{.}g;
-   return $metas{$name} or croak "Unknown Tangence::Meta::Class for '$perlname'";
+   return $metas{$name} or croak "Unknown Tangence::Class for '$perlname'";
 }
 
 sub perlname
@@ -150,7 +150,7 @@ sub superclasses
    my @supers = $self->SUPER::superclasses;
 
    if( !@supers and $self->perlname ne "Tangence::Object" ) {
-      @supers = Tangence::Meta::Class->for_perlname( "Tangence::Object" );
+      @supers = Tangence::Class->for_perlname( "Tangence::Object" );
    }
 
    return @supers;
