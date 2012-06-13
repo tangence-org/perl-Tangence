@@ -17,7 +17,13 @@ sub new
 
    my $registry = $self->registry;
 
-   $self->{balls} = [ map { $registry->construct( "t::Ball", colour => $_, size => $args{size} ) } @$colours ];
+   my $balls = $self->{balls} = [ map { $registry->construct( "t::Ball", colour => $_, size => $args{size} ) } @$colours ];
+
+   # Watch for ball destruction
+   $_->subscribe_event( destroy => sub {
+      my ( $obj ) = @_;
+      @$balls = grep { $_ != $obj } @$balls;
+   } ) for @$balls;
 
    return $self;
 }
