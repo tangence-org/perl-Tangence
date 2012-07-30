@@ -1,5 +1,8 @@
 Revision history for Tangence
 
+0.10    BUGFIXES:
+         * Fix memory cycle testing bug
+
 0.09    CHANGES:
          * Renaming/reworking of internal metadata classes
          * Optionally use Sub::Name to apply names to subscription / watch
