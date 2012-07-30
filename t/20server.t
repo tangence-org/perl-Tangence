@@ -2,10 +2,9 @@
 
 use strict;
 
-use Test::More tests => 32;
+use Test::More tests => 30;
 use Test::HexString;
 use Test::Identity;
-use Test::Memory::Cycle;
 use Test::Refcount;
 
 use Tangence::Constants;
@@ -147,9 +146,6 @@ is( $obj_destroyed, 1, 'object gets destroyed' );
 is_oneref( $bag, '$bag has refcount 1 before shutdown' );
 
 is_oneref( $server, '$server has refcount 1 before shutdown' );
-
-memory_cycle_ok( $bag, '$bag has no memory cycles' );
-memory_cycle_ok( $registry, '$registry has no memory cycles' );
 
 package TestServer;
 
