@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 57;
+use Test::More tests => 65;
 use Test::Identity;
 
 use Tangence::Constants;
@@ -186,3 +186,33 @@ $obj->move_prop_array( 5, -2 );
 is_deeply( $obj->get_prop_array, [ 0 .. 9 ], 'array after move(-2)' );
 
 is_deeply( $array_shadow, [ 0 .. 9 ], 'array shadow finally' );
+
+# OBJSET
+# Shall have to construct some other TestObj objects to use here, as we can't
+# put regular ints in
+
+is_deeply( $obj->get_prop_objset, {}, 'objset initially' );
+
+my $objset;
+undef $cb_self;
+my ( $added, $deleted_id );
+$obj->watch_property( objset =>
+   on_set => sub { ( $cb_self, $objset ) = @_ },
+   on_add => sub { ( undef, $added ) = @_ },
+   on_del => sub { ( undef, $deleted_id ) = @_ },
+);
+
+my $new = $registry->construct( "t::TestObj" );
+
+$obj->set_prop_objset( { $new->id => $new } );
+is_deeply( $obj->get_prop_objset, { $new->id => $new }, 'objset after set' );
+identical( $cb_self, $obj, '$cb_self is $obj' );
+is_deeply( $objset, [ $new ], '$objset after set' );
+
+$obj->del_prop_objset( $new );
+is_deeply( $obj->get_prop_objset, {}, 'objset after del' );
+is( $deleted_id, $new->id, '$deleted_id after del' );
+
+$obj->add_prop_objset( $new );
+is_deeply( $obj->get_prop_objset, { $new->id => $new }, 'objset after add' );
+identical( $added, $new, '$added after add' );

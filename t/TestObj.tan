@@ -3,5 +3,6 @@ class t.TestObj {
   prop hash   = hash  of int;
   prop queue  = queue of int;
   prop array  = array of int;
+  prop objset = objset of obj;
   prop items  = list(obj);
 }

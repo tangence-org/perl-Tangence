@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 49;
+use Test::More tests => 51;
 use Test::Identity;
 
 use Tangence::Compiler::Parser;
@@ -99,5 +99,7 @@ is( $props->{queue}->dimension, DIM_QUEUE, 't.TestObj prop queue dimension' );
 is( $props->{queue}->type, "int", 't.TestObj prop queue type' );
 is( $props->{scalar}->dimension, DIM_SCALAR, 't.TestObj prop scalar dimension' );
 is( $props->{scalar}->type, "int", 't.TestObj prop scalar type' );
+is( $props->{objset}->dimension, DIM_OBJSET, 't.TestObj prop objset dimension' );
+is( $props->{objset}->type, "obj", 't.TestObj prop objset type' );
 is( $props->{items}->dimension, DIM_SCALAR, 't.TestObj prop items dimension' );
 is( $props->{items}->type, "list(obj)", 't.TestObj prop items type' );
