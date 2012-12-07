@@ -1,5 +1,8 @@
 Revision history for Tangence
 
+0.11    BUGFIXES:
+         * Handle UPDATE messages on objset properties correctly
+
 0.10    BUGFIXES:
          * Fix memory cycle testing bug
 
