@@ -615,11 +615,11 @@ sub _generate_message_UPDATE_objset
       $message->pack_typed( "list($type)", $value );
    }
    elsif( $how == CHANGE_ADD ) {
-      my ( $value ) = @_;
+      my ( $value ) = @args;
       $message->pack_typed( $type, $value );
    }
    elsif( $how == CHANGE_DEL ) {
-      my ( $id ) = @_;
+      my ( $id ) = @args;
       $message->pack_int( $id );
    }
    else {

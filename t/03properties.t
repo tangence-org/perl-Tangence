@@ -191,7 +191,7 @@ is_deeply( $array_shadow, [ 0 .. 9 ], 'array shadow finally' );
 # Shall have to construct some other TestObj objects to use here, as we can't
 # put regular ints in
 
-is_deeply( $obj->get_prop_objset, {}, 'objset initially' );
+is_deeply( $obj->get_prop_objset, [], 'objset initially' );
 
 my $objset;
 undef $cb_self;
@@ -205,14 +205,14 @@ $obj->watch_property( objset =>
 my $new = $registry->construct( "t::TestObj" );
 
 $obj->set_prop_objset( { $new->id => $new } );
-is_deeply( $obj->get_prop_objset, { $new->id => $new }, 'objset after set' );
+is_deeply( $obj->get_prop_objset, [ $new ], 'objset after set' );
 identical( $cb_self, $obj, '$cb_self is $obj' );
 is_deeply( $objset, [ $new ], '$objset after set' );
 
 $obj->del_prop_objset( $new );
-is_deeply( $obj->get_prop_objset, {}, 'objset after del' );
+is_deeply( $obj->get_prop_objset, [], 'objset after del' );
 is( $deleted_id, $new->id, '$deleted_id after del' );
 
 $obj->add_prop_objset( $new );
-is_deeply( $obj->get_prop_objset, { $new->id => $new }, 'objset after add' );
+is_deeply( $obj->get_prop_objset, [ $new ], 'objset after add' );
 identical( $added, $new, '$added after add' );

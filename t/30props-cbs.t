@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 19;
+use Test::More tests => 24;
 use Test::Memory::Cycle;
 
 use Tangence::Constants;
@@ -134,6 +134,40 @@ my $proxy = $client->rootobj;
 
    is( $m_index, 1, 'move array index' );
    is( $m_delta, 3, 'move array delta' );
+}
+
+# OBJSET
+{
+   my $objset;
+   my $added;
+   my $deleted_id;
+   $proxy->watch_property(
+      property => "objset",
+      on_set => sub { $objset = shift },
+      on_add => sub { $added = shift },
+      on_del => sub { $deleted_id = shift },
+      want_initial => 1,
+   );
+
+   # Shall have to construct some other TestObj objects to use here, as we can't
+   # put regular ints in
+   my $new = $registry->construct( "t::TestObj" );
+
+   is_deeply( $objset, {}, 'Initial value from watch_property "objset"' );
+
+   undef $objset;
+   $obj->set_prop_objset( { $new->id => $new } );
+
+   is( ref $objset, "HASH", 'set objset value type' );
+   is_deeply( [ keys %$objset ], [ $new->id ], 'set objset value keys' );
+
+   $obj->del_prop_objset( $new );
+
+   is( $deleted_id, $new->id, 'del objset deleted_id' );
+
+   $obj->add_prop_objset( $new );
+
+   is( ref $added, "Tangence::ObjectProxy", 'add objset added' );
 }
 
 memory_cycle_ok( $registry, '$registry has no memory cycles' );

@@ -289,8 +289,8 @@ sub handle_request_WATCH
          request     => $message,
          on_response => sub { "IGNORE" },
       );
-   }
-   # ignore $@
+   };
+   warn "$@ during initial property fetch" if $@;
 }
 
 sub handle_request_UNWATCH

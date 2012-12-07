@@ -357,7 +357,12 @@ sub _accessor_for_objset
    my $prop = shift;
    my ( $subs, $pname ) = @_;
 
-   # Different set method
+   # Different get and set methods
+   $subs->{"get_prop_$pname"} = sub {
+      my $self = shift;
+      return [ values %{ $self->{properties}->{$pname}->[0] } ];
+   };
+
    $subs->{"set_prop_$pname"} = sub {
       my $self = shift;
       my ( $newval ) = @_;
