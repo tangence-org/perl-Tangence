@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 30;
+use Test::More tests => 32;
 use Test::HexString;
 use Test::Identity;
 use Test::Refcount;
@@ -38,9 +38,15 @@ is_deeply( $bag->get_prop_colours,
            { red => 1, blue => 1, green => 1, yellow => 1 },
            '$bag colours before pull' );
 
+$server->send_message( $C2S{INIT} );
+
+is_hexstr( $server->recv_message, $S2C{INITED}, 'serverstream initially contains INITED message' );
+
+is( $server->minor_version, 0, '$server->minor_version after MSG_INIT' );
+
 $server->send_message( $C2S{GETROOT} );
 
-is_hexstr( $server->recv_message, $S2C{GETROOT}, 'serverstream initially contains root object' );
+is_hexstr( $server->recv_message, $S2C{GETROOT}, 'serverstream contains root object' );
 
 is_oneref( $bag, '$bag has refcount 1 after MSG_GETROOT' );
 
@@ -48,7 +54,7 @@ is( $server->identity, "testscript", '$server->identity' );
 
 $server->send_message( $C2S{GETREGISTRY} );
 
-is_hexstr( $server->recv_message, $S2C{GETREGISTRY}, 'serverstream initially contains registry' );
+is_hexstr( $server->recv_message, $S2C{GETREGISTRY}, 'serverstream contains registry' );
 
 $server->send_message( $C2S{CALL_PULL} );
 

@@ -7,6 +7,7 @@ package Tangence::Stream;
 
 use strict;
 use warnings;
+use 5.010; # //
 
 our $VERSION = '0.11';
 
@@ -32,6 +33,7 @@ my %REQ_METHOD = (
 
    MSG_GETROOT,     'handle_request_GETROOT',
    MSG_GETREGISTRY, 'handle_request_GETREGISTRY',
+   MSG_INIT,        'handle_request_INIT',
 );
 
 =head1 NAME
@@ -256,6 +258,20 @@ sub respondERROR
    $self->respond( $token, Tangence::Message->new( $self, MSG_ERROR )
       ->pack_str( $string )
    );
+}
+
+=head2 $ver = $stream->minor_version
+
+Returns the minor version negotiated by the C<MSG_INIT> / C<MSG_INITED>
+initial message handshake.
+
+=cut
+
+sub minor_version
+{
+   my $self = shift;
+   ( $self->{tangence_minor_version} ) = @_ if @_;
+   return $self->{tangence_minor_version} // 0;
 }
 
 =head1 AUTHOR

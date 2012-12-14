@@ -627,6 +627,19 @@ MSG_GETREGISTRY (C->S)
   Requests the registry object from the server. The result will contain a
   single object reference, being the registry object.
 
+MSG_INIT (C->S)
+  INT            major version
+  INT            maximal minor version
+  INT            minimal minor version
+
+  Responses: MSG_INITED
+
+  Requests the start of the Tangence stream. This must be the first message
+  sent by the client. If the server is unwilling to provide a suitable version
+  it can return MSG_ERROR. Otherwise, the accepted minor is returned in the
+  MSG_INITED message.
+
+  The version specified by this document is major 0, minor 0.
 
 The following responses may be sent to a request:
 
@@ -656,6 +669,13 @@ MSG_WATCHING
   [no arguments]
 
   Informs the client that a MSG_WATCH was successful.
+
+MSG_INITED
+  INT            major version
+  INT            minor version
+
+  Informs the client that the initial MSG_INIT was successful, and what
+  minor version was accepted.
 
 
 5. Perl Distribution

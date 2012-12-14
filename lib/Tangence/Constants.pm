@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2010 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2010-2012 -- leonerd@leonerd.org.uk
 
 package Tangence::Constants;
 
@@ -24,12 +24,14 @@ our @EXPORT = qw(
    MSG_DESTROY
    MSG_GETROOT
    MSG_GETREGISTRY
+   MSG_INIT
 
    MSG_OK
    MSG_ERROR
    MSG_RESULT
    MSG_SUBSCRIBED
    MSG_WATCHING
+   MSG_INITED
 
    DIM_SCALAR
    DIM_HASH
@@ -69,6 +71,9 @@ our @EXPORT = qw(
 
    DATAMETA_CONSTRUCT
    DATAMETA_CLASS
+
+   VERSION_MAJOR
+   VERSION_MINOR
 );
 
 # Message types
@@ -100,6 +105,8 @@ use constant MSG_GETROOT => 0x40;
 # request the connection's root object: $identity -> ERROR / RESULT
 use constant MSG_GETREGISTRY => 0x41;
 # request the object registry: (void) -> ERROR / RESULT
+use constant MSG_INIT => 0x7f;
+# initial request, to initialise the stream in the first place: $major, $minor_max, $minor_min -> ERROR / INITED
 
 # Responses
 
@@ -113,6 +120,8 @@ use constant MSG_SUBSCRIBED => 0x83;
 # result of MSG_SUBSCRIBE: (void)
 use constant MSG_WATCHING => 0x84;
 # result of MSG_WATCH: (void)
+use constant MSG_INITED => 0xff;
+# result of MSG_INITED: $major, $minor
 
 
 # Property dimensions
@@ -167,6 +176,9 @@ use constant DATA_OBJECT => 4; # Object: num=bytes: objid
 use constant DATA_META   => 7; # Meta stream operation: num=:
 use constant DATAMETA_CONSTRUCT => 1; # Construct: num(id), typenameZ
 use constant DATAMETA_CLASS     => 2; # Class: typenameZ, schema
+
+use constant VERSION_MAJOR => 0;
+use constant VERSION_MINOR => 0;
 
 =head1 AUTHOR
 

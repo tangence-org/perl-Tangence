@@ -24,6 +24,19 @@ our $MSG_OK = "\x80" . "\0\0\0\0";
 
 # If you are sitting comfortably, our story begings with the client...
 
+# MSG_INIT
+$C2S{INIT} =
+   "\x7f" . "\0\0\0\6" .
+   "\x02" . "\0" .
+   "\x02" . "\0" .
+   "\x02" . "\0";
+
+# MSG_INITED
+$S2C{INITED} =
+   "\xff" . "\0\0\0\4" .
+   "\x02" . "\0" .
+   "\x02" . "\0";
+
 # MSG_GETROOT
 $C2S{GETROOT} = 
    "\x40" . "\0\0\0\x0b" .

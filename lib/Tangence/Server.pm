@@ -19,6 +19,9 @@ use Scalar::Util qw( weaken );
 use Tangence::Constants;
 use Tangence::Server::Context;
 
+# We will accept any version back to 0
+use constant VERSION_MINOR_MIN => 0;
+
 BEGIN {
    if( eval { require Sub::Name } ) {
       Sub::Name->import(qw( subname ));
@@ -319,6 +322,38 @@ sub handle_request_UNWATCH
    $object->unwatch_property( $prop, $id );
 
    $ctx->respond( Tangence::Message->new( $self, MSG_OK ) );
+}
+
+sub handle_request_INIT
+{
+   my $self = shift;
+   my ( $token, $message ) = @_;
+
+   my $major = $message->unpack_int();
+   my $minor_max = $message->unpack_int();
+   my $minor_min = $message->unpack_int();
+
+   my $ctx = Tangence::Server::Context->new( $self, $token );
+
+   if( $major != VERSION_MAJOR ) {
+      return $ctx->responderr( "Major version $major not available" );
+   }
+
+   # Don't accept higher than the minor version we recognise
+   $minor_max = VERSION_MINOR if $minor_max > VERSION_MINOR;
+   $minor_min = VERSION_MINOR_MIN if $minor_min < VERSION_MINOR_MIN;
+
+   if( $minor_max < $minor_min ) {
+      return $ctx->responderr( "No suitable minor version available" );
+   }
+
+   # Otherwise just accept the highest minor we can
+   $ctx->respond( Tangence::Message->new( $self, MSG_INITED )
+      ->pack_int( $major )
+      ->pack_int( $minor_max )
+   );
+
+   $self->minor_version( $minor_max );
 }
 
 sub handle_request_GETROOT
