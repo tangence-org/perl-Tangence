@@ -114,38 +114,6 @@ sub _unpack_leader
    return ( $type, $num );
 }
 
-sub _unpack_meta
-{
-   my $self = shift;
-   my $num = shift;
-
-   my $stream = $self->{stream};
-
-   if( $num == DATAMETA_CONSTRUCT ) {
-      my ( $id, $class ) = unpack( "NZ*", $self->{record} ); substr( $self->{record}, 0, 5 + length $class, "" );
-      my $smasharr = $self->unpack_typed( 'list(any)' );
-
-      my $smashkeys = $stream->peer_hasclass->{$class}->[0];
-
-      my $smashdata;
-      $smashdata->{$smashkeys->[$_]} = $smasharr->[$_] for 0 .. $#$smasharr;
-
-      $stream->make_proxy( $id, $class, $smashdata );
-   }
-   elsif( $num == DATAMETA_CLASS ) {
-      my ( $class ) = unpack( "Z*", $self->{record} ); substr( $self->{record}, 0, 1 + length $class, "" );
-      my $schema = $self->unpack_typed( 'dict(any)' );
-
-      $stream->schemata->{$class} = $schema;
-
-      my $smashkeys = $self->unpack_typed( 'list(str)' );
-      $stream->peer_hasclass->{$class} = [ $smashkeys ];
-   }
-   else {
-      die sprintf("TODO: Data stream meta-operation 0x%02x", $num);
-   }
-}
-
 sub _unpack_leader_dometa
 {
    my $self = shift;
@@ -155,7 +123,15 @@ sub _unpack_leader_dometa
       my ( $type, $num ) = $self->_unpack_leader();
       return $type, $num unless $type == DATA_META;
 
-      $self->_unpack_meta( $num );
+      if( $num == DATAMETA_CONSTRUCT ) {
+         $self->unpackmeta_construct;
+      }
+      elsif( $num == DATAMETA_CLASS ) {
+         $self->unpackmeta_class;
+      }
+      else {
+         die sprintf("TODO: Data stream meta-operation 0x%02x", $num);
+      }
    }
 }
 
@@ -282,54 +258,10 @@ sub pack_obj
 
       $d->{destroyed} and croak "Cannot pack destroyed object $d";
 
-      if( !$stream->peer_hasobj->{$id} ) {
-         my $class = ref $d;
-
-         my $smashkeys;
-
-         if( !$stream->peer_hasclass->{$class} ) {
-            my $schema = $class->introspect;
-
-            $self->_pack_leader( DATA_META, DATAMETA_CLASS );
-            $self->{record} .= pack( "Z*", $class );
-            $self->pack_typed( 'dict(any)', $schema );
-
-            $smashkeys = [ keys %{ $class->smashkeys } ];
-
-            @$smashkeys = sort @$smashkeys if $SORT_HASH_KEYS;
-
-            $self->pack_typed( 'list(str)', $smashkeys );
-
-            $stream->peer_hasclass->{$class} = [ $smashkeys ];
-         }
-         else {
-            $smashkeys = $stream->peer_hasclass->{$class}->[0];
-         }
-
-         $self->_pack_leader( DATA_META, DATAMETA_CONSTRUCT );
-         $self->{record} .= pack( "NZ*", $id, $class );
-
-         my $smasharr = [];
-
-         if( @$smashkeys ) {
-            my $smashdata = $d->smash( $smashkeys );
-            $smasharr = [ map { $smashdata->{$_} } @$smashkeys ];
-
-            for my $prop ( @$smashkeys ) {
-               $stream->_install_watch( $d, $prop );
-            }
-         }
-
-         $self->pack_typed( 'list(any)', $smasharr );
-
-         weaken( my $weakstream = $stream );
-         $stream->peer_hasobj->{$id} = $d->subscribe_event( 
-            destroy => sub { $weakstream->object_destroyed( @_ ) if $weakstream },
-         );
-      }
+      $self->packmeta_construct( $d ) unless $stream->peer_hasobj->{$id};
 
       $self->_pack_leader( DATA_OBJECT, 4 );
-      $self->{record} .= pack( "N", $d->id );
+      $self->{record} .= pack( "N", $id );
    }
    elsif( eval { $d->isa( "Tangence::ObjectProxy" ) } ) {
       $self->_pack_leader( DATA_OBJECT, 4 );
@@ -356,6 +288,97 @@ sub unpack_obj
    else {
       croak "Unexpected number of bits to encode an OBJECT";
    }
+}
+
+sub packmeta_construct
+{
+   my $self = shift;
+   my ( $obj ) = @_;
+
+   my $stream = $self->{stream};
+
+   my $class = ref $obj;
+   my $id    = $obj->id;
+
+   $self->packmeta_class( $class ) unless $stream->peer_hasclass->{$class};
+
+   my $smashkeys = $stream->peer_hasclass->{$class}->[0];
+
+   $self->_pack_leader( DATA_META, DATAMETA_CONSTRUCT );
+   $self->{record} .= pack( "NZ*", $id, $class );
+
+   my $smasharr = [];
+
+   if( @$smashkeys ) {
+      my $smashdata = $obj->smash( $smashkeys );
+      $smasharr = [ map { $smashdata->{$_} } @$smashkeys ];
+
+      for my $prop ( @$smashkeys ) {
+         $stream->_install_watch( $obj, $prop );
+      }
+   }
+
+   $self->pack_typed( 'list(any)', $smasharr );
+
+   weaken( my $weakstream = $stream );
+   $stream->peer_hasobj->{$id} = $obj->subscribe_event( 
+      destroy => sub { $weakstream->object_destroyed( @_ ) if $weakstream },
+   );
+}
+
+sub unpackmeta_construct
+{
+   my $self = shift;
+
+   my $stream = $self->{stream};
+
+   my ( $id, $class ) = unpack( "NZ*", $self->{record} ); substr( $self->{record}, 0, 5 + length $class, "" );
+   my $smasharr = $self->unpack_typed( 'list(any)' );
+
+   my $smashkeys = $stream->peer_hasclass->{$class}->[0];
+
+   my $smashdata;
+   $smashdata->{$smashkeys->[$_]} = $smasharr->[$_] for 0 .. $#$smasharr;
+
+   $stream->make_proxy( $id, $class, $smashdata );
+}
+
+sub packmeta_class
+{
+   my $self = shift;
+   my ( $class ) = @_;
+
+   my $stream = $self->{stream};
+
+   my $schema = $class->introspect;
+
+   $self->_pack_leader( DATA_META, DATAMETA_CLASS );
+   $self->{record} .= pack( "Z*", $class );
+   $self->pack_typed( 'dict(any)', $schema );
+
+   my $smashkeys = [ keys %{ $class->smashkeys } ];
+
+   @$smashkeys = sort @$smashkeys if $SORT_HASH_KEYS;
+
+   $self->pack_typed( 'list(str)', $smashkeys );
+
+   $stream->peer_hasclass->{$class} = [ $smashkeys ];
+}
+
+sub unpackmeta_class
+{
+   my $self = shift;
+
+   my $stream = $self->{stream};
+
+   my ( $class ) = unpack( "Z*", $self->{record} ); substr( $self->{record}, 0, 1 + length $class, "" );
+   my $schema = $self->unpack_typed( 'dict(any)' );
+
+   $stream->schemata->{$class} = $schema;
+
+   my $smashkeys = $self->unpack_typed( 'list(str)' );
+
+   $stream->peer_hasclass->{$class} = [ $smashkeys ];
 }
 
 sub pack_any
