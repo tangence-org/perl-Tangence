@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2011 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2011-2012 -- leonerd@leonerd.org.uk
 
 package Tangence::Stream;
 
@@ -246,6 +246,16 @@ sub respond
    while( defined $self->{request_queue}[0] ) {
       $self->tangence_write( shift @{ $self->{request_queue} } );
    }
+}
+
+sub respondERROR
+{
+   my $self = shift;
+   my ( $token, $string ) = @_;
+
+   $self->respond( $token, Tangence::Message->new( $self, MSG_ERROR )
+      ->pack_str( $string )
+   );
 }
 
 =head1 AUTHOR
