@@ -27,6 +27,13 @@ use Scalar::Util qw( weaken );
 # true value will sort keys first
 our $SORT_HASH_KEYS = 0;
 
+# It would be really useful to put this in List::Utils or somesuch
+sub pairmap(&@)
+{
+   my $code = shift;
+   return map { $code->( local $a = shift, local $b = shift ) } 0 .. @_/2-1;
+}
+
 sub new
 {
    my $class = shift;
@@ -344,7 +351,28 @@ sub packmeta_class
    my $stream = $self->{stream};
 
    $self->_pack_leader( DATA_META, DATAMETA_CLASS );
-   my $schema    = $class->introspect;
+
+   my $schema = {
+      methods    => { 
+         pairmap {
+            $a => { args => [ $b->argtypes ], ret => $b->ret || "" }
+         } %{ $class->methods }
+      },
+      events     => {
+         pairmap {
+            $a => { args => [ $b->argtypes ] }
+         } %{ $class->events }
+      },
+      properties => {
+         pairmap {
+            $a => { type => $b->type, dim => $b->dimension, $b->smashed ? ( smash => 1 ) : () }
+         } %{ $class->properties }
+      },
+      isa        => [
+         grep { $_ ne "Tangence::Object" } $class->perlname, map { $_->perlname } $class->superclasses
+      ],
+   };
+
    my $smashkeys = $class->smashkeys;
 
    # TODO: This ought to be totally redone sometime

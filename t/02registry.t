@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 54;
+use Test::More tests => 53;
 use Test::Identity;
 use Test::Memory::Cycle;
 use Test::Refcount;
@@ -102,23 +102,6 @@ my $properties = $ball->_meta->properties;
 is_deeply( [ sort keys %$properties ],
            [qw( colour size )],
            '$ball->_meta->properties yields all' );
-
-is_deeply( $ball->_meta->introspect,
-           {
-              isa => [qw( t::Ball t::Colourable )],
-              methods => {
-                 bounce => { args => [qw( str )], ret => 'str' },
-              },
-              events => {
-                 bounced => { args => [qw( str )] },
-
-                 destroy => { args => [] },
-              },
-              properties => {
-                 colour => { dim => DIM_SCALAR, type => 'str' },
-                 size   => { dim => DIM_SCALAR, type => 'int', smash => 1 },
-              },
-           }, '$ball introspect' );
 
 is_deeply( $ball->smashkeys,
            [qw( size )],

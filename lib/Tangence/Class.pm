@@ -32,13 +32,6 @@ our $VERSION = '0.11';
 
 our %metas; # cache one per class, keyed by _Tangence_ class name
 
-# It would be really useful to put this in List::Utils or somesuch
-sub pairmap(&@)
-{
-   my $code = shift;
-   return map { $code->( local $a = shift, local $b = shift ) } 0 .. @_/2-1;
-}
-
 sub new
 {
    my $class = shift;
@@ -184,34 +177,6 @@ sub smashkeys
       $smash{$_->name} = 1 for grep { $_->smashed } values %{ $self->properties };
       $Tangence::Message::SORT_HASH_KEYS ? [ sort keys %smash ] : [ keys %smash ];
    };
-}
-
-sub introspect
-{
-   my $self = shift;
-
-   my $ret = {
-      methods    => { 
-         pairmap {
-            $a => { args => [ $b->argtypes ], ret => $b->ret || "" }
-         } %{ $self->methods }
-      },
-      events     => {
-         pairmap {
-            $a => { args => [ $b->argtypes ] }
-         } %{ $self->events }
-      },
-      properties => {
-         pairmap {
-            $a => { type => $b->type, dim => $b->dimension, $b->smashed ? ( smash => 1 ) : () }
-         } %{ $self->properties }
-      },
-      isa        => [
-         grep { $_ ne "Tangence::Object" } $self->perlname, map { $_->perlname } $self->superclasses
-      ],
-   };
-
-   return $ret;
 }
 
 sub build_accessor
