@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 37;
+use Test::More tests => 38;
 use Test::Fatal qw( dies_ok );
 use Test::HexString;
 use Test::Memory::Cycle;
@@ -16,7 +16,11 @@ $Tangence::Message::SORT_HASH_KEYS = 1;
 
 my $client = TestClient->new();
 
-is_hexstr( $client->recv_message, $C2S{GETROOT} . $C2S{GETREGISTRY}, 'client stream initially contains MSG_GETROOT and MSG_GETREGISTRY' );
+is_hexstr( $client->recv_message, $C2S{INIT}, 'client stream initially contains MSG_INIT' );
+
+$client->send_message( $S2C{INITED} );
+
+is_hexstr( $client->recv_message, $C2S{GETROOT} . $C2S{GETREGISTRY}, 'client stream contains MSG_GETROOT and MSG_GETREGISTRY' );
 
 $client->send_message( $S2C{GETROOT} );
 $client->send_message( $S2C{GETREGISTRY} );
@@ -254,7 +258,7 @@ sub new
    my $self = bless { written => "" }, shift;
    $self->identity( "testscript" );
    $self->on_error( sub { die "Test failed early - $_[0]" } );
-   $self->tangence_connected;
+   $self->tangence_connected( do_init => 1 );
    return $self;
 }
 
