@@ -13,7 +13,7 @@ sub make_property { shift; DumperParser::Property->new( @_ ) }
 sub make_argument { shift; DumperParser::Argument->new( @_ ) }
 
 package DumperParser::Class;
-use base qw( Tangence::Compiler::Class );
+use base qw( Tangence::Meta::Class );
 
 sub _vals { my $h = shift; map { $h->{$_} } sort keys %$h }
 
@@ -30,7 +30,7 @@ sub as_text
 }
 
 package DumperParser::Method;
-use base qw( Tangence::Compiler::Method );
+use base qw( Tangence::Meta::Method );
 
 sub as_text
 {
@@ -41,12 +41,12 @@ sub as_text
       "(",
       join( ",", map { $_->as_text } $self->arguments ),
       ")",
-      defined $self->ret ? ( " -> ", $self->ret ) : (),
+      defined $self->ret ? ( " -> ", $self->ret->sig ) : (),
       ";";
 }
 
 package DumperParser::Event;
-use base qw( Tangence::Compiler::Event );
+use base qw( Tangence::Meta::Event );
 
 sub as_text
 {
@@ -60,7 +60,7 @@ sub as_text
 }
 
 package DumperParser::Property;
-use base qw( Tangence::Compiler::Property );
+use base qw( Tangence::Meta::Property );
 
 use Tangence::Constants;
 my %dimnames = (
@@ -84,18 +84,18 @@ sub as_text
       " = ",
       ( $dimension == DIM_SCALAR ? ()
                                        : ( $dimnames{$dimension} . " of " ) ),
-      $self->type,
+      $self->type->sig,
       ";";
 }
 
 package DumperParser::Argument;
-use base qw( Tangence::Compiler::Argument );
+use base qw( Tangence::Meta::Argument );
 
 sub as_text
 {
    my $self = shift;
    return join " ",
-      $self->type,
+      $self->type->sig,
       ( defined $self->name ? $self->name : () );
 }
 
