@@ -11,7 +11,7 @@ use base qw( Parser::MGC );
 
 use feature qw( switch ); # we like given/when
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 use File::Basename qw( dirname );
 

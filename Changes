@@ -1,5 +1,14 @@
 Revision history for Tangence
 
+0.12    CHANGES:
+         * Defined MSG_INIT for server/client version negitiations
+         * Implement it in the server, but not yet in the client as it crashes
+           pre 0.12 servers
+         * Implement types as first-class metadata values
+
+        BUGFIXES:
+         * Implement respondERROR since it is actually being used
+
 0.11    BUGFIXES:
          * Handle UPDATE messages on objset properties correctly
 
