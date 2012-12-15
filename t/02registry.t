@@ -121,7 +121,7 @@ is_deeply( $ball->introspect,
            }, '$ball introspect' );
 
 is_deeply( $ball->smashkeys,
-           { size => 1 },
+           [qw( size )],
            '$ball->smashkeys' );
 
 my $bounces = 0;

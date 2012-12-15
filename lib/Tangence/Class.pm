@@ -179,9 +179,11 @@ sub property
 sub smashkeys
 {
    my $self = shift;
-   my %smash;
-   $smash{$_->name} = 1 for grep { $_->smashed } values %{ $self->properties };
-   return \%smash;
+   return $self->{smashkeys} ||= do {
+      my %smash;
+      $smash{$_->name} = 1 for grep { $_->smashed } values %{ $self->properties };
+      [ keys %smash ];
+   };
 }
 
 sub introspect

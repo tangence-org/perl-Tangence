@@ -349,7 +349,7 @@ sub packmeta_class
    $self->{record} .= pack( "Z*", $class );
    $self->pack_typed( 'dict(any)', $schema );
 
-   my $smashkeys = [ keys %{ $class->smashkeys } ];
+   my $smashkeys = $class->smashkeys;
 
    @$smashkeys = sort @$smashkeys if $SORT_HASH_KEYS;
 
