@@ -328,7 +328,7 @@ sub unpackmeta_construct
    my ( $id, $class ) = unpack( "NZ*", $self->{record} ); substr( $self->{record}, 0, 5 + length $class, "" );
    my $smasharr = $self->unpack_typed( 'list(any)' );
 
-   my $smashkeys = $stream->peer_hasclass->{$class}->[0];
+   my $smashkeys = $stream->peer_hasclass->{$class}->[1];
 
    my $smashdata;
    $smashdata->{$smashkeys->[$_]} = $smasharr->[$_] for 0 .. $#$smasharr;
@@ -344,13 +344,15 @@ sub packmeta_class
    my $stream = $self->{stream};
 
    $self->_pack_leader( DATA_META, DATAMETA_CLASS );
+   my $schema    = $class->introspect;
+   my $smashkeys = $class->smashkeys;
 
    # TODO: This ought to be totally redone sometime
    $self->{record} .= pack( "Z*", $class->perlname );
-   $self->pack_typed( 'dict(any)', $class->introspect );
-   $self->pack_typed( 'list(str)', $class->smashkeys );
+   $self->pack_typed( 'dict(any)', $schema );
+   $self->pack_typed( 'list(str)', $smashkeys );
 
-   $stream->peer_hasclass->{$class->perlname} = $class;
+   $stream->peer_hasclass->{$class->perlname} = [ $schema, $smashkeys ];
 }
 
 sub unpackmeta_class
@@ -360,11 +362,10 @@ sub unpackmeta_class
    my $stream = $self->{stream};
 
    my ( $class ) = unpack( "Z*", $self->{record} ); substr( $self->{record}, 0, 1 + length $class, "" );
-   my $schema = $self->unpack_typed( 'dict(any)' );
+   my $schema    = $self->unpack_typed( 'dict(any)' );
    my $smashkeys = $self->unpack_typed( 'list(str)' );
 
-   $stream->schemata->{$class} = $schema;
-   $stream->peer_hasclass->{$class} = [ $smashkeys ];
+   $stream->peer_hasclass->{$class} = [ $schema, $smashkeys ];
 }
 
 sub pack_any

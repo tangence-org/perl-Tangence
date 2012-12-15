@@ -83,7 +83,6 @@ The following methods are provided by this mixin.
 
 # Accessors for Tangence::Message decoupling
 sub objectproxies { shift->{objectproxies} ||= {} }
-sub schemata      { shift->{schemata} ||= {} }
 
 =head2 $rootobj = $client->rootobj
 
@@ -259,7 +258,7 @@ sub make_proxy
 
    my $schema;
    if( defined $class ) {
-      $schema = $self->schemata->{$class};
+      $schema = $self->peer_hasclass->{$class}->[0];
       defined $schema or croak "Cannot construct a proxy for class $class as no schema exists";
    }
 
