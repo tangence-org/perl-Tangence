@@ -241,12 +241,6 @@ sub smashkeys
    return $self->_meta->smashkeys;
 }
 
-sub introspect
-{
-   my $self = shift;
-   return $self->_meta->introspect;
-}
-
 =head2 $obj->fire_event( $event, @args )
 
 Fires the named event on the object. Each event subscription function will be

@@ -103,7 +103,7 @@ is_deeply( [ sort keys %$properties ],
            [qw( colour size )],
            '$ball->_meta->properties yields all' );
 
-is_deeply( $ball->introspect,
+is_deeply( $ball->_meta->introspect,
            {
               isa => [qw( t::Ball t::Colourable )],
               methods => {
