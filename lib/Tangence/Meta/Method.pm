@@ -41,7 +41,7 @@ Reference to the containing class
 
 Name of the method
 
-=item args => ARRAY
+=item arguments => ARRAY
 
 Optional ARRAY reference containing arguments as
 L<Tangence::Meta::Argument> references.
