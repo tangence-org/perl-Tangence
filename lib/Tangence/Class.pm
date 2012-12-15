@@ -41,6 +41,12 @@ sub new
    return $metas{$name} ||= $class->SUPER::new( @_ );
 }
 
+sub _new_type
+{
+   my ( $sig ) = @_;
+   return Tangence::Meta::Type->new_from_sig( $sig );
+}
+
 sub declare
 {
    my $class = shift;
@@ -67,8 +73,9 @@ sub declare
          name => $_,
          %{ $args{methods}{$_} },
          arguments => [ map {
-            Tangence::Meta::Argument->new( name => $_->[0], type => $_->[1] )
+            Tangence::Meta::Argument->new( name => $_->[0], type => _new_type( $_->[1] ) )
          } @{ $args{methods}{$_}{args} } ],
+         ret => _new_type( $args{methods}{$_}{ret} ),
       );
    }
 
@@ -78,7 +85,7 @@ sub declare
          name => $_,
          %{ $args{events}{$_} },
          arguments => [ map {
-            Tangence::Meta::Argument->new( name => $_->[0], type => $_->[1] )
+            Tangence::Meta::Argument->new( name => $_->[0], type => _new_type( $_->[1] ) )
          } @{ $args{events}{$_}{args} } ],
       );
    }
@@ -89,6 +96,7 @@ sub declare
          name => $_,
          %{ $args{props}{$_} },
          dimension => $args{props}{$_}{dim} || DIM_SCALAR,
+         type => _new_type( $args{props}{$_}{type} ),
       );
    }
 

@@ -9,6 +9,9 @@ use Test::HexString;
 use Tangence::Message;
 $Tangence::Message::SORT_HASH_KEYS = 1;
 
+use Tangence::Meta::Type;
+sub _make_type { Tangence::Meta::Type->new_from_sig( shift ) }
+
 sub test_specific
 {
    my $name = shift;
@@ -131,14 +134,14 @@ sub test_typed
    my $name = shift;
    my %args = @_;
 
-   my $sig = $args{sig};
+   my $type = _make_type $args{sig};
 
    my $m = Tangence::Message->new( 0 );
-   is( $m->pack_typed( $sig, $args{data} ), $m, "pack_typed returns \$m for $name" );
+   is( $m->pack_typed( $type, $args{data} ), $m, "pack_typed returns \$m for $name" );
 
    is_hexstr( $m->{record}, $args{stream}, "pack_typed $name" );
 
-   is_deeply( $m->unpack_typed( $sig ), $args{data}, "unpack_typed $name" );
+   is_deeply( $m->unpack_typed( $type ), $args{data}, "unpack_typed $name" );
    is( length $m->{record}, 0, "eats all stream for $name" );
 }
 
@@ -148,17 +151,18 @@ sub test_typed_dies
    my %args = @_;
 
    my $sig = $args{sig};
+   my $type = _make_type $sig;
 
    dies_ok( sub {
       my $m = Tangence::Message->new( 0 );
 
-      $m->pack_typed( $sig, $args{data} );
+      $m->pack_typed( $type, $args{data} );
    }, "pack_typed($sig) $name dies" ) if exists $args{data};
 
    dies_ok( sub {
       my $m = Tangence::Message->new( 0, undef, $args{stream} );
 
-      $m->unpack_typed( $sig )
+      $m->unpack_typed( $type )
    }, "unpack_typed($sig) $name dies" ) if exists $args{stream};
 }
 
@@ -318,17 +322,17 @@ test_typed "any (HASH of HASH)",
 my $m;
 
 $m = Tangence::Message->new( 0 );
-$m->pack_all_typed( [ 'int', 'str', 'bool' ], 10, "hello", "true" );
+$m->pack_all_typed( [ map _make_type($_), 'int', 'str', 'bool' ], 10, "hello", "true" );
 
 is_hexstr( $m->{record}, "\x02\x0a\x25hello\x01", 'pack_all_typed' );
 
-is_deeply( [ $m->unpack_all_typed( [ 'int', 'str', 'bool' ] ) ], [ 10, "hello", 1 ], 'unpack_all_typed' );
+is_deeply( [ $m->unpack_all_typed( [ map _make_type($_), 'int', 'str', 'bool' ] ) ], [ 10, "hello", 1 ], 'unpack_all_typed' );
 is( length $m->{record}, 0, "eats all stream for all_typed" );
 
 $m = Tangence::Message->new( 0 );
-$m->pack_all_sametype( 'int', 10, 20, 30 );
+$m->pack_all_sametype( _make_type('int'), 10, 20, 30 );
 
 is_hexstr( $m->{record}, "\x02\x0a\x02\x14\x02\x1e", 'pack_all_sametype' );
 
-is_deeply( [ $m->unpack_all_sametype( 'int' ) ], [ 10, 20, 30 ], 'unpack_all_sametype' );
+is_deeply( [ $m->unpack_all_sametype( _make_type('int') ) ], [ 10, 20, 30 ], 'unpack_all_sametype' );
 is( length $m->{record}, 0, "eats all stream for all_sametype" );

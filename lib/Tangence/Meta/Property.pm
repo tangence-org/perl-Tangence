@@ -50,7 +50,7 @@ L<Tangence::Constants>.
 
 =item type => STRING
 
-String giving the type as a string.
+The element type as a L<Tangence::Meta::Type> reference.
 
 =item smashed => BOOL
 
@@ -111,7 +111,7 @@ sub dimension
 
 =head2 $type = $property->type
 
-Returns the element type as a string.
+Returns the element type as a L<Tangence::Meta::Type> reference.
 
 =cut
 
@@ -123,21 +123,32 @@ sub type
 
 =head2 $type = $property->overall_type
 
-Returns the type of the entire collection as a string. For scalar types this
-will be the element type. For dict types this will be a hash of the array
-type. For array, queue and objset types this will a list of the element type.
+Returns the type of the entire collection as a L<Tangence::Meta::Type>
+reference. For scalar types this will be the element type. For dict types this
+will be a hash of the array type. For array, queue and objset types this will
+a list of the element type.
 
 =cut
 
 sub overall_type
 {
    my $self = shift;
-   my $type = $self->type;
-   my $dim  = $self->dimension;
-   return $type         if $dim == DIM_SCALAR;
-   return "dict($type)" if $dim == DIM_HASH;
-   return "list($type)" if $dim == DIM_ARRAY or $dim == DIM_QUEUE or $dim == DIM_OBJSET;
-   die "Unrecognised dimension $dim for ->overall_type";
+   return $self->{overall_type} ||= do {
+      my $type = $self->type;
+      my $dim  = $self->dimension;
+      if( $dim == DIM_SCALAR ) {
+         $type;
+      }
+      elsif( $dim == DIM_HASH ) {
+         Tangence::Meta::Type->new( dict => $type );
+      }
+      elsif( $dim == DIM_ARRAY or $dim == DIM_QUEUE or $dim == DIM_OBJSET ) {
+         Tangence::Meta::Type->new( list => $type );
+      }
+      else {
+         die "Unrecognised dimension $dim for ->overall_type";
+      }
+   }
 }
 
 =head2 $smashed = $property->smashed

@@ -14,6 +14,10 @@ use Carp;
 
 use Tangence::Constants;
 
+use Tangence::Meta::Type;
+
+use constant TYPE_U8 => Tangence::Meta::Type->new( "u8" );
+
 use Tangence::Class;
 
 Tangence::Class->declare(
@@ -495,7 +499,7 @@ sub generate_message_UPDATE
    my $message = Tangence::Message->new( $conn, MSG_UPDATE )
       ->pack_int( $self->id )
       ->pack_str( $prop )
-      ->pack_typed( "u8", $how );
+      ->pack_typed( TYPE_U8, $how );
 
    my $dimname = DIMNAMES->[$dim];
    if( $how == CHANGE_SET ) {

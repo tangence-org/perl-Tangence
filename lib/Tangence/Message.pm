@@ -19,6 +19,8 @@ use Carp;
 
 use Tangence::Constants;
 
+use Tangence::Meta::Type;
+
 use Encode qw( encode_utf8 decode_utf8 );
 use Scalar::Util qw( weaken );
 
@@ -318,7 +320,7 @@ sub packmeta_construct
       }
    }
 
-   $self->pack_typed( 'list(any)', $smasharr );
+   $self->pack_typed( TYPE_LIST_ANY, $smasharr );
 
    weaken( my $weakstream = $stream );
    $stream->peer_hasobj->{$id} = $obj->subscribe_event( 
@@ -333,7 +335,7 @@ sub unpackmeta_construct
    my $stream = $self->{stream};
 
    my ( $id, $class ) = unpack( "NZ*", $self->{record} ); substr( $self->{record}, 0, 5 + length $class, "" );
-   my $smasharr = $self->unpack_typed( 'list(any)' );
+   my $smasharr = $self->unpack_typed( TYPE_LIST_ANY );
 
    my $smashkeys = $stream->peer_hasclass->{$class}->[1];
 
@@ -355,17 +357,17 @@ sub packmeta_class
    my $schema = {
       methods    => { 
          pairmap {
-            $a => { args => [ $b->argtypes ], ret => $b->ret || "" }
+            $a => { args => [ map { $_->sig } $b->argtypes ], ret => ( $b->ret ? $b->ret->sig : "" ) }
          } %{ $class->methods }
       },
       events     => {
          pairmap {
-            $a => { args => [ $b->argtypes ] }
+            $a => { args => [ map { $_->sig } $b->argtypes ] }
          } %{ $class->events }
       },
       properties => {
          pairmap {
-            $a => { type => $b->type, dim => $b->dimension, $b->smashed ? ( smash => 1 ) : () }
+            $a => { type => $b->type->sig, dim => $b->dimension, $b->smashed ? ( smash => 1 ) : () }
          } %{ $class->properties }
       },
       isa        => [
@@ -377,8 +379,8 @@ sub packmeta_class
 
    # TODO: This ought to be totally redone sometime
    $self->{record} .= pack( "Z*", $class->perlname );
-   $self->pack_typed( 'dict(any)', $schema );
-   $self->pack_typed( 'list(str)', $smashkeys );
+   $self->pack_typed( TYPE_DICT_ANY, $schema );
+   $self->pack_typed( TYPE_LIST_STR, $smashkeys );
 
    $stream->peer_hasclass->{$class->perlname} = [ $schema, $smashkeys ];
 }
@@ -390,8 +392,19 @@ sub unpackmeta_class
    my $stream = $self->{stream};
 
    my ( $class ) = unpack( "Z*", $self->{record} ); substr( $self->{record}, 0, 1 + length $class, "" );
-   my $schema    = $self->unpack_typed( 'dict(any)' );
-   my $smashkeys = $self->unpack_typed( 'list(str)' );
+   my $schema    = $self->unpack_typed( TYPE_DICT_ANY );
+   my $smashkeys = $self->unpack_typed( TYPE_LIST_STR );
+
+   foreach my $mdef ( values %{ $schema->{methods} } ) {
+      $_ = Tangence::Meta::Type->new_from_sig( $_ ) for @{ $mdef->{args} };
+      length and $_ = Tangence::Meta::Type->new_from_sig( $_) for $mdef->{ret};
+   }
+   foreach my $edef ( values %{ $schema->{events} } ) {
+      $_ = Tangence::Meta::Type->new_from_sig( $_ ) for @{ $edef->{args} };
+   }
+   foreach my $pdef ( values %{ $schema->{properties} } ) {
+      $_ = Tangence::Meta::Type->new_from_sig( $_ ) for $pdef->{type};
+   }
 
    $stream->peer_hasclass->{$class} = [ $schema, $smashkeys ];
 }
@@ -466,7 +479,12 @@ sub unpack_any
 sub pack_typed
 {
    my $self = shift;
-   my ( $sig, $d ) = @_;
+   my ( $type, $d ) = @_;
+
+   ref $type and $type->isa( "Tangence::Meta::Type" ) or
+      croak 'Require "$type" as a Tangence::Meta::Type instance';
+
+   my $sig = $type->sig;
 
    if( my $code = $self->can( "pack_$sig" ) ) {
       $code->( $self, $d );
@@ -477,14 +495,14 @@ sub pack_typed
       $self->_pack_leader( DATA_NUMBER, $subtype );
       $self->{record} .= pack( $pack_int_format{$subtype}[0], $d );
    }
-   elsif( $sig =~ m/^list\((.*)\)$/ ) {
-      my $subtype = $1;
+   elsif( $type->isa( "Tangence::Meta::Type::List" ) ) {
+      my $subtype = $type->membertype;
       ref $d eq "ARRAY" or croak "Cannot pack a list from non-ARRAY reference";
       $self->_pack_leader( DATA_LIST, scalar @$d );
       $self->pack_typed( $subtype, $_ ) for @$d;
    }
-   elsif( $sig =~ m/^dict\((.*)\)$/ ) {
-      my $subtype = $1;
+   elsif( $type->isa( "Tangence::Meta::Type::Dict" ) ) {
+      my $subtype = $type->membertype;
       ref $d eq "HASH" or croak "Cannot pack a dict from non-HASH reference";
       my @keys = keys %$d;
       @keys = sort @keys if $SORT_HASH_KEYS;
@@ -501,7 +519,11 @@ sub pack_typed
 sub unpack_typed
 {
    my $self = shift;
-   my $sig = shift;
+   my $type = shift;
+
+   Carp::confess "unpack_typed needs Type sig" unless ref $type;
+
+   my $sig = $type->sig;
 
    if( my $code = $self->can( "unpack_$sig" ) ) {
       return $code->( $self );
@@ -515,8 +537,8 @@ sub unpack_typed
       substr( $self->{record}, 0, $pack_int_format{$num}[1] ) = "";
       return $n;
    }
-   elsif( $sig =~ m/^list\((.*)\)$/ ) {
-      my $subtype = $1;
+   elsif( $type->isa( "Tangence::Meta::Type::List" ) ) {
+      my $subtype = $type->membertype;
       my ( $type, $num ) = $self->_unpack_leader();
 
       $type == DATA_LIST or croak "Expected to unpack a list but did not find one";
@@ -526,8 +548,8 @@ sub unpack_typed
       }
       return \@a;
    }
-   elsif( $sig =~ m/^dict\((.*)\)$/ ) {
-      my $subtype = $1;
+   elsif( $type->isa( "Tangence::Meta::Type::Dict" ) ) {
+      my $subtype = $type->membertype;
       my ( $type, $num ) = $self->_unpack_leader();
 
       $type == DATA_DICT or croak "Expected to unpack a dict but did not find one";
@@ -546,26 +568,26 @@ sub unpack_typed
 sub pack_all_typed
 {
    my $self = shift;
-   my ( $sigs, @args ) = @_;
+   my ( $types, @args ) = @_;
 
-   $self->pack_typed( $_, shift @args ) for @$sigs;
+   $self->pack_typed( $_, shift @args ) for @$types;
    return $self;
 }
 
 sub unpack_all_typed
 {
    my $self = shift;
-   my ( $sigs ) = @_;
+   my ( $types ) = @_;
 
-   return map { $self->unpack_typed( $_ ) } @$sigs;
+   return map { $self->unpack_typed( $_ ) } @$types;
 }
 
 sub pack_all_sametype
 {
    my $self = shift;
-   my $sig = shift;
+   my $type = shift;
 
-   $self->pack_typed( $sig, $_ ) for @_;
+   $self->pack_typed( $type, $_ ) for @_;
 
    return $self;
 }
@@ -573,9 +595,9 @@ sub pack_all_sametype
 sub unpack_all_sametype
 {
    my $self = shift;
-   my ( $sig ) = @_;
+   my ( $type ) = @_;
    my @data;
-   push @data, $self->unpack_typed( $sig ) while length $self->{record};
+   push @data, $self->unpack_typed( $type ) while length $self->{record};
 
    return @data;
 }

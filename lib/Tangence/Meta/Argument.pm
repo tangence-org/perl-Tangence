@@ -39,7 +39,7 @@ Name of the argument
 
 =item type => STRING
 
-Type of the arugment
+Type of the arugment as a L<Tangence::Meta::Type> reference
 
 =back
 
@@ -70,7 +70,7 @@ sub name
 
 =head2 $type = $argument->type
 
-Return the type
+Return the type as a L<Tangence::Meta::Type> reference.
 
 =cut
 

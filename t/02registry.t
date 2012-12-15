@@ -66,8 +66,8 @@ is( $ball->describe, 't::Ball[colour="red"]', '$ball->describe' );
 my $mdef = $ball->can_method( "bounce" );
 isa_ok( $mdef, "Tangence::Meta::Method", '$ball->can_method "bounce"' );
 is( $mdef->name, "bounce", 'can_method "bounce" name' );
-is_deeply( [ $mdef->argtypes ], [qw( str )], 'can_method "bounce" argtypes' );
-is( $mdef->ret, "str", 'can_method "bounce" ret' );
+is_deeply( [ map $_->sig, $mdef->argtypes ], [qw( str )], 'can_method "bounce" argtypes' );
+is( $mdef->ret->sig, "str", 'can_method "bounce" ret' );
 
 ok( !$ball->can_method( "fly" ), '$ball->can_method "fly" is undef' );
 
@@ -79,7 +79,7 @@ is_deeply( [ sort keys %$methods ],
 my $edef = $ball->can_event( "bounced" );
 isa_ok( $edef, "Tangence::Meta::Event", '$ball->can_event "bounced"' );
 is( $edef->name, "bounced", 'can_event "bounced" name' );
-is_deeply( [ $edef->argtypes ], [qw( str )], 'can_event "bounced" argtypes' );
+is_deeply( [ map $_->sig, $edef->argtypes ], [qw( str )], 'can_event "bounced" argtypes' );
 
 ok( $ball->can_event( "destroy" ), '$ball->can_event "destroy"' );
 
@@ -94,7 +94,7 @@ my $pdef = $ball->can_property( "colour" );
 isa_ok( $pdef, "Tangence::Meta::Property", '$ball->can_property "colour"' );
 is( $pdef->name, "colour", 'can_property "colour" name' );
 is( $pdef->dimension, DIM_SCALAR, 'can_property "colour" dimension' );
-is( $pdef->type, "str", 'can_property "colour" type' );
+is( $pdef->type->sig, "str", 'can_property "colour" type' );
 
 ok( !$ball->can_property( "style" ), '$ball->can_property "style" is undef' );
 

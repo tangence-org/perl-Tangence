@@ -38,7 +38,7 @@ $bagproxy->call_method(
 ok( $ballproxy->proxy_isa( "t::Ball" ), 'proxy for isa t::Ball' );
 
 is_deeply( $ballproxy->can_method( "bounce" ),
-           { args => [qw( str )], ret => "str" },
+           { args => [ TYPE_STR ], ret => TYPE_STR },
            'proxy can_method bounce' );
 
 my $colour;

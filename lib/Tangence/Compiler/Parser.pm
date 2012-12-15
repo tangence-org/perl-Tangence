@@ -296,7 +296,7 @@ sub parse_type
 
          my $membertype = $self->scope_of( "(", \&parse_type, ")" );
 
-         return "$aggregate($membertype)";
+         return $self->make_type( $aggregate => $membertype );
       },
       sub {
          my $typename = $self->token_ident;
@@ -304,7 +304,7 @@ sub parse_type
          grep { $_ eq $typename } @basic_types or
             $self->fail( "'$typename' is not a typename" );
 
-         return $typename;
+         return $self->make_type( $typename );
       },
    );
 }
@@ -392,6 +392,24 @@ sub make_argument
    my $self = shift;
    require Tangence::Meta::Argument;
    return Tangence::Meta::Argument->new( @_ );
+}
+
+=head2 $type = $parser->make_type( $primitive_name )
+
+=head2 $type = $parser->make_type( $aggregate_name => $member_type )
+
+Return an instance of L<Tangence::Meta::Type> representing the given
+primitive or aggregate type name. An implementation is allowed to use
+singleton objects and return identical objects for the same primitive name or
+aggregate and member type.
+
+=cut
+
+sub make_type
+{
+   my $self = shift;
+   require Tangence::Meta::Type;
+   return Tangence::Meta::Type->new( @_ );
 }
 
 =head1 AUTHOR

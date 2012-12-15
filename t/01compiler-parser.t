@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 51;
+use Test::More tests => 57;
 use Test::Identity;
 
 use Tangence::Compiler::Parser;
@@ -32,7 +32,8 @@ is_deeply( [ sort keys %$props ], [qw( colour )], 't.Colourable direct props' );
 isa_ok( $props->{colour}, "Tangence::Meta::Property", 't.Colourable prop colour' );
 is( $props->{colour}->name, "colour", 't.Colourable prop colour name' );
 is( $props->{colour}->dimension, DIM_SCALAR, 't.Colourable prop colour dimension' );
-is( $props->{colour}->type, "str", 't.Colourable prop colour type' );
+isa_ok( $props->{colour}->type, "Tangence::Meta::Type", 't.Colourable prop colour type' );
+is( $props->{colour}->type->sig, "str", 't.Colourable prop colour type sig' );
 ok( !$props->{colour}->smashed, 't.Colourable prop colour !smashed' );
 
 is_deeply( [ sort keys %{ $colourable->properties } ], [qw( colour )], 't.Colourable props' );
@@ -50,9 +51,11 @@ is( $methods->{bounce}->name, "bounce", 't.Ball method bounce name' );
 @args = $methods->{bounce}->arguments;
 is( scalar @args, 1, 't.Ball method bounce has 1 argument' );
 is( $args[0]->name, "howhigh", 't.Ball method bounce arg[0] name' );
-is( $args[0]->type, "str",     't.Ball method bounce arg[0] type' );
-is_deeply( [ $methods->{bounce}->argtypes ], [qw( str )], 't.Ball method bounce argtypes' );
-is( $methods->{bounce}->ret,  "str", 't.Ball method bounce ret' );
+isa_ok( $args[0]->type, "Tangence::Meta::Type", 't.Ball method bounce arg[0] type' );
+is( $args[0]->type->sig, "str", 't.Ball method bounce arg[0] type sig' );
+is_deeply( [ map $_->sig, $methods->{bounce}->argtypes ], [qw( str )], 't.Ball method bounce argtypes sigs' );
+isa_ok( $methods->{bounce}->ret, "Tangence::Meta::Type", 't.Ball method bounce ret' );
+is( $methods->{bounce}->ret->sig, "str", 't.Ball method bounce ret sig' );
 
 is_deeply( [ sort keys %{ $ball->methods } ], [qw( bounce )], 't.Ball methods' );
 
@@ -66,8 +69,9 @@ is( $events->{bounced}->name, "bounced", 't.Ball event bounced name' );
 @args = $events->{bounced}->arguments;
 is( scalar @args, 1, 't.Ball event bounced has 1 argument' );
 is( $args[0]->name, "howhigh", 't.Ball event bounced arg[0] name' );
-is( $args[0]->type, "str",     't.Ball event bounced arg[0] type' );
-is_deeply( [ $events->{bounced}->argtypes ], [qw( str )], 't.Ball event bounced argtypes' );
+isa_ok( $args[0]->type, "Tangence::Meta::Type", 't.Ball event bounced arg[0] type' );
+is( $args[0]->type->sig, "str", 't.Ball event bounced arg[0] type sig' );
+is_deeply( [ map $_->sig, $events->{bounced}->argtypes ], [qw( str )], 't.Ball event bounced argtypes sigs' );
 
 is_deeply( [ sort keys %{ $ball->events } ], [qw( bounced )], 't.Ball events' );
 
@@ -78,7 +82,8 @@ is_deeply( [ sort keys %$props ], [qw( size )], 't.Ball direct props' );
 identical( $props->{size}->class, $ball, 't.Ball prop size class' );
 is( $props->{size}->name, "size", 't.Ball prop size name' );
 is( $props->{size}->dimension, DIM_SCALAR, 't.Ball prop size dimension' );
-is( $props->{size}->type, "int", 't.Ball prop size type' );
+isa_ok( $props->{size}->type, "Tangence::Meta::Type", 't.Ball prop size type' );
+is( $props->{size}->type->sig, "int", 't.Ball prop size type sig' );
 ok( $props->{size}->smashed, 't.Ball prop size smashed' );
 
 is_deeply( [ sort keys %{ $ball->properties } ], [qw( colour size )], 't.Ball props' );
@@ -92,14 +97,15 @@ my $testobj = $meta->{'t.TestObj'};
 $props = $testobj->direct_properties;
 
 is( $props->{array}->dimension, DIM_ARRAY, 't.TestObj prop array dimension' );
-is( $props->{array}->type, "int", 't.TestObj prop array type' );
+is( $props->{array}->type->sig, "int", 't.TestObj prop array type sig' );
 is( $props->{hash}->dimension, DIM_HASH, 't.TestObj prop hash dimension' );
-is( $props->{hash}->type, "int", 't.TestObj prop hash type' );
+is( $props->{hash}->type->sig, "int", 't.TestObj prop hash type sig' );
 is( $props->{queue}->dimension, DIM_QUEUE, 't.TestObj prop queue dimension' );
-is( $props->{queue}->type, "int", 't.TestObj prop queue type' );
+is( $props->{queue}->type->sig, "int", 't.TestObj prop queue type sig' );
 is( $props->{scalar}->dimension, DIM_SCALAR, 't.TestObj prop scalar dimension' );
-is( $props->{scalar}->type, "int", 't.TestObj prop scalar type' );
+is( $props->{scalar}->type->sig, "int", 't.TestObj prop scalar type' );
 is( $props->{objset}->dimension, DIM_OBJSET, 't.TestObj prop objset dimension' );
-is( $props->{objset}->type, "obj", 't.TestObj prop objset type' );
+is( $props->{objset}->type->sig, "obj", 't.TestObj prop objset type' );
 is( $props->{items}->dimension, DIM_SCALAR, 't.TestObj prop items dimension' );
-is( $props->{items}->type, "list(obj)", 't.TestObj prop items type' );
+isa_ok( $props->{items}->type, "Tangence::Meta::Type::List", 't.TestObj prop items type' );
+is( $props->{items}->type->sig, "list(obj)", 't.TestObj prop items type sig' );

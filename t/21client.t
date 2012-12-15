@@ -48,15 +48,15 @@ my $ballproxy = $result[0];
 is_deeply( $ballproxy->introspect,
    {
       methods => {
-         bounce  => { args => [qw( str )], ret => "str" },
+         bounce  => { args => [ TYPE_STR ], ret => TYPE_STR },
       },
       events  => {
-         bounced => { args => [qw( str )], },
+         bounced => { args => [ TYPE_STR ], },
          destroy => { args => [] },
       },
       properties => {
-         colour  => { type => "str", dim => DIM_SCALAR },
-         size    => { type => "int", dim => DIM_SCALAR, smash => 1 },
+         colour  => { type => TYPE_STR, dim => DIM_SCALAR },
+         size    => { type => TYPE_INT, dim => DIM_SCALAR, smash => 1 },
       },
       isa => [qw( t::Ball t::Colourable )],
    },

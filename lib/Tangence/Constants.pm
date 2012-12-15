@@ -74,7 +74,16 @@ our @EXPORT = qw(
 
    VERSION_MAJOR
    VERSION_MINOR
+
+   TYPE_ANY
+   TYPE_INT
+   TYPE_STR
+   TYPE_LIST_ANY
+   TYPE_LIST_STR
+   TYPE_DICT_ANY
 );
+
+use Tangence::Meta::Type;
 
 # Message types
 
@@ -179,6 +188,13 @@ use constant DATAMETA_CLASS     => 2; # Class: typenameZ, schema
 
 use constant VERSION_MAJOR => 0;
 use constant VERSION_MINOR => 0;
+
+use constant TYPE_ANY      => Tangence::Meta::Type->new( "any" );
+use constant TYPE_INT      => Tangence::Meta::Type->new( "int" );
+use constant TYPE_STR      => Tangence::Meta::Type->new( "str" );
+use constant TYPE_LIST_ANY => Tangence::Meta::Type->new( list => TYPE_ANY );
+use constant TYPE_LIST_STR => Tangence::Meta::Type->new( list => TYPE_STR );
+use constant TYPE_DICT_ANY => Tangence::Meta::Type->new( dict => TYPE_ANY );
 
 =head1 AUTHOR
 
