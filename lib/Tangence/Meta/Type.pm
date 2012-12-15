@@ -78,12 +78,12 @@ sub new_from_sig
    my ( $sig ) = @_;
 
    $sig =~ m/^list\((.*)\)$/ and
-      return Tangence::Meta::Type->new( list => $class->new_from_sig( $1 ) );
+      return $class->new( list => $class->new_from_sig( $1 ) );
 
    $sig =~ m/^dict\((.*)\)$/ and
-      return Tangence::Meta::Type->new( dict => $class->new_from_sig( $1 ) );
+      return $class->new( dict => $class->new_from_sig( $1 ) );
 
-   return Tangence::Meta::Type->new( $sig );
+   return $class->new( $sig );
 }
 
 =head1 ACCESSORS
