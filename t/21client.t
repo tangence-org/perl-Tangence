@@ -12,6 +12,9 @@ use Tangence::Registry;
 
 use t::Conversation;
 
+use constant TYPE_INT => Tangence::Meta::Type->new( "int" );
+use constant TYPE_STR => Tangence::Meta::Type->new( "str" );
+
 $Tangence::Message::SORT_HASH_KEYS = 1;
 
 my $client = TestClient->new();

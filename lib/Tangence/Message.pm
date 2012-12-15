@@ -29,6 +29,13 @@ use Scalar::Util qw( weaken );
 # true value will sort keys first
 our $SORT_HASH_KEYS = 0;
 
+use constant TYPE_ANY      => Tangence::Meta::Type->new( "any" );
+use constant TYPE_INT      => Tangence::Meta::Type->new( "int" );
+use constant TYPE_STR      => Tangence::Meta::Type->new( "str" );
+use constant TYPE_LIST_ANY => Tangence::Meta::Type->new( list => TYPE_ANY );
+use constant TYPE_LIST_STR => Tangence::Meta::Type->new( list => TYPE_STR );
+use constant TYPE_DICT_ANY => Tangence::Meta::Type->new( dict => TYPE_ANY );
+
 # It would be really useful to put this in List::Utils or somesuch
 sub pairmap(&@)
 {

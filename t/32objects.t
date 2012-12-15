@@ -12,6 +12,8 @@ use t::Ball;
 use t::Bag;
 use t::TestServerClient;
 
+use constant TYPE_STR => Tangence::Meta::Type->new( "str" );
+
 my $registry = Tangence::Registry->new(
    tanfile => "t/Bag.tan",
 );
