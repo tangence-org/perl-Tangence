@@ -41,11 +41,24 @@ isa_ok( $result[0], "Tangence::ObjectProxy", 'result contains an ObjectProxy' );
 
 my $ballproxy = $result[0];
 
-ok( $ballproxy->proxy_isa( "t::Ball" ), 'proxy for isa t::Ball' );
+is_deeply( $ballproxy->introspect,
+   {
+      methods => {
+         bounce  => { args => [qw( str )], ret => "str" },
+      },
+      events  => {
+         bounced => { args => [qw( str )], },
+         destroy => { args => [] },
+      },
+      properties => {
+         colour  => { type => "str", dim => DIM_SCALAR },
+         size    => { type => "int", dim => DIM_SCALAR, smash => 1 },
+      },
+      isa => [qw( t::Ball t::Colourable )],
+   },
+   '$ballproxy->introspect' );
 
-is_deeply( $ballproxy->can_method( "bounce" ),
-           { args => [qw( str )], ret => "str" },
-           'proxy can_method bounce' );
+ok( $ballproxy->proxy_isa( "t::Ball" ), 'proxy for isa t::Ball' );
 
 my $result;
 
