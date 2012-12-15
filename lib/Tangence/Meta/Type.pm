@@ -41,12 +41,27 @@ instance.
 
 =cut
 
+our %PRIMITIVES;
+our %LISTS;
+our %DICTS;
+
 sub new
 {
-   shift;
-   return Tangence::Meta::Type::Primitive->new( $_[0] ) if @_ == 1;
-   return Tangence::Meta::Type::List->new( $_[1] ) if @_ == 2 and $_[0] eq "list";
-   return Tangence::Meta::Type::Dict->new( $_[1] ) if @_ == 2 and $_[0] eq "dict";
+   my $class = shift;
+
+   if( @_ == 1 ) {
+      my ( $sig ) = @_;
+      return $PRIMITIVES{$sig} ||= bless [ prim => $sig ], $class;
+   }
+   elsif( @_ == 2 and $_[0] eq "list" ) {
+      my ( undef, $membertype ) = @_;
+      return $LISTS{$membertype->sig} ||= bless [ list => $membertype ], $class;
+   }
+   elsif( @_ == 2 and $_[0] eq "dict" ) {
+      my ( undef, $membertype ) = @_;
+      return $DICTS{$membertype->sig} ||= bless [ dict => $membertype ], $class;
+   }
+
    die "TODO: @_";
 }
 
@@ -75,79 +90,61 @@ sub new_from_sig
 
 =cut
 
+=head2 $agg = $type->aggregate
+
+Returns C<"prim"> for primitive types, or the aggregation name for list and
+dict aggregate types.
+
+=cut
+
+sub aggregate
+{
+   my $self = shift;
+   return $self->[0];
+}
+
+=head2 $member_type = $type->member_type
+
+Returns the member type for aggregation types. Throws an exception for
+primitive types.
+
+=cut
+
+sub member_type
+{
+   my $self = shift;
+   die "Cannot return the member type for primitive types" if $self->[0] eq "prim";
+   return $self->[1];
+}
+
 =head2 $sig = $type->sig
 
 Returns the Tangence type signature for the type.
 
 =cut
 
-package # noindex
-   Tangence::Meta::Type::Primitive;
-use base qw( Tangence::Meta::Type );
-
-our %TYPES;
-
-sub new
-{
-   my $class = shift;
-   my ( $sig ) = @_;
-   return $TYPES{$sig} ||= bless [ $sig ], $class;
-}
-
 sub sig
 {
    my $self = shift;
-   return $self->[0];
+   $self->${\"_sig_for_$self->[0]"}();
 }
 
-package # noindex
-   Tangence::Meta::Type::List;
-use base qw( Tangence::Meta::Type );
-
-our %TYPES;
-
-sub new
-{
-   my $class = shift;
-   my ( $membertype ) = @_;
-   return $TYPES{$membertype->sig} ||= bless [ $membertype ], $class;
-}
-
-sub membertype
+sub _sig_for_prim
 {
    my $self = shift;
-   return $self->[0];
+   return $self->[1];
 }
 
-sub sig
+sub _sig_for_list
 {
    my $self = shift;
-   return "list(" . $self->membertype->sig . ")";
+   return "list(" . $self->[1]->sig . ")";
 }
 
-package # noindex
-   Tangence::Meta::Type::Dict;
-use base qw( Tangence::Meta::Type );
-
-our %TYPES;
-
-sub new
-{
-   my $class = shift;
-   my ( $membertype ) = @_;
-   return $TYPES{$membertype->sig} ||= bless [ $membertype ], $class;
-}
-
-sub membertype
+sub _sig_for_dict
 {
    my $self = shift;
-   return $self->[0];
-}
-
-sub sig
-{
-   my $self = shift;
-   return "dict(" . $self->membertype->sig . ")";
+   return "dict(" . $self->[1]->sig . ")";
 }
 
 =head1 AUTHOR

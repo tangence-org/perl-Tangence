@@ -107,5 +107,5 @@ is( $props->{scalar}->type->sig, "int", 't.TestObj prop scalar type' );
 is( $props->{objset}->dimension, DIM_OBJSET, 't.TestObj prop objset dimension' );
 is( $props->{objset}->type->sig, "obj", 't.TestObj prop objset type' );
 is( $props->{items}->dimension, DIM_SCALAR, 't.TestObj prop items dimension' );
-isa_ok( $props->{items}->type, "Tangence::Meta::Type::List", 't.TestObj prop items type' );
+is( $props->{items}->type->aggregate, "list", 't.TestObj prop items type' );
 is( $props->{items}->type->sig, "list(obj)", 't.TestObj prop items type sig' );

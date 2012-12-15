@@ -481,28 +481,30 @@ sub pack_typed
    my $self = shift;
    my ( $type, $d ) = @_;
 
-   ref $type and $type->isa( "Tangence::Meta::Type" ) or
-      croak 'Require "$type" as a Tangence::Meta::Type instance';
+   if( $type->aggregate eq "prim" ) {
+      my $sig = $type->sig;
 
-   my $sig = $type->sig;
-
-   if( my $code = $self->can( "pack_$sig" ) ) {
-      $code->( $self, $d );
+      if( my $code = $self->can( "pack_$sig" ) ) {
+         $code->( $self, $d );
+      }
+      elsif( exists $int_sigs{$sig} ) {
+         ref $d and croak "$d is not a number";
+         my $subtype = $int_sigs{$sig};
+         $self->_pack_leader( DATA_NUMBER, $subtype );
+         $self->{record} .= pack( $pack_int_format{$subtype}[0], $d );
+      }
+      else {
+         croak "Unrecognised type signature $sig";
+      }
    }
-   elsif( exists $int_sigs{$sig} ) {
-      ref $d and croak "$d is not a number";
-      my $subtype = $int_sigs{$sig};
-      $self->_pack_leader( DATA_NUMBER, $subtype );
-      $self->{record} .= pack( $pack_int_format{$subtype}[0], $d );
-   }
-   elsif( $type->isa( "Tangence::Meta::Type::List" ) ) {
-      my $subtype = $type->membertype;
+   elsif( $type->aggregate eq "list" ) {
+      my $subtype = $type->member_type;
       ref $d eq "ARRAY" or croak "Cannot pack a list from non-ARRAY reference";
       $self->_pack_leader( DATA_LIST, scalar @$d );
       $self->pack_typed( $subtype, $_ ) for @$d;
    }
-   elsif( $type->isa( "Tangence::Meta::Type::Dict" ) ) {
-      my $subtype = $type->membertype;
+   elsif( $type->aggregate eq "dict" ) {
+      my $subtype = $type->member_type;
       ref $d eq "HASH" or croak "Cannot pack a dict from non-HASH reference";
       my @keys = keys %$d;
       @keys = sort @keys if $SORT_HASH_KEYS;
@@ -510,7 +512,7 @@ sub pack_typed
       $self->{record} .= pack( "Z*", $_ ) and $self->pack_typed( $subtype, $d->{$_} ) for @keys;
    }
    else {
-      croak "Unrecognised type signature $sig";
+      croak "Unrecognised type aggregation ".$type->aggregate;
    }
 
    return $self;
@@ -521,24 +523,27 @@ sub unpack_typed
    my $self = shift;
    my $type = shift;
 
-   Carp::confess "unpack_typed needs Type sig" unless ref $type;
+   if( $type->aggregate eq "prim" ) {
+      my $sig = $type->sig;
 
-   my $sig = $type->sig;
+      if( my $code = $self->can( "unpack_$sig" ) ) {
+         return $code->( $self );
+      }
+      elsif( exists $int_sigs{$sig} ) {
+         my ( $type, $num ) = $self->_unpack_leader();
 
-   if( my $code = $self->can( "unpack_$sig" ) ) {
-      return $code->( $self );
+         $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
+         $num == $int_sigs{$sig} or croak "Expected subtype $int_sigs{$sig} but got $num";
+         my ( $n ) = unpack( $pack_int_format{$num}[0], $self->{record} );
+         substr( $self->{record}, 0, $pack_int_format{$num}[1] ) = "";
+         return $n;
+      }
+      else {
+         croak "Unrecognised type signature $sig";
+      }
    }
-   elsif( exists $int_sigs{$sig} ) {
-      my ( $type, $num ) = $self->_unpack_leader();
-
-      $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
-      $num == $int_sigs{$sig} or croak "Expected subtype $int_sigs{$sig} but got $num";
-      my ( $n ) = unpack( $pack_int_format{$num}[0], $self->{record} );
-      substr( $self->{record}, 0, $pack_int_format{$num}[1] ) = "";
-      return $n;
-   }
-   elsif( $type->isa( "Tangence::Meta::Type::List" ) ) {
-      my $subtype = $type->membertype;
+   elsif( $type->aggregate eq "list" ) {
+      my $subtype = $type->member_type;
       my ( $type, $num ) = $self->_unpack_leader();
 
       $type == DATA_LIST or croak "Expected to unpack a list but did not find one";
@@ -548,8 +553,8 @@ sub unpack_typed
       }
       return \@a;
    }
-   elsif( $type->isa( "Tangence::Meta::Type::Dict" ) ) {
-      my $subtype = $type->membertype;
+   elsif( $type->aggregate eq "dict" ) {
+      my $subtype = $type->member_type;
       my ( $type, $num ) = $self->_unpack_leader();
 
       $type == DATA_DICT or croak "Expected to unpack a dict but did not find one";
@@ -561,7 +566,7 @@ sub unpack_typed
       return \%h;
    }
    else {
-      croak "Unrecognised type signature $sig";
+      croak "Unrecognised type aggregation ".$type->aggregate;
    }
 }
 
