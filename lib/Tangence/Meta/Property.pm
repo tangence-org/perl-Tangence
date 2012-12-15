@@ -10,6 +10,8 @@ use warnings;
 
 our $VERSION = '0.11';
 
+use Tangence::Constants;
+
 use Scalar::Util qw( weaken );
 
 =head1 NAME
@@ -109,7 +111,7 @@ sub dimension
 
 =head2 $type = $property->type
 
-Returns the type as a string.
+Returns the element type as a string.
 
 =cut
 
@@ -117,6 +119,25 @@ sub type
 {
    my $self = shift;
    return $self->{type};
+}
+
+=head2 $type = $property->overall_type
+
+Returns the type of the entire collection as a string. For scalar types this
+will be the element type. For dict types this will be a hash of the array
+type. For array, queue and objset types this will a list of the element type.
+
+=cut
+
+sub overall_type
+{
+   my $self = shift;
+   my $type = $self->type;
+   my $dim  = $self->dimension;
+   return $type         if $dim == DIM_SCALAR;
+   return "dict($type)" if $dim == DIM_HASH;
+   return "list($type)" if $dim == DIM_ARRAY or $dim == DIM_QUEUE or $dim == DIM_OBJSET;
+   die "Unrecognised dimension $dim for ->overall_type";
 }
 
 =head2 $smashed = $property->smashed
