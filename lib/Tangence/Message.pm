@@ -290,15 +290,15 @@ sub packmeta_construct
 
    my $stream = $self->{stream};
 
-   my $class = ref $obj;
+   my $class = $obj->_meta;
    my $id    = $obj->id;
 
-   $self->packmeta_class( $class ) unless $stream->peer_hasclass->{$class};
+   $self->packmeta_class( $class ) unless $stream->peer_hasclass->{$class->perlname};
 
-   my $smashkeys = $stream->peer_hasclass->{$class}->[0];
+   my $smashkeys = $class->smashkeys;
 
    $self->_pack_leader( DATA_META, DATAMETA_CONSTRUCT );
-   $self->{record} .= pack( "NZ*", $id, $class );
+   $self->{record} .= pack( "NZ*", $id, $class->perlname );
 
    my $smasharr = [];
 
@@ -343,19 +343,14 @@ sub packmeta_class
 
    my $stream = $self->{stream};
 
-   my $schema = $class->introspect;
-
    $self->_pack_leader( DATA_META, DATAMETA_CLASS );
-   $self->{record} .= pack( "Z*", $class );
-   $self->pack_typed( 'dict(any)', $schema );
 
-   my $smashkeys = $class->smashkeys;
+   # TODO: This ought to be totally redone sometime
+   $self->{record} .= pack( "Z*", $class->perlname );
+   $self->pack_typed( 'dict(any)', $class->introspect );
+   $self->pack_typed( 'list(str)', $class->smashkeys );
 
-   @$smashkeys = sort @$smashkeys if $SORT_HASH_KEYS;
-
-   $self->pack_typed( 'list(str)', $smashkeys );
-
-   $stream->peer_hasclass->{$class} = [ $smashkeys ];
+   $stream->peer_hasclass->{$class->perlname} = $class;
 }
 
 sub unpackmeta_class
@@ -366,11 +361,9 @@ sub unpackmeta_class
 
    my ( $class ) = unpack( "Z*", $self->{record} ); substr( $self->{record}, 0, 1 + length $class, "" );
    my $schema = $self->unpack_typed( 'dict(any)' );
-
-   $stream->schemata->{$class} = $schema;
-
    my $smashkeys = $self->unpack_typed( 'list(str)' );
 
+   $stream->schemata->{$class} = $schema;
    $stream->peer_hasclass->{$class} = [ $smashkeys ];
 }
 

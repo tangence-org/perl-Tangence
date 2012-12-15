@@ -182,7 +182,7 @@ sub smashkeys
    return $self->{smashkeys} ||= do {
       my %smash;
       $smash{$_->name} = 1 for grep { $_->smashed } values %{ $self->properties };
-      [ keys %smash ];
+      $Tangence::Message::SORT_HASH_KEYS ? [ sort keys %smash ] : [ keys %smash ];
    };
 }
 
