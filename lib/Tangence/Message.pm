@@ -264,6 +264,22 @@ sub unpack_str
    return decode_utf8( $octets );
 }
 
+# Temporary methods for null-terminated strings. Will be removed once we no
+# longer support protocol version 0
+sub pack_stringZ
+{
+   my $self = shift;
+   $self->{record} .= pack( "Z*", $_[0] );
+}
+
+sub unpack_stringZ
+{
+   my $self = shift;
+   my ( $string ) = unpack( "Z*", $self->{record} );
+   substr( $self->{record}, 0, 1 + length $string, "" );
+   return $string;
+}
+
 sub pack_obj
 {
    my $self = shift;
@@ -328,7 +344,13 @@ sub packmeta_construct
    my $smashkeys = $class->smashkeys;
 
    $self->_pack_leader( DATA_META, DATAMETA_CONSTRUCT );
-   $self->{record} .= pack( "NZ*", $id, $class->perlname );
+   $self->{record} .= pack( "N", $id );
+   if( $stream->_ver_tangence_strings ) {
+      $self->pack_str( $class->perlname );
+   }
+   else {
+      $self->pack_stringZ( $class->perlname );
+   }
 
    my $smasharr = [];
 
@@ -355,7 +377,14 @@ sub unpackmeta_construct
 
    my $stream = $self->{stream};
 
-   my ( $id, $class ) = unpack( "NZ*", $self->{record} ); substr( $self->{record}, 0, 5 + length $class, "" );
+   my ( $id ) = unpack( "N", $self->{record} ); substr( $self->{record}, 0, 4, "" );
+   my $class;
+   if( $stream->_ver_tangence_strings ) {
+      $class = $self->unpack_str();
+   }
+   else {
+      $class = $self->unpackZ();
+   }
    my $smasharr = $self->unpack_typed( TYPE_LIST_ANY );
 
    my $smashkeys = $stream->peer_hasclass->{$class}->[1];
@@ -398,8 +427,12 @@ sub packmeta_class
 
    my $smashkeys = $class->smashkeys;
 
-   # TODO: This ought to be totally redone sometime
-   $self->{record} .= pack( "Z*", $class->perlname );
+   if( $stream->_ver_tangence_strings ) {
+      $self->pack_str( $class->perlname );
+   }
+   else {
+      $self->pack_stringZ( $self->perlname );
+   }
    $self->pack_typed( TYPE_DICT_ANY, $schema );
    $self->pack_typed( TYPE_LIST_STR, $smashkeys );
 
@@ -412,7 +445,13 @@ sub unpackmeta_class
 
    my $stream = $self->{stream};
 
-   my ( $class ) = unpack( "Z*", $self->{record} ); substr( $self->{record}, 0, 1 + length $class, "" );
+   my $class;
+   if( $stream->_ver_tangence_strings ) {
+      $class = $self->unpack_str();
+   }
+   else {
+      $class = $self->unpack_stringZ();
+   }
    my $schema    = $self->unpack_typed( TYPE_DICT_ANY );
    my $smashkeys = $self->unpack_typed( TYPE_LIST_STR );
 
@@ -435,6 +474,8 @@ sub pack_any
    my $self = shift;
    my ( $d ) = @_;
 
+   my $stream = $self->{stream};
+
    if( !defined $d ) {
       $self->pack_obj( undef );
    }
@@ -453,7 +494,12 @@ sub pack_any
       my @keys = keys %$d;
       @keys = sort @keys if $SORT_HASH_KEYS;
       $self->_pack_leader( DATA_DICT, scalar @keys );
-      $self->{record} .= pack( "Z*", $_ ) and $self->pack_any( $d->{$_} ) for @keys;
+      if( $stream->_ver_tangence_strings ) {
+         $self->pack_str( $_ ), $self->pack_any( $d->{$_} ) for @keys;
+      }
+      else {
+         $self->pack_stringZ( $_ ) and $self->pack_any( $d->{$_} ) for @keys;
+      }
    }
    else {
       croak "Do not know how to pack a " . ref($d);
@@ -465,6 +511,8 @@ sub pack_any
 sub unpack_any
 {
    my $self = shift;
+
+   my $stream = $self->{stream};
 
    my $type = $self->_peek_leader_type();
 
@@ -489,7 +537,13 @@ sub unpack_any
       my ( undef, $num ) = $self->_unpack_leader();
       my %h;
       foreach ( 1 .. $num ) {
-         my ( $key ) = unpack( "Z*", $self->{record} ); substr( $self->{record}, 0, 1 + length $key, "" );
+         my $key;
+         if( $stream->_ver_tangence_strings ) {
+            $key = $self->unpack_str();
+         }
+         else {
+            $key = $self->unpack_stringZ();
+         }
          $h{$key} = $self->unpack_any();
       }
       return \%h;
@@ -503,6 +557,8 @@ sub pack_typed
 {
    my $self = shift;
    my ( $type, $d ) = @_;
+
+   my $stream = $self->{stream};
 
    if( $type->aggregate eq "prim" ) {
       my $sig = $type->sig;
@@ -532,7 +588,12 @@ sub pack_typed
       my @keys = keys %$d;
       @keys = sort @keys if $SORT_HASH_KEYS;
       $self->_pack_leader( DATA_DICT, scalar @keys );
-      $self->{record} .= pack( "Z*", $_ ) and $self->pack_typed( $subtype, $d->{$_} ) for @keys;
+      if( $stream->_ver_tangence_strings ) {
+         $self->pack_str( $_ ) and $self->pack_typed( $subtype, $d->{$_} ) for @keys;
+      }
+      else {
+         $self->pack_stringZ( $_ ) and $self->pack_typed( $subtype, $d->{$_} ) for @keys;
+      }
    }
    else {
       croak "Unrecognised type aggregation ".$type->aggregate;
@@ -545,6 +606,8 @@ sub unpack_typed
 {
    my $self = shift;
    my $type = shift;
+
+   my $stream = $self->{stream};
 
    if( $type->aggregate eq "prim" ) {
       my $sig = $type->sig;
@@ -583,7 +646,13 @@ sub unpack_typed
       $type == DATA_DICT or croak "Expected to unpack a dict but did not find one";
       my %h;
       foreach ( 1 .. $num ) {
-         my ( $key ) = unpack( "Z*", $self->{record} ); substr( $self->{record}, 0, 1 + length $key, "" );
+         my $key;
+         if( $stream->_ver_tangence_strings ) {
+            $key = $self->unpack_str();
+         }
+         else {
+            $key = $self->unpack_stringZ();
+         }
          $h{$key} = $self->unpack_typed( $subtype );
       }
       return \%h;

@@ -12,12 +12,20 @@ $Tangence::Message::SORT_HASH_KEYS = 1;
 use Tangence::Meta::Type;
 sub _make_type { Tangence::Meta::Type->new_from_sig( shift ) }
 
+{
+   # We need a testing stream that declares a version
+   package TestStream;
+   use base qw( Tangence::Stream );
+
+   sub new { bless {}, shift }
+}
+
 sub test_specific
 {
    my $name = shift;
    my %args = @_;
 
-   my $m = Tangence::Message->new( 0 );
+   my $m = Tangence::Message->new( TestStream->new );
    my $pack_method = "pack_$args{type}";
    is( $m->$pack_method( $args{data} ), $m, "$pack_method returns \$m for $name" );
 
@@ -34,14 +42,14 @@ sub test_specific_dies
    my %args = @_;
 
    dies_ok( sub {
-      my $m = Tangence::Message->new( 0 );
+      my $m = Tangence::Message->new( TestStream->new );
       my $pack_method = "pack_$args{type}";
 
       $m->$pack_method( $args{data} );
    }, "pack $name dies" ) if exists $args{data};
 
    dies_ok( sub {
-      my $m = Tangence::Message->new( 0, undef, $args{stream} );
+      my $m = Tangence::Message->new( TestStream->new, undef, $args{stream} );
       my $unpack_method = "unpack_$args{type}";
 
       $m->$unpack_method()
@@ -136,7 +144,7 @@ sub test_typed
 
    my $type = _make_type $args{sig};
 
-   my $m = Tangence::Message->new( 0 );
+   my $m = Tangence::Message->new( TestStream->new );
    is( $m->pack_typed( $type, $args{data} ), $m, "pack_typed returns \$m for $name" );
 
    is_hexstr( $m->{record}, $args{stream}, "pack_typed $name" );
@@ -154,13 +162,13 @@ sub test_typed_dies
    my $type = _make_type $sig;
 
    dies_ok( sub {
-      my $m = Tangence::Message->new( 0 );
+      my $m = Tangence::Message->new( TestStream->new );
 
       $m->pack_typed( $type, $args{data} );
    }, "pack_typed($sig) $name dies" ) if exists $args{data};
 
    dies_ok( sub {
-      my $m = Tangence::Message->new( 0, undef, $args{stream} );
+      my $m = Tangence::Message->new( TestStream->new, undef, $args{stream} );
 
       $m->unpack_typed( $type )
    }, "unpack_typed($sig) $name dies" ) if exists $args{stream};

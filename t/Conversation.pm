@@ -28,14 +28,14 @@ our $MSG_OK = "\x80" . "\0\0\0\0";
 $C2S{INIT} =
    "\x7f" . "\0\0\0\6" .
    "\x02" . "\0" .
-   "\x02" . "\0" .
+   "\x02" . "\1" .
    "\x02" . "\0";
 
 # MSG_INITED
 $S2C{INITED} =
    "\xff" . "\0\0\0\4" .
    "\x02" . "\0" .
-   "\x02" . "\0";
+   "\x02" . "\1";
 
 # MSG_GETROOT
 $C2S{GETROOT} = 
@@ -43,19 +43,19 @@ $C2S{GETROOT} =
    "\x2a" . "testscript";
 $S2C{GETROOT} =
    "\x82" . "\0\0\0\xbe" .
-   "\xe2" . "t::Bag\0" .
-            "\x64" . "events\0"     . "\x61" . "destroy\0" . "\x61" . "args\0" . "\x40" .
-                     "isa\0"        . "\x41" . "\x26" . "t::Bag" .
-                     "methods\0"    . "\x63" . "add_ball\0"  . "\x62" . "args\0" . "\x41" . "\x23" . "obj" .
-                                                                        "ret\0"  . "\x20" .
-                                               "get_ball\0"  . "\x62" . "args\0" . "\x41" . "\x23" . "str" .
-                                                                        "ret\0"  . "\x23" . "obj" .
-                                               "pull_ball\0" . "\x62" . "args\0" . "\x41" . "\x23" . "str" .
-                                                                        "ret\0"  . "\x23" . "obj" .
-                     "properties\0" . "\x61" . "colours\0" . "\x62" . "dim\0"  . "\x21" . "2" .
-                                                                      "type\0" . "\x23" . "int" .
+   "\xe2" . "\x26" . "t::Bag" .
+            "\x64" . "\x26events"     . "\x61" . "\x27destroy" . "\x61" . "\x24args" . "\x40" .
+                     "\x23isa"        . "\x41" . "\x26" . "t::Bag" .
+                     "\x27methods"    . "\x63" . "\x28add_ball"  . "\x62" . "\x24args" . "\x41" . "\x23" . "obj" .
+                                                                            "\x23ret"  . "\x20" .
+                                                 "\x28get_ball"  . "\x62" . "\x24args" . "\x41" . "\x23" . "str" .
+                                                                            "\x23ret"  . "\x23" . "obj" .
+                                                 "\x29pull_ball" . "\x62" . "\x24args" . "\x41" . "\x23" . "str" .
+                                                                            "\x23ret"  . "\x23" . "obj" .
+                     "\x2aproperties" . "\x61" . "\x27colours" . "\x62" . "\x23dim"  . "\x21" . "2" .
+                                                                          "\x24type" . "\x23" . "int" .
             "\x40" .
-   "\xe1" . "\0\0\0\1" . "t::Bag\0" . "\x40" .
+   "\xe1" . "\0\0\0\1" . "\x26" . "t::Bag" . "\x40" .
    "\x84" . "\0\0\0\1";
 
 # MSG_GETREGISTRY
@@ -63,17 +63,17 @@ $C2S{GETREGISTRY} =
    "\x41" . "\0\0\0\0";
 $S2C{GETREGISTRY} =
    "\x82" . "\0\0\0\xe7" .
-   "\xe2" . "Tangence::Registry\0" .
-            "\x64" . "events\0"     . "\x63" . "destroy\0"            . "\x61" . "args\0" . "\x40" .
-                                               "object_constructed\0" . "\x61" . "args\0" . "\x41" . "\x23" . "int" .
-                                               "object_destroyed\0"   . "\x61" . "args\0" . "\x41" . "\x23" . "int" .
-                     "isa\0"        . "\x41" . "\x32" . "Tangence::Registry" .
-                     "methods\0"    . "\x61" . "get_by_id\0" . "\x62" . "args\0" . "\x41" . "\x23" . "int" .
-                                                                        "ret\0"  . "\x23" . "obj" .
-                     "properties\0" . "\x61" . "objects\0" . "\x62" . "dim\0"  . "\x21" . "2" .
-                                                                      "type\0" . "\x23" . "str" .
+   "\xe2" . "\x32" . "Tangence::Registry" .
+            "\x64" . "\x26events"     . "\x63" . "\x27destroy"            . "\x61" . "\x24args" . "\x40" .
+                                                 "\x32object_constructed" . "\x61" . "\x24args" . "\x41" . "\x23" . "int" .
+                                                 "\x30object_destroyed"   . "\x61" . "\x24args" . "\x41" . "\x23" . "int" .
+                     "\x23isa"        . "\x41" . "\x32" . "Tangence::Registry" .
+                     "\x27methods"    . "\x61" . "\x29get_by_id" . "\x62" . "\x24args" . "\x41" . "\x23" . "int" .
+                                                                          "\x23ret"  . "\x23" . "obj" .
+                     "\x2aproperties" . "\x61" . "\x27objects" . "\x62" . "\x23dim"  . "\x21" . "2" .
+                                                                        "\x24type" . "\x23" . "str" .
             "\x40" .
-   "\xe1" . "\0\0\0\0" . "Tangence::Registry\0" . "\x40" .
+   "\xe1" . "\0\0\0\0" . "\x32" . "Tangence::Registry" . "\x40" .
    "\x84" . "\0\0\0\0";
 
 # MSG_CALL
@@ -85,20 +85,20 @@ $C2S{CALL_PULL} =
 # MSG_RESULT
 $S2C{CALL_PULL} =
    "\x82" . "\0\0\0\xcf" .
-   "\xe2" . "t::Ball\0" .
-            "\x64" . "events\0"     . "\x62" . "bounced\0" . "\x61" . "args\0" . "\x41" . "\x23" . "str" .
-                                               "destroy\0" . "\x61" . "args\0" . "\x40" .
-                     "isa\0"        . "\x42" . "\x27" . "t::Ball" .
-                                               "\x2d" . "t::Colourable" .
-                     "methods\0"    . "\x61" . "bounce\0" . "\x62" . "args\0" . "\x41" . "\x23" . "str" .
-                                                                     "ret\0" . "\x23" . "str" .
-                     "properties\0" . "\x62" . "colour\0" . "\x62" . "dim\0" . "\x21" . "1" .
-                                                                     "type\0" . "\x23" . "str" .
-                                               "size\0"   . "\x63" . "dim\0" . "\x21" . "1" .
-                                                                     "smash\0" . "\x21" . "1" .
-                                                                     "type\0" . "\x23" . "int" .
+   "\xe2" . "\x27" . "t::Ball" .
+            "\x64" . "\x26events"     . "\x62" . "\x27bounced" . "\x61" . "\x24args" . "\x41" . "\x23" . "str" .
+                                                 "\x27destroy" . "\x61" . "\x24args" . "\x40" .
+                     "\x23isa"        . "\x42" . "\x27" . "t::Ball" .
+                                                 "\x2d" . "t::Colourable" .
+                     "\x27methods"    . "\x61" . "\x26bounce" . "\x62" . "\x24args" . "\x41" . "\x23" . "str" .
+                                                                         "\x23ret" . "\x23" . "str" .
+                     "\x2aproperties" . "\x62" . "\x26colour" . "\x62" . "\x23dim" . "\x21" . "1" .
+                                                                         "\x24type" . "\x23" . "str" .
+                                                 "\x24size"   . "\x63" . "\x23dim" . "\x21" . "1" .
+                                                                         "\x25smash" . "\x21" . "1" .
+                                                                         "\x24type" . "\x23" . "int" .
             "\x41" . "\x24" . "size" .
-   "\xe1" . "\0\0\0\2" . "t::Ball\0" . "\x41" . "\x23" . "100" .
+   "\xe1" . "\0\0\0\2" . "\x27" . "t::Ball" . "\x41" . "\x23" . "100" .
    "\x84" . "\0\0\0\2";
 
 $C2S{CALL_BOUNCE} =

@@ -345,8 +345,7 @@ element.
 
 For dictionaries, this size gives the number of key/value pairs. Following
 the leader will be this number of key/value pairs. Each pair consists of a
-null-terminated string for the key name, then a data serialisation for the
-value.
+string for the key name, then a data serialisation for the value.
 
 For objects, the size gives the number of bytes in the object's ID number,
 followed by a big-endian encoding of the object's ID number. Currently,
@@ -368,7 +367,7 @@ Following each metadata item is an encoding of its arguments.
 
 DATAMETA_CONSTRUCT:
   Object ID:    4 byte big-endian
-  Object class: null-terminated string
+  Object class: string
   Smash values: 0 or more bytes, data encoded (list)
 
   If the object class defines smash properties, the construct message will
@@ -377,7 +376,7 @@ DATAMETA_CONSTRUCT:
   schema defines the smash keys.
 
 DATAMETA_CLASS:
-  Class name:   null-terminated string
+  Class name:   string
   Schema:       data encoded (dict)
   Smash keys:   data encoded (list)
 
@@ -639,7 +638,7 @@ MSG_INIT (C->S)
   it can return MSG_ERROR. Otherwise, the accepted minor is returned in the
   MSG_INITED message.
 
-  The version specified by this document is major 0, minor 0.
+  The version specified by this document is major 0, minor 1.
 
 The following responses may be sent to a request:
 

@@ -178,7 +178,7 @@ use constant DATAMETA_CONSTRUCT => 1; # Construct: num(id), typenameZ
 use constant DATAMETA_CLASS     => 2; # Class: typenameZ, schema
 
 use constant VERSION_MAJOR => 0;
-use constant VERSION_MINOR => 0;
+use constant VERSION_MINOR => 1;
 
 =head1 AUTHOR
 

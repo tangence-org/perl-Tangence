@@ -274,6 +274,11 @@ sub minor_version
    return $self->{tangence_minor_version} // 0;
 }
 
+# Some (internal) methods that control new protocol features
+
+# wire protocol uses Tangence (rather than \0-terminated) strings in all places
+sub _ver_tangence_strings { shift->minor_version >= 1 }
+
 =head1 AUTHOR
 
 Paul Evans <leonerd@leonerd.org.uk>
