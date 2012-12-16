@@ -544,6 +544,55 @@ sub unpackmeta_class
    $stream->peer_hasclass->{$class} = [ $schema, $smashkeys ];
 }
 
+# Used by pack_typed
+sub pack_prim
+{
+   my $self = shift;
+   my ( $d, $type ) = @_;
+
+   my $sig = $type->sig;
+
+   if( my $code = $self->can( "pack_$sig" ) ) {
+      $code->( $self, $d );
+   }
+   elsif( exists $int_sigs{$sig} ) {
+      ref $d and croak "$d is not a number";
+      my $subtype = $int_sigs{$sig};
+      $self->_pack_leader( DATA_NUMBER, $subtype );
+      $self->{record} .= pack( $pack_int_format{$subtype}[0], $d );
+   }
+   else {
+      croak "Unrecognised type signature $sig";
+   }
+
+   return $self;
+}
+
+# Used by unpack_typed
+sub unpack_prim
+{
+   my $self = shift;
+   my ( $type ) = @_;
+
+   my $sig = $type->sig;
+
+   if( my $code = $self->can( "unpack_$sig" ) ) {
+      return $code->( $self );
+   }
+   elsif( exists $int_sigs{$sig} ) {
+      my ( $type, $num ) = $self->_unpack_leader();
+
+      $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
+      $num == $int_sigs{$sig} or croak "Expected subtype $int_sigs{$sig} but got $num";
+      my ( $n ) = unpack( $pack_int_format{$num}[0], $self->{record} );
+      substr( $self->{record}, 0, $pack_int_format{$num}[1] ) = "";
+      return $n;
+   }
+   else {
+      croak "Unrecognised type signature $sig";
+   }
+}
+
 sub pack_any
 {
    my $self = shift;
@@ -605,33 +654,8 @@ sub pack_typed
    my $self = shift;
    my ( $type, $d ) = @_;
 
-   if( $type->aggregate eq "prim" ) {
-      my $sig = $type->sig;
-
-      if( my $code = $self->can( "pack_$sig" ) ) {
-         $code->( $self, $d );
-      }
-      elsif( exists $int_sigs{$sig} ) {
-         ref $d and croak "$d is not a number";
-         my $subtype = $int_sigs{$sig};
-         $self->_pack_leader( DATA_NUMBER, $subtype );
-         $self->{record} .= pack( $pack_int_format{$subtype}[0], $d );
-      }
-      else {
-         croak "Unrecognised type signature $sig";
-      }
-   }
-   elsif( $type->aggregate eq "list" ) {
-      $self->pack_list( $d, $type );
-   }
-   elsif( $type->aggregate eq "dict" ) {
-      $self->pack_dict( $d, $type );
-   }
-   else {
-      croak "Unrecognised type aggregation ".$type->aggregate;
-   }
-
-   return $self;
+   my $code = $self->can( "pack_" . $type->aggregate ) or die "Unrecognised type aggregation " . $type->aggregate;
+   return $code->( $self, $d, $type );
 }
 
 sub unpack_typed
@@ -639,34 +663,8 @@ sub unpack_typed
    my $self = shift;
    my $type = shift;
 
-   if( $type->aggregate eq "prim" ) {
-      my $sig = $type->sig;
-
-      if( my $code = $self->can( "unpack_$sig" ) ) {
-         return $code->( $self );
-      }
-      elsif( exists $int_sigs{$sig} ) {
-         my ( $type, $num ) = $self->_unpack_leader();
-
-         $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
-         $num == $int_sigs{$sig} or croak "Expected subtype $int_sigs{$sig} but got $num";
-         my ( $n ) = unpack( $pack_int_format{$num}[0], $self->{record} );
-         substr( $self->{record}, 0, $pack_int_format{$num}[1] ) = "";
-         return $n;
-      }
-      else {
-         croak "Unrecognised type signature $sig";
-      }
-   }
-   elsif( $type->aggregate eq "list" ) {
-      return $self->unpack_list( $type );
-   }
-   elsif( $type->aggregate eq "dict" ) {
-      return $self->unpack_dict( $type );
-   }
-   else {
-      croak "Unrecognised type aggregation ".$type->aggregate;
-   }
+   my $code = $self->can( "unpack_" . $type->aggregate ) or die "Unrecognised type aggregation " . $type->aggregate;
+   return $code->( $self, $type );
 }
 
 sub pack_all_typed
