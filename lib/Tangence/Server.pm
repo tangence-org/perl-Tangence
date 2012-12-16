@@ -347,13 +347,16 @@ sub handle_request_INIT
       return $ctx->responderr( "No suitable minor version available" );
    }
 
-   # Otherwise just accept the highest minor we can
-   $ctx->respond( Tangence::Message->new( $self, MSG_INITED )
+   # For unit tests or other synchronous cases, we need to set the version
+   # -before- we send the message. But we'd better construct the response
+   # message before setting the version, in case it makes a difference.
+   my $response = Tangence::Message->new( $self, MSG_INITED )
       ->pack_int( $major )
-      ->pack_int( $minor_max )
-   );
+      ->pack_int( $minor_max );
 
    $self->minor_version( $minor_max );
+
+   $ctx->respond( $response );
 }
 
 sub handle_request_GETROOT
