@@ -305,10 +305,10 @@ sub make_proxy
       croak "Already have an object id $id";
    }
 
-   my $schema;
+   my $introspection;
    if( defined $class ) {
-      $schema = $self->peer_hasclass->{$class}->[0];
-      defined $schema or croak "Cannot construct a proxy for class $class as no schema exists";
+      $introspection = $self->peer_hasclass->{$class}->[0];
+      defined $introspection or croak "Cannot construct a proxy for class $class as no introspection exists";
    }
 
    my $obj = $self->objectproxies->{$id} =
@@ -317,7 +317,7 @@ sub make_proxy
          id   => $id,
 
          class  => $class,
-         schema => $schema,
+         introspection => $introspection,
 
          on_error => $self->on_error,
       );

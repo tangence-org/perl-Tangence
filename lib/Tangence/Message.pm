@@ -479,7 +479,7 @@ sub packmeta_class
 
    $self->_pack_leader( DATA_META, DATAMETA_CLASS );
 
-   my $schema = {
+   my $introspection = {
       methods    => { 
          pairmap {
             $a => { args => [ map { $_->sig } $b->argtypes ], ret => ( $b->ret ? $b->ret->sig : "" ) }
@@ -508,10 +508,10 @@ sub packmeta_class
    else {
       $self->pack_stringZ( $self->perlname );
    }
-   $self->pack_typed( TYPE_DICT_ANY, $schema );
+   $self->pack_typed( TYPE_DICT_ANY, $introspection );
    $self->pack_typed( TYPE_LIST_STR, $smashkeys );
 
-   $stream->peer_hasclass->{$class->perlname} = [ $schema, $smashkeys ];
+   $stream->peer_hasclass->{$class->perlname} = [ $introspection, $smashkeys ];
 }
 
 sub unpackmeta_class
@@ -527,21 +527,21 @@ sub unpackmeta_class
    else {
       $class = $self->unpack_stringZ();
    }
-   my $schema    = $self->unpack_typed( TYPE_DICT_ANY );
-   my $smashkeys = $self->unpack_typed( TYPE_LIST_STR );
+   my $introspection = $self->unpack_typed( TYPE_DICT_ANY );
+   my $smashkeys     = $self->unpack_typed( TYPE_LIST_STR );
 
-   foreach my $mdef ( values %{ $schema->{methods} } ) {
+   foreach my $mdef ( values %{ $introspection->{methods} } ) {
       $_ = Tangence::Meta::Type->new_from_sig( $_ ) for @{ $mdef->{args} };
       length and $_ = Tangence::Meta::Type->new_from_sig( $_) for $mdef->{ret};
    }
-   foreach my $edef ( values %{ $schema->{events} } ) {
+   foreach my $edef ( values %{ $introspection->{events} } ) {
       $_ = Tangence::Meta::Type->new_from_sig( $_ ) for @{ $edef->{args} };
    }
-   foreach my $pdef ( values %{ $schema->{properties} } ) {
+   foreach my $pdef ( values %{ $introspection->{properties} } ) {
       $_ = Tangence::Meta::Type->new_from_sig( $_ ) for $pdef->{type};
    }
 
-   $stream->peer_hasclass->{$class} = [ $schema, $smashkeys ];
+   $stream->peer_hasclass->{$class} = [ $introspection, $smashkeys ];
 }
 
 # Used by pack_typed

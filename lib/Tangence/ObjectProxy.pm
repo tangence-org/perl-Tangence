@@ -49,7 +49,7 @@ sub new
       id   => $args{id},
 
       class  => $args{class},
-      schema => $args{schema},
+      introspection => $args{introspection},
 
       on_error => $args{on_error},
    }, $class;
@@ -114,11 +114,11 @@ sub introspect
 {
    my $self = shift;
    if( !@_ ) {
-      return $self->{schema};
+      return $self->{introspection};
    }
    else {
       my $section = shift;
-      return $self->{schema}->{$section};
+      return $self->{introspection}->{$section};
    }
 }
 
@@ -126,21 +126,21 @@ sub can_method
 {
    my $self = shift;
    my ( $method ) = @_;
-   return $self->{schema}->{methods}->{$method};
+   return $self->{introspection}->{methods}->{$method};
 }
 
 sub can_event
 {
    my $self = shift;
    my ( $event ) = @_;
-   return $self->{schema}->{events}->{$event};
+   return $self->{introspection}->{events}->{$event};
 }
 
 sub can_property
 {
    my $self = shift;
    my ( $property ) = @_;
-   return $self->{schema}->{properties}->{$property};
+   return $self->{introspection}->{properties}->{$property};
 }
 
 # Don't want to call it "isa"
@@ -149,10 +149,10 @@ sub proxy_isa
    my $self = shift;
    if( @_ ) {
       my ( $class ) = @_;
-      return !! grep { $_ eq $class } @{ $self->{schema}->{isa} };
+      return !! grep { $_ eq $class } @{ $self->{introspection}->{isa} };
    }
    else {
-      return @{ $self->{schema}->{isa} };
+      return @{ $self->{introspection}->{isa} };
    }
 }
 
@@ -163,7 +163,7 @@ sub grab
 
    foreach my $property ( keys %{ $smashdata } ) {
       my $value = $smashdata->{$property};
-      my $dim = $self->{schema}->{properties}->{$property}->{dim};
+      my $dim = $self->{introspection}->{properties}->{$property}->{dim};
 
       if( $dim == DIM_OBJSET ) {
          # Comes across in a LIST. We need to map id => obj
