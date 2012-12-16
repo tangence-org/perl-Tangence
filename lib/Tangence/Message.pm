@@ -104,7 +104,7 @@ sub _pack_leader
    }
 }
 
-sub _unpack_leader
+sub _peek_leader_type
 {
    my $self = shift;
 
@@ -112,26 +112,13 @@ sub _unpack_leader
       length $self->{record} or croak "Ran out of bytes before finding a leader";
 
       my ( $typenum ) = unpack( "C", $self->{record} );
+      my $type = $typenum >> 5;
+
+      return $type unless $type == DATA_META;
+
       substr( $self->{record}, 0, 1, "" );
 
-      my $type = $typenum >> 5;
       my $num  = $typenum & 0x1f;
-
-      if( $num == 0x1f ) {
-         ( $num ) = unpack( "C", $self->{record} );
-
-         if( $num < 0x80 ) {
-            substr( $self->{record}, 0, 1, "" );
-         }
-         else {
-            ( $num ) = unpack( "N", $self->{record} );
-            $num &= 0x7fffffff;
-            substr( $self->{record}, 0, 4, "" );
-         }
-      }
-
-      return $type, $num unless $type == DATA_META;
-
       if( $num == DATAMETA_CONSTRUCT ) {
          $self->unpackmeta_construct;
       }
@@ -142,6 +129,32 @@ sub _unpack_leader
          die sprintf("TODO: Data stream meta-operation 0x%02x", $num);
       }
    }
+}
+
+sub _unpack_leader
+{
+   my $self = shift;
+
+   my $type = $self->_peek_leader_type;
+   my ( $typenum ) = unpack( "C", $self->{record} );
+   substr( $self->{record}, 0, 1, "" );
+
+   my $num  = $typenum & 0x1f;
+
+   if( $num == 0x1f ) {
+      ( $num ) = unpack( "C", $self->{record} );
+
+      if( $num < 0x80 ) {
+         substr( $self->{record}, 0, 1, "" );
+      }
+      else {
+         ( $num ) = unpack( "N", $self->{record} );
+         $num &= 0x7fffffff;
+         substr( $self->{record}, 0, 4, "" );
+      }
+   }
+
+   return $type, $num;
 }
 
 sub pack_bool
@@ -155,7 +168,7 @@ sub pack_bool
 sub unpack_bool
 {
    my $self = shift;
-   my ( $type, $num ) = @_ ? @_ : $self->_unpack_leader();
+   my ( $type, $num ) = $self->_unpack_leader();
 
    $type == DATA_NUMBER or croak "Expected to unpack a number(bool) but did not find one";
    $num == DATANUM_BOOLFALSE and return 0;
@@ -218,7 +231,7 @@ sub pack_int
 sub unpack_int
 {
    my $self = shift;
-   my ( $type, $num ) = @_ ? @_ : $self->_unpack_leader();
+   my ( $type, $num ) = $self->_unpack_leader();
 
    $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
    exists $pack_int_format{$num} or croak "Expected an integer subtype but got $num";
@@ -243,7 +256,7 @@ sub pack_str
 sub unpack_str
 {
    my $self = shift;
-   my ( $type, $num ) = @_ ? @_ : $self->_unpack_leader();
+   my ( $type, $num ) = $self->_unpack_leader();
 
    $type == DATA_STRING or croak "Expected to unpack a string but did not find one";
    length $self->{record} >= $num or croak "Can't pull $num bytes for string as there aren't enough";
@@ -285,10 +298,11 @@ sub pack_obj
 sub unpack_obj
 {
    my $self = shift;
-   my ( $type, $num ) = @_ ? @_ : $self->_unpack_leader();
+   my ( $type, $num ) = $self->_unpack_leader();
 
    my $stream = $self->{stream};
 
+   $type == DATA_OBJECT or croak "Expected to unpack an object but did not find one";
    return undef unless $num;
    if( $num == 4 ) {
       my ( $id ) = unpack( "N", $self->{record} ); substr( $self->{record}, 0, 4, "" );
@@ -452,18 +466,19 @@ sub unpack_any
 {
    my $self = shift;
 
-   my ( $type, $num ) = $self->_unpack_leader();
+   my $type = $self->_peek_leader_type();
 
    if( $type == DATA_NUMBER ) {
-      return $self->unpack_int( $type, $num );
+      return $self->unpack_int();
    }
    if( $type == DATA_STRING ) {
-      return $self->unpack_str( $type, $num );
+      return $self->unpack_str();
    }
    elsif( $type == DATA_OBJECT ) {
-      return $self->unpack_obj( $type, $num );
+      return $self->unpack_obj();
    }
    elsif( $type == DATA_LIST ) {
+      my ( undef, $num ) = $self->_unpack_leader();
       my @a;
       foreach ( 1 .. $num ) {
          push @a, $self->unpack_any();
@@ -471,6 +486,7 @@ sub unpack_any
       return \@a;
    }
    elsif( $type == DATA_DICT ) {
+      my ( undef, $num ) = $self->_unpack_leader();
       my %h;
       foreach ( 1 .. $num ) {
          my ( $key ) = unpack( "Z*", $self->{record} ); substr( $self->{record}, 0, 1 + length $key, "" );
