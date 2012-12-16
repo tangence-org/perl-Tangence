@@ -329,6 +329,81 @@ sub unpack_obj
    }
 }
 
+sub pack_list
+{
+   my $self = shift;
+   my ( $list, $listtype ) = @_;
+
+   ref $list eq "ARRAY" or croak "Cannot pack a list from non-ARRAY reference";
+   my $member_type = $listtype->member_type;
+
+   $self->_pack_leader( DATA_LIST, scalar @$list );
+   $self->pack_typed( $member_type, $_ ) for @$list;
+
+   return $self;
+}
+
+sub unpack_list
+{
+   my $self = shift;
+   my ( $listtype ) = @_;
+
+   my ( $type, $num ) = $self->_unpack_leader();
+   $type == DATA_LIST or croak "Expected to unpack a list but did not find one";
+
+   my $member_type = $listtype->member_type;
+   my @a;
+   foreach ( 1 .. $num ) {
+      push @a, $self->unpack_typed( $member_type );
+   }
+   return \@a;
+}
+
+sub pack_dict
+{
+   my $self = shift;
+   my ( $dict, $dicttype ) = @_;
+
+   ref $dict eq "HASH" or croak "Cannot pack a dict from non-HASH reference";
+   my $member_type = $dicttype->member_type;
+
+   my @keys = keys %$dict;
+   @keys = sort @keys if $SORT_HASH_KEYS;
+
+   $self->_pack_leader( DATA_DICT, scalar @keys );
+   if( $self->{stream}->_ver_tangence_strings ) {
+      $self->pack_str( $_ ) and $self->pack_typed( $member_type, $dict->{$_} ) for @keys;
+   }
+   else {
+      $self->pack_stringZ( $_ ) and $self->pack_typed( $member_type, $dict->{$_} ) for @keys;
+   }
+
+   return $self;
+}
+
+sub unpack_dict
+{
+   my $self = shift;
+   my ( $dicttype ) = @_;
+
+   my ( $type, $num ) = $self->_unpack_leader();
+   $type == DATA_DICT or croak "Expected to unpack a dict but did not find one";
+
+   my $member_type = $dicttype->member_type;
+   my %h;
+   foreach ( 1 .. $num ) {
+      my $key;
+      if( $self->{stream}->_ver_tangence_strings ) {
+         $key = $self->unpack_str();
+      }
+      else {
+         $key = $self->unpack_stringZ();
+      }
+      $h{$key} = $self->unpack_typed( $member_type );
+   }
+   return \%h;
+}
+
 sub packmeta_construct
 {
    my $self = shift;
@@ -487,19 +562,10 @@ sub pack_any
       $self->pack_obj( $d );
    }
    elsif( ref $d eq "ARRAY" ) {
-      $self->_pack_leader( DATA_LIST, scalar @$d );
-      $self->pack_any( $_ ) for @$d;
+      $self->pack_list( $d, TYPE_LIST_ANY );
    }
    elsif( ref $d eq "HASH" ) {
-      my @keys = keys %$d;
-      @keys = sort @keys if $SORT_HASH_KEYS;
-      $self->_pack_leader( DATA_DICT, scalar @keys );
-      if( $stream->_ver_tangence_strings ) {
-         $self->pack_str( $_ ), $self->pack_any( $d->{$_} ) for @keys;
-      }
-      else {
-         $self->pack_stringZ( $_ ) and $self->pack_any( $d->{$_} ) for @keys;
-      }
+      $self->pack_dict( $d, TYPE_DICT_ANY );
    }
    else {
       croak "Do not know how to pack a " . ref($d);
@@ -511,8 +577,6 @@ sub pack_any
 sub unpack_any
 {
    my $self = shift;
-
-   my $stream = $self->{stream};
 
    my $type = $self->_peek_leader_type();
 
@@ -526,27 +590,10 @@ sub unpack_any
       return $self->unpack_obj();
    }
    elsif( $type == DATA_LIST ) {
-      my ( undef, $num ) = $self->_unpack_leader();
-      my @a;
-      foreach ( 1 .. $num ) {
-         push @a, $self->unpack_any();
-      }
-      return \@a;
+      return $self->unpack_list( TYPE_LIST_ANY );
    }
    elsif( $type == DATA_DICT ) {
-      my ( undef, $num ) = $self->_unpack_leader();
-      my %h;
-      foreach ( 1 .. $num ) {
-         my $key;
-         if( $stream->_ver_tangence_strings ) {
-            $key = $self->unpack_str();
-         }
-         else {
-            $key = $self->unpack_stringZ();
-         }
-         $h{$key} = $self->unpack_any();
-      }
-      return \%h;
+      return $self->unpack_dict( TYPE_DICT_ANY );
    }
    else {
       croak "Do not know how to unpack record of type $type";
@@ -557,8 +604,6 @@ sub pack_typed
 {
    my $self = shift;
    my ( $type, $d ) = @_;
-
-   my $stream = $self->{stream};
 
    if( $type->aggregate eq "prim" ) {
       my $sig = $type->sig;
@@ -577,23 +622,10 @@ sub pack_typed
       }
    }
    elsif( $type->aggregate eq "list" ) {
-      my $subtype = $type->member_type;
-      ref $d eq "ARRAY" or croak "Cannot pack a list from non-ARRAY reference";
-      $self->_pack_leader( DATA_LIST, scalar @$d );
-      $self->pack_typed( $subtype, $_ ) for @$d;
+      $self->pack_list( $d, $type );
    }
    elsif( $type->aggregate eq "dict" ) {
-      my $subtype = $type->member_type;
-      ref $d eq "HASH" or croak "Cannot pack a dict from non-HASH reference";
-      my @keys = keys %$d;
-      @keys = sort @keys if $SORT_HASH_KEYS;
-      $self->_pack_leader( DATA_DICT, scalar @keys );
-      if( $stream->_ver_tangence_strings ) {
-         $self->pack_str( $_ ) and $self->pack_typed( $subtype, $d->{$_} ) for @keys;
-      }
-      else {
-         $self->pack_stringZ( $_ ) and $self->pack_typed( $subtype, $d->{$_} ) for @keys;
-      }
+      $self->pack_dict( $d, $type );
    }
    else {
       croak "Unrecognised type aggregation ".$type->aggregate;
@@ -606,8 +638,6 @@ sub unpack_typed
 {
    my $self = shift;
    my $type = shift;
-
-   my $stream = $self->{stream};
 
    if( $type->aggregate eq "prim" ) {
       my $sig = $type->sig;
@@ -629,33 +659,10 @@ sub unpack_typed
       }
    }
    elsif( $type->aggregate eq "list" ) {
-      my $subtype = $type->member_type;
-      my ( $type, $num ) = $self->_unpack_leader();
-
-      $type == DATA_LIST or croak "Expected to unpack a list but did not find one";
-      my @a;
-      foreach ( 1 .. $num ) {
-         push @a, $self->unpack_typed( $subtype );
-      }
-      return \@a;
+      return $self->unpack_list( $type );
    }
    elsif( $type->aggregate eq "dict" ) {
-      my $subtype = $type->member_type;
-      my ( $type, $num ) = $self->_unpack_leader();
-
-      $type == DATA_DICT or croak "Expected to unpack a dict but did not find one";
-      my %h;
-      foreach ( 1 .. $num ) {
-         my $key;
-         if( $stream->_ver_tangence_strings ) {
-            $key = $self->unpack_str();
-         }
-         else {
-            $key = $self->unpack_stringZ();
-         }
-         $h{$key} = $self->unpack_typed( $subtype );
-      }
-      return \%h;
+      return $self->unpack_dict( $type );
    }
    else {
       croak "Unrecognised type aggregation ".$type->aggregate;
