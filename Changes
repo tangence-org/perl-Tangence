@@ -1,5 +1,12 @@
 Revision history for Tangence
 
+0.13    CHANGES:
+         * Bumped wire protocol minor version to 1:
+            + Encode strings on the wire (dict keys and class names) as
+              Tangence strings
+            + Give classes ID numbers to refer to in CONSTRUCT messages,
+              rather then full class name every time
+
 0.12    CHANGES:
          * Defined MSG_INIT for server/client version negitiations
          * Implement it in the server, but not yet in the client as it crashes
