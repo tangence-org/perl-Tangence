@@ -471,7 +471,7 @@ sub unpackmeta_construct
          $class = $self->unpack_str();
       }
       else {
-         $class = $self->unpackZ();
+         $class = $self->unpack_stringZ();
       }
    }
    my $smasharr = $self->unpack_typed( TYPE_LIST_ANY );
