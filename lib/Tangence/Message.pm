@@ -419,12 +419,18 @@ sub packmeta_construct
    my $smashkeys = $class->smashkeys;
 
    $self->_pack_leader( DATA_META, DATAMETA_CONSTRUCT );
-   $self->{record} .= pack( "N", $id );
-   if( $stream->_ver_tangence_strings ) {
-      $self->pack_str( $class->perlname );
+   if( $stream->_ver_class_idnums ) {
+      $self->pack_int( $id );
+      $self->pack_int( $stream->peer_hasclass->{$class->perlname}->[2] );
    }
    else {
-      $self->pack_stringZ( $class->perlname );
+      $self->{record} .= pack( "N", $id );
+      if( $stream->_ver_tangence_strings ) {
+         $self->pack_str( $class->perlname );
+      }
+      else {
+         $self->pack_stringZ( $class->perlname );
+      }
    }
 
    my $smasharr = [];
@@ -452,13 +458,21 @@ sub unpackmeta_construct
 
    my $stream = $self->{stream};
 
-   my ( $id ) = unpack( "N", $self->{record} ); substr( $self->{record}, 0, 4, "" );
+   my $id;
    my $class;
-   if( $stream->_ver_tangence_strings ) {
-      $class = $self->unpack_str();
+   if( $stream->_ver_class_idnums ) {
+      $id = $self->unpack_int();
+      my $classid = $self->unpack_int();
+      $class = $stream->message_state->{id2class}{$classid};
    }
    else {
-      $class = $self->unpackZ();
+      ( $id ) = unpack( "N", $self->{record} ); substr( $self->{record}, 0, 4, "" );
+      if( $stream->_ver_tangence_strings ) {
+         $class = $self->unpack_str();
+      }
+      else {
+         $class = $self->unpackZ();
+      }
    }
    my $smasharr = $self->unpack_typed( TYPE_LIST_ANY );
 
@@ -502,16 +516,24 @@ sub packmeta_class
 
    my $smashkeys = $class->smashkeys;
 
-   if( $stream->_ver_tangence_strings ) {
+   my $classid;
+   if( $stream->_ver_class_idnums ) {
+      $classid = ++$stream->message_state->{next_classid};
       $self->pack_str( $class->perlname );
+      $self->pack_int( $classid );
    }
    else {
-      $self->pack_stringZ( $self->perlname );
+      if( $stream->_ver_tangence_strings ) {
+         $self->pack_str( $class->perlname );
+      }
+      else {
+         $self->pack_stringZ( $self->perlname );
+      }
    }
    $self->pack_typed( TYPE_DICT_ANY, $introspection );
    $self->pack_typed( TYPE_LIST_STR, $smashkeys );
 
-   $stream->peer_hasclass->{$class->perlname} = [ $introspection, $smashkeys ];
+   $stream->peer_hasclass->{$class->perlname} = [ $introspection, $smashkeys, $classid ];
 }
 
 sub unpackmeta_class
@@ -521,11 +543,18 @@ sub unpackmeta_class
    my $stream = $self->{stream};
 
    my $class;
-   if( $stream->_ver_tangence_strings ) {
+   my $classid;
+   if( $stream->_ver_class_idnums ) {
       $class = $self->unpack_str();
+      $classid = $self->unpack_int();
    }
    else {
-      $class = $self->unpack_stringZ();
+      if( $stream->_ver_tangence_strings ) {
+         $class = $self->unpack_str();
+      }
+      else {
+         $class = $self->unpack_stringZ();
+      }
    }
    my $introspection = $self->unpack_typed( TYPE_DICT_ANY );
    my $smashkeys     = $self->unpack_typed( TYPE_LIST_STR );
@@ -541,7 +570,10 @@ sub unpackmeta_class
       $_ = Tangence::Meta::Type->new_from_sig( $_ ) for $pdef->{type};
    }
 
-   $stream->peer_hasclass->{$class} = [ $introspection, $smashkeys ];
+   $stream->peer_hasclass->{$class} = [ $introspection, $smashkeys, $classid ];
+   if( defined $classid ) {
+      $stream->message_state->{id2class}{$classid} = $class;
+   }
 }
 
 # Used by pack_typed
