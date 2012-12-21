@@ -419,7 +419,7 @@ by MSG_ERROR in case of an error, so this response type is not listed.
 Some of these messages are sent from the client to the server (C->S),
 others are sent from the server to client (S->C)
 
-MSG_CALL (C->S)
+MSG_CALL (C->S) (0x01)
   INT           object ID
   STRING        method name
   data...       arguments
@@ -428,7 +428,7 @@ MSG_CALL (C->S)
 
   Calls the named method on the given object.
 
-MSG_SUBSCRIBE (C->S)
+MSG_SUBSCRIBE (C->S) (0x02)
   INT           object ID
   STRING        event name
 
@@ -436,7 +436,7 @@ MSG_SUBSCRIBE (C->S)
 
   Subscribes the client to be informed of the event on given object.
 
-MSG_UNSUBSCRIBE (C->S)
+MSG_UNSUBSCRIBE (C->S) (0x03)
   INT           object ID
   STRING        event name
 
@@ -444,7 +444,7 @@ MSG_UNSUBSCRIBE (C->S)
 
   Cancels an event subscription.
 
-MSG_EVENT (S->C)
+MSG_EVENT (S->C) (0x04)
   INT           object ID
   STRING        event name
   data...       arguments
@@ -453,7 +453,7 @@ MSG_EVENT (S->C)
 
   Informs the client that the event has occured.
 
-MSG_GETPROP (C->S)
+MSG_GETPROP (C->S) (0x05)
   INT           object ID
   STRING        property name
 
@@ -461,7 +461,7 @@ MSG_GETPROP (C->S)
 
   Requests the current value of the property
 
-MSG_SETPROP (C->S)
+MSG_SETPROP (C->S) (0x06)
   INT           object ID
   STRING        property name
   data          new value
@@ -470,7 +470,7 @@ MSG_SETPROP (C->S)
 
   Sets the new value of the property
 
-MSG_WATCH (C->S)
+MSG_WATCH (C->S) (0x07)
   INT           object ID
   STRING        property name
   BOOL          want initial?
@@ -481,7 +481,7 @@ MSG_WATCH (C->S)
   boolean 'want initial' value is true, the client will be sent an
   initial MSG_CHANGE message for the current value of the property.
 
-MSG_UNWATCH (C->S)
+MSG_UNWATCH (C->S) (0x08)
   INT           object ID
   STRING        property name
 
@@ -489,7 +489,7 @@ MSG_UNWATCH (C->S)
 
   Cancels a request to watch a property
 
-MSG_UPDATE (S->C)
+MSG_UPDATE (S->C) (0x09)
   INT           object ID
   STRING        property name
   U8            change type
@@ -595,7 +595,7 @@ MSG_UPDATE (S->C)
 
       Removes the object of the given ID from the set.
 
-MSG_DESTROY (S->C)
+MSG_DESTROY (S->C) (0x0a)
   INT           object ID
 
   Responses: MSG_OK
@@ -609,7 +609,7 @@ MSG_DESTROY (S->C)
   watches will have been removed by the server before this message is
   sent.
 
-MSG_GETROOT (C->S)
+MSG_GETROOT (C->S) (0x40)
   data          identity
 
   Responses: MSG_RESULT
@@ -619,7 +619,7 @@ MSG_GETROOT (C->S)
   login procedure. The result will contain a single object reference,
   being the root object.
 
-MSG_GETREGISTRY (C->S)
+MSG_GETREGISTRY (C->S) (0x41)
   [no arguments]
 
   Responses: MSG_RESULT
@@ -627,7 +627,7 @@ MSG_GETREGISTRY (C->S)
   Requests the registry object from the server. The result will contain a
   single object reference, being the registry object.
 
-MSG_INIT (C->S)
+MSG_INIT (C->S) (0x7f)
   INT            major version
   INT            maximal minor version
   INT            minimal minor version
@@ -643,34 +643,34 @@ MSG_INIT (C->S)
 
 The following responses may be sent to a request:
 
-MSG_OK
+MSG_OK (0x80)
   [no arguments]
 
   A simple OK message, informing the requester that the operation was
   successful, an no error occured.
 
-MSG_ERROR
+MSG_ERROR (0x81)
   STRING        error message
 
   An error occured; the text of the message is included.
 
-MSG_RESULT
+MSG_RESULT (0x82)
   data...       values
 
   Contains the return value from a method call, a property value, or the
   initial root or registry object.
 
-MSG_SUBSCRIBED
+MSG_SUBSCRIBED (0x83)
   [no arguments]
 
   Informs the client that a MSG_SUBSCRIBE was successful.
 
-MSG_WATCHING
+MSG_WATCHING (0x84)
   [no arguments]
 
   Informs the client that a MSG_WATCH was successful.
 
-MSG_INITED
+MSG_INITED (0xff)
   INT            major version
   INT            minor version
 
