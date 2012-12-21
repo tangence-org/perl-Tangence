@@ -17,6 +17,8 @@ sub _make_type { Tangence::Meta::Type->new_from_sig( shift ) }
    package TestStream;
    use base qw( Tangence::Stream );
 
+   sub minor_version { Tangence::Constants->VERSION_MINOR }
+
    sub new { bless {}, shift }
 }
 
@@ -265,7 +267,7 @@ test_typed_dies "list(string) from ARRAY(ARRAY)",
 test_typed "dict(string)",
    sig    => 'dict(str)',
    data   => { one => "one", },
-   stream => "\x61one\0\x23one";
+   stream => "\x61\x23one\x23one";
 
 test_typed_dies "dict(string) from string",
    sig    => 'dict(str)',
@@ -275,7 +277,7 @@ test_typed_dies "dict(string) from string",
 test_typed_dies "dict(string) from HASH(ARRAY)",
    sig    => 'dict(str)',
    data   => { splot => [] },
-   stream => "\x61splot\0\x40";
+   stream => "\x61\x65splot\x40";
 
 test_typed "any (undef)",
    sig    => "any",
@@ -315,17 +317,17 @@ test_typed "any (HASH empty)",
 test_typed "any (HASH of string*1)",
    sig    => "any",
    data   => { key => "value" },
-   stream => "\x61key\0\x25value";
+   stream => "\x61\x23key\x25value";
 
 test_typed "any (HASH of string*2)",
    sig    => "any",
    data   => { a => "A", b => "B" },
-   stream => "\x62a\0\x{21}Ab\0\x{21}B";
+   stream => "\x62\x21a\x{21}A\x21b\x{21}B";
 
 test_typed "any (HASH of HASH)",
    sig    => "any",
    data   => { hash => {} },
-   stream => "\x61hash\0\x60";
+   stream => "\x61\x24hash\x60";
 
 my $m;
 
