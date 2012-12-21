@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 162;
+use Test::More tests => 166;
 use Test::Fatal qw( dies_ok );
 use Test::HexString;
 
@@ -20,6 +20,11 @@ sub _make_type { Tangence::Meta::Type->new_from_sig( shift ) }
    sub minor_version { Tangence::Constants->VERSION_MINOR }
 
    sub new { bless {}, shift }
+
+   # Stub the methods we don't care about
+   sub _install_watch { }
+   sub make_proxy { }
+   sub get_by_id { my ( $self, $id ) = @_; "OBJPROXY[id=$id]" }
 }
 
 sub test_specific
@@ -57,6 +62,19 @@ sub test_specific_dies
       $m->$unpack_method()
    }, "unpack $name dies" ) if exists $args{stream};
 }
+
+use Tangence::Registry;
+use t::Ball;
+
+my $registry = Tangence::Registry->new(
+   tanfile => "t/Ball.tan",
+);
+
+my $ball = $registry->construct(
+   "t::Ball",
+   colour => "red",
+);
+$ball->id == 1 or die "Expected ball->id to be 1";
 
 test_specific "bool f",
    type   => "bool",
@@ -138,6 +156,32 @@ test_specific_dies "string from undef",
    type   => "str",
    data   => undef,
    stream => "\x80";
+
+test_specific "object",
+   type   => "obj",
+   data   => $ball,
+             # DATAMETA_CLASS
+   stream => "\xe2" . "\x27t::Ball" .
+                      "\x02\1" .
+                      "\x64" . "\x26events" . "\x62" . "\x27bounced" . "\x61" . "\x24args" . "\x41" . "\x23str" .
+                                                       "\x27destroy" . "\x61" . "\x24args" . "\x40" .
+                               "\x23isa" . "\x42" . "\x27t::Ball" .
+                                                    "\x2dt::Colourable" .
+                               "\x27methods" . "\x61" . "\x26bounce" . "\x62" . "\x24args" . "\x41" . "\x23str" .
+                                                                                "\x23ret" . "\x23str" .
+                               "\x2aproperties" . "\x62" . "\x26colour" . "\x62" . "\x23dim" . "\x211" .
+                                                                                   "\x24type" . "\x23str" .
+                                                           "\x24size" . "\x63" . "\x23dim" . "\x211" .
+                                                                                 "\x25smash" . "\x211" .
+                                                                                 "\x24type" . "\x23int" .
+                      "\x41" . "\x24size" .
+             # DATAMETA_CONSTRUCT
+             "\xe1" . "\x02\1" .
+                      "\x02\1" .
+                      "\x41" . "\x80" .
+             # DATA_OBJ
+             "\x84" . "\0\0\0\1",
+   retdata => "OBJPROXY[id=1]";
 
 sub test_typed
 {
