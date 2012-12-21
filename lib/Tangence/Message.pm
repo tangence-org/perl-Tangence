@@ -527,7 +527,7 @@ sub packmeta_class
          $self->pack_str( $class->perlname );
       }
       else {
-         $self->pack_stringZ( $self->perlname );
+         $self->pack_stringZ( $class->perlname );
       }
    }
    $self->pack_typed( TYPE_DICT_ANY, $introspection );
