@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2011 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2011-2012 -- leonerd@leonerd.org.uk
 
 package Tangence::Compiler::Parser;
 
@@ -36,7 +36,7 @@ returns a metadata tree.
 =head1 GRAMMAR
 
 The top level of an interface definition file contains C<include> directives
-and C<class> definitions.
+and C<class> and C<struct> definitions.
 
 =head2 include
 
@@ -57,6 +57,17 @@ defined by a named class.
 The contents of the class block will be a list of C<method>, C<event>, C<prop>
 and C<isa> declarations.
 
+=head2 struct
+
+A C<struct> definition defines the list of fields contained within a named
+structure type.
+
+ struct N {
+    ...
+ }
+
+The contents of the struct block will be a list of C<field> declarations.
+
 =cut
 
 sub parse
@@ -66,16 +77,26 @@ sub parse
    local $self->{package} = \my %package;
 
    while( !$self->at_eos ) {
-      given( $self->token_kw(qw( class include )) ) {
+      given( $self->token_kw(qw( class struct include )) ) {
          when( 'class' ) {
             my $classname = $self->token_ident;
 
             exists $package{$classname} and
-               $self->fail( "Already have a class called $classname" );
+               $self->fail( "Already have a class or struct called $classname" );
 
             my $class = $self->scope_of( '{', sub { $self->parse_classblock( $classname ) }, '}' );
 
             $package{$classname} = $class;
+         }
+         when( 'struct' ) {
+            my $structname = $self->token_ident;
+
+            exists $package{$structname} and
+               $self->fail( "Already have a class or struct called $structname" );
+
+            my $struct = $self->scope_of( '{', sub { $self->parse_structblock( $structname ) }, '}' );
+
+            $package{$structname} = $struct;
          }
          when( 'include' ) {
             my $filename = dirname($self->{filename}) . "/" . $self->token_string;
@@ -262,6 +283,45 @@ sub parse_arg
    return $self->make_argument( name => $name, type => $type );
 }
 
+sub parse_structblock
+{
+   my $self = shift;
+   my ( $structname ) = @_;
+
+   my @fields;
+   my %fieldnames;
+
+   my $struct = $self->make_struct( name => $structname );
+
+   while( !$self->at_eos ) {
+      given( $self->token_kw(qw( field )) ) {
+         when( 'field' ) {
+            my $fieldname = $self->token_ident;
+
+            exists $fieldnames{$fieldname} and
+               $self->fail( "Already have a field called $fieldname" );
+
+            $self->expect( '=' );
+
+            my $type = $self->parse_type;
+
+            push @fields, $self->make_field(
+               name => $fieldname,
+               type => $type,
+            );
+            $fieldnames{$fieldname}++;
+         }
+      }
+      $self->expect( ';' );
+   }
+
+   $struct->define(
+      fields => \@fields,
+   );
+
+   return $struct;
+}
+
 =head2 Types
 
 The following basic type names are recognised
@@ -348,6 +408,20 @@ sub make_class
    return Tangence::Meta::Class->new( @_ );
 }
 
+=head2 $struct = $parser->make_struct( name => $name )
+
+Return a new instance of L<Tangence::Meta::Struct> to go in a package. The
+parser will call C<define> on it.
+
+=cut
+
+sub make_struct
+{
+   shift;
+   require Tangence::Meta::Struct;
+   return Tangence::Meta::Struct->new( @_ );
+}
+
 =head2 $method = $parser->make_method( %args )
 
 =head2 $event = $parser->make_event( %args )
@@ -392,6 +466,19 @@ sub make_argument
    my $self = shift;
    require Tangence::Meta::Argument;
    return Tangence::Meta::Argument->new( @_ );
+}
+
+=head2 $field = $parser->make_field( %args )
+
+Return a new instance of L<Tangence::Meta::Field> to use for a structure type.
+
+=cut
+
+sub make_field
+{
+   my $self = shift;
+   require Tangence::Meta::Field;
+   return Tangence::Meta::Field->new( @_ );
 }
 
 =head2 $type = $parser->make_type( $primitive_name )

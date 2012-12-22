@@ -6,3 +6,10 @@ class t.TestObj {
   prop objset = objset of obj;
   prop items  = list(obj);
 }
+
+struct t.TestStruct {
+  field b = bool;
+  field i = int;
+  field s = str;
+  field o = obj;
+}

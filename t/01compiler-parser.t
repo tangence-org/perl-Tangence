@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 57;
+use Test::More tests => 65;
 use Test::Identity;
 
 use Tangence::Compiler::Parser;
@@ -110,4 +110,17 @@ my $parser = Tangence::Compiler::Parser->new;
    is( $props->{items}->dimension, DIM_SCALAR, 't.TestObj prop items dimension' );
    is( $props->{items}->type->aggregate, "list", 't.TestObj prop items type' );
    is( $props->{items}->type->sig, "list(obj)", 't.TestObj prop items type sig' );
+
+   my $teststruct = $meta->{"t.TestStruct"};
+
+   my @fields = $teststruct->fields;
+
+   is( $fields[0]->name, "b", 't.TestStruct field b' );
+   is( $fields[0]->type->sig, "bool", 't.TestStruct field b type sig' );
+   is( $fields[1]->name, "i", 't.TestStruct field i' );
+   is( $fields[1]->type->sig, "int", 't.TestStruct field i type sig' );
+   is( $fields[2]->name, "s", 't.TestStruct field s' );
+   is( $fields[2]->type->sig, "str", 't.TestStruct field s type sig' );
+   is( $fields[3]->name, "o", 't.TestStruct field o' );
+   is( $fields[3]->type->sig, "obj", 't.TestStruct field o type sig' );
 }
