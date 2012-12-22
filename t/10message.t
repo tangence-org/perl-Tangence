@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 170;
+use Test::More tests => 176;
 use Test::Fatal qw( dies_ok );
 use Test::HexString;
 
@@ -12,12 +12,14 @@ $Tangence::Message::SORT_HASH_KEYS = 1;
 use Tangence::Meta::Type;
 sub _make_type { Tangence::Meta::Type->new_from_sig( shift ) }
 
+my $VERSION_MINOR = Tangence::Constants->VERSION_MINOR;
+
 {
    # We need a testing stream that declares a version
    package TestStream;
    use base qw( Tangence::Stream );
 
-   sub minor_version { Tangence::Constants->VERSION_MINOR }
+   sub minor_version { $VERSION_MINOR }
 
    sub new { bless {}, shift }
 
@@ -191,10 +193,9 @@ test_specific "object",
              "\x84" . "\0\0\0\1",
    retdata => "OBJPROXY[id=1]";
 
-my $record = TestRecord->new( one => 1, two => 2 );
 test_specific "record",
    type   => "record",
-   data   => $record,
+   data   => TestRecord->new( one => 1, two => 2 ),
              # DATAMETA_SCHEMA
    stream => "\xe3" . "\x2aTestRecord" .
                       "\x02\1" .
@@ -395,6 +396,19 @@ test_typed "any (HASH of HASH)",
    data   => { hash => {} },
    stream => "\x61\x24hash\x60";
 
+test_typed "any (record)",
+   sig    => "any",
+   data   => TestRecord->new( one => 3, two => 4 ),
+             # DATAMETA_SCHEMA
+   stream => "\xe3" . "\x2aTestRecord" .
+                      "\x02\1" .
+                      "\x42" . "\x23one" . "\x23two" .
+                      "\x42" . "\x23int" . "\x23str" .
+             # DATA_RECORD
+             "\xa2" . "\x02\1" .
+                      "\x02\3" .
+                      "\x214";
+
 my $m;
 
 $m = Tangence::Message->new( 0 );
@@ -412,3 +426,19 @@ is_hexstr( $m->{record}, "\x02\x0a\x02\x14\x02\x1e", 'pack_all_sametype' );
 
 is_deeply( [ $m->unpack_all_sametype( _make_type('int') ) ], [ 10, 20, 30 ], 'unpack_all_sametype' );
 is( length $m->{record}, 0, "eats all stream for all_sametype" );
+
+$VERSION_MINOR = 1;
+# records should no longer work
+
+test_typed_dies "any from record on minor version 1",
+   sig    => "any",
+   data   => TestRecord->new( one => 5, two => 6 ),
+             # DATAMETA_SCHEMA
+   stream => "\xe3" . "\x2aTestRecord" .
+                      "\x02\1" .
+                      "\x42" . "\x23one" . "\x23two" .
+                      "\x42" . "\x23int" . "\x23str" .
+             # DATA_RECORD
+             "\xa2" . "\x02\1" .
+                      "\x02\5" .
+                      "\x216";

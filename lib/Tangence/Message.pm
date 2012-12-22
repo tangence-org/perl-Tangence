@@ -741,6 +741,10 @@ sub pack_any
    elsif( eval { $d->isa( "Tangence::Object" ) or $d->isa( "Tangence::ObjectProxy" ) } ) {
       $self->pack_obj( $d );
    }
+   elsif( my $schema = eval { Tangence::Schema->for_perlname( ref $d ) } ) {
+      $stream->_ver_has_records or croak "Cannot pack a record type as the stream version is too old";
+      $self->pack_record( $d, $schema );
+   }
    elsif( ref $d eq "ARRAY" ) {
       $self->pack_list( $d, TYPE_LIST_ANY );
    }
@@ -758,6 +762,8 @@ sub unpack_any
 {
    my $self = shift;
 
+   my $stream = $self->{stream};
+
    my $type = $self->_peek_leader_type();
 
    if( $type == DATA_NUMBER ) {
@@ -774,6 +780,10 @@ sub unpack_any
    }
    elsif( $type == DATA_DICT ) {
       return $self->unpack_dict( TYPE_DICT_ANY );
+   }
+   elsif( $type == DATA_RECORD ) {
+      $stream->_ver_has_records or croak "Was not expecting to unpack a record type as the stream version is too old";
+      return $self->unpack_record( undef );
    }
    else {
       croak "Do not know how to unpack record of type $type";
