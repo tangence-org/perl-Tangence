@@ -84,9 +84,10 @@ sub parse
             exists $package{$classname} and
                $self->fail( "Already have a class or struct called $classname" );
 
-            my $class = $self->scope_of( '{', sub { $self->parse_classblock( $classname ) }, '}' );
-
+            my $class = $self->make_class( name => $classname );
             $package{$classname} = $class;
+
+            $self->scope_of( '{', sub { $self->parse_classblock( $class ) }, '}' ),
          }
          when( 'struct' ) {
             my $structname = $self->token_ident;
@@ -94,9 +95,10 @@ sub parse
             exists $package{$structname} and
                $self->fail( "Already have a class or struct called $structname" );
 
-            my $struct = $self->scope_of( '{', sub { $self->parse_structblock( $structname ) }, '}' );
-
+            my $struct = $self->make_struct( name => $structname );
             $package{$structname} = $struct;
+
+            $self->scope_of( '{', sub { $self->parse_structblock( $struct ) }, '}' ),
          }
          when( 'include' ) {
             my $filename = dirname($self->{filename}) . "/" . $self->token_string;
@@ -157,14 +159,12 @@ An C<isa> declaration declares a superclass of the class, by its name (C)
 sub parse_classblock
 {
    my $self = shift;
-   my ( $classname ) = @_;
+   my ( $class ) = @_;
 
    my %methods;
    my %events;
    my %properties;
    my @superclasses;
-
-   my $class = $self->make_class( name => $classname );
 
    while( !$self->at_eos ) {
       given( $self->token_kw(qw( method event prop smashed isa )) ) {
@@ -258,8 +258,6 @@ sub parse_classblock
       properties   => \%properties,
       superclasses => \@superclasses,
    );
-
-   return $class;
 }
 
 sub parse_arglist
@@ -286,12 +284,10 @@ sub parse_arg
 sub parse_structblock
 {
    my $self = shift;
-   my ( $structname ) = @_;
+   my ( $struct ) = @_;
 
    my @fields;
    my %fieldnames;
-
-   my $struct = $self->make_struct( name => $structname );
 
    while( !$self->at_eos ) {
       given( $self->token_kw(qw( field )) ) {
@@ -318,8 +314,6 @@ sub parse_structblock
    $struct->define(
       fields => \@fields,
    );
-
-   return $struct;
 }
 
 =head2 Types
