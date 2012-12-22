@@ -645,7 +645,7 @@ sub packmeta_schema
    my @fields = $schema->fields;
 
    my $schemaid = ++$stream->message_state->{next_schemaid};
-   $self->pack_str( $schema->perlname );
+   $self->pack_str( $schema->name );
    $self->pack_int( $schemaid );
    $self->pack_typed( TYPE_LIST_STR, [ map { $_->name } @fields ] );
    $self->pack_typed( TYPE_LIST_STR, [ map { $_->type->sig } @fields ] );
@@ -664,14 +664,16 @@ sub unpackmeta_schema
    my $names    = $self->unpack_typed( TYPE_LIST_STR );
    my $types    = $self->unpack_typed( TYPE_LIST_STR );
 
+   ( my $perlname = $name ) =~ s{\.}{::}g;
+
    my $schema = Tangence::Schema->declare(
-      $name,
+      $perlname,
       fields => [
          map { $names->[$_] => $types->[$_] } 0 .. $#$names
       ]
    );
 
-   $stream->peer_hasschema->{$name} = [ $schema, $schemaid ];
+   $stream->peer_hasschema->{$perlname} = [ $schema, $schemaid ];
    $stream->message_state->{id2schema}{$schemaid} = $schema;
 }
 
