@@ -29,7 +29,7 @@ my $VERSION_MINOR = Tangence::Constants->VERSION_MINOR;
    sub get_by_id { my ( $self, $id ) = @_; "OBJPROXY[id=$id]" }
 }
 
-Tangence::Schema->declare(
+Tangence::Struct->declare(
    "TestRecord",
    fields => [
       one => "int",
@@ -196,7 +196,7 @@ test_specific "object",
 test_specific "record",
    type   => "record",
    data   => TestRecord->new( one => 1, two => 2 ),
-             # DATAMETA_SCHEMA
+             # DATAMETA_STRUCT
    stream => "\xe3" . "\x2aTestRecord" .
                       "\x02\1" .
                       "\x42" . "\x23one" . "\x23two" .
@@ -399,7 +399,7 @@ test_typed "any (HASH of HASH)",
 test_typed "any (record)",
    sig    => "any",
    data   => TestRecord->new( one => 3, two => 4 ),
-             # DATAMETA_SCHEMA
+             # DATAMETA_STRUCT
    stream => "\xe3" . "\x2aTestRecord" .
                       "\x02\1" .
                       "\x42" . "\x23one" . "\x23two" .
@@ -433,7 +433,7 @@ $VERSION_MINOR = 1;
 test_typed_dies "any from record on minor version 1",
    sig    => "any",
    data   => TestRecord->new( one => 5, two => 6 ),
-             # DATAMETA_SCHEMA
+             # DATAMETA_STRUCT
    stream => "\xe3" . "\x2aTestRecord" .
                       "\x02\1" .
                       "\x42" . "\x23one" . "\x23two" .

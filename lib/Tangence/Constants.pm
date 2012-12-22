@@ -72,7 +72,7 @@ our @EXPORT = qw(
 
    DATAMETA_CONSTRUCT
    DATAMETA_CLASS
-   DATAMETA_SCHEMA
+   DATAMETA_STRUCT
 
    VERSION_MAJOR
    VERSION_MINOR
@@ -159,7 +159,7 @@ use constant DATA_RECORD => 5;
 use constant DATA_META   => 7;
 use constant DATAMETA_CONSTRUCT => 1;
 use constant DATAMETA_CLASS     => 2;
-use constant DATAMETA_SCHEMA    => 3;
+use constant DATAMETA_STRUCT    => 3;
 
 use constant VERSION_MAJOR => 0;
 use constant VERSION_MINOR => 2;

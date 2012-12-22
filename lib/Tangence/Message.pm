@@ -20,7 +20,7 @@ use Carp;
 use Tangence::Constants;
 
 use Tangence::Meta::Type;
-use Tangence::Schema;
+use Tangence::Struct;
 
 use Encode qw( encode_utf8 decode_utf8 );
 use Scalar::Util qw( weaken );
@@ -126,8 +126,8 @@ sub _peek_leader_type
       elsif( $num == DATAMETA_CLASS ) {
          $self->unpackmeta_class;
       }
-      elsif( $num == DATAMETA_SCHEMA ) {
-         $self->unpackmeta_schema;
+      elsif( $num == DATAMETA_STRUCT ) {
+         $self->unpackmeta_struct;
       }
       else {
          die sprintf("TODO: Data stream meta-operation 0x%02x", $num);
@@ -411,18 +411,18 @@ sub unpack_dict
 sub pack_record
 {
    my $self = shift;
-   my ( $rec, $schema ) = @_;
+   my ( $rec, $struct ) = @_;
 
    my $stream = $self->{stream};
 
-   $schema ||= eval { Tangence::Schema->for_perlname( ref $rec ) } or
-      croak "No schema for " . ref $rec;
+   $struct ||= eval { Tangence::Struct->for_perlname( ref $rec ) } or
+      croak "No struct for " . ref $rec;
 
-   $self->packmeta_schema( $schema ) unless $stream->peer_hasschema->{$schema->perlname};
+   $self->packmeta_struct( $struct ) unless $stream->peer_hasstruct->{$struct->perlname};
 
-   my @fields = $schema->fields;
+   my @fields = $struct->fields;
    $self->_pack_leader( DATA_RECORD, scalar @fields );
-   $self->pack_int( $stream->peer_hasschema->{$schema->perlname}->[1] );
+   $self->pack_int( $stream->peer_hasstruct->{$struct->perlname}->[1] );
    foreach my $field ( @fields ) {
       my $fieldname = $field->name;
       $self->pack_typed( $field->type, $rec->$fieldname );
@@ -434,31 +434,31 @@ sub pack_record
 sub unpack_record
 {
    my $self = shift;
-   my ( $schema ) = @_;
+   my ( $struct ) = @_;
 
    my $stream = $self->{stream};
 
    my ( $type, $num ) = $self->_unpack_leader();
    $type == DATA_RECORD or croak "Expected to unpack a record but did not find one";
 
-   my $schemaid = $self->unpack_int();
-   my $got_schema = $stream->message_state->{id2schema}{$schemaid};
-   if( !$schema ) {
-      $schema = $got_schema;
+   my $structid = $self->unpack_int();
+   my $got_struct = $stream->message_state->{id2struct}{$structid};
+   if( !$struct ) {
+      $struct = $got_struct;
    }
    else {
-      $schema->name eq $got_schema->name or
-         croak "Expected to unpack a ".$schema->name." but found ".$got_schema->name;
+      $struct->name eq $got_struct->name or
+         croak "Expected to unpack a ".$struct->name." but found ".$got_struct->name;
    }
 
-   $num == $schema->fields or croak "Expected ".$schema->name." to unpack from ".(scalar $schema->fields)." fields";
+   $num == $struct->fields or croak "Expected ".$struct->name." to unpack from ".(scalar $struct->fields)." fields";
 
    my %values;
-   foreach my $field ( $schema->fields ) {
+   foreach my $field ( $struct->fields ) {
       $values{$field->name} = $self->unpack_typed( $field->type );
    }
 
-   return $schema->perlname->new( %values );
+   return $struct->perlname->new( %values );
 }
 
 sub packmeta_construct
@@ -633,48 +633,48 @@ sub unpackmeta_class
    }
 }
 
-sub packmeta_schema
+sub packmeta_struct
 {
    my $self = shift;
-   my ( $schema ) = @_;
+   my ( $struct ) = @_;
 
    my $stream = $self->{stream};
 
-   $self->_pack_leader( DATA_META, DATAMETA_SCHEMA );
+   $self->_pack_leader( DATA_META, DATAMETA_STRUCT );
 
-   my @fields = $schema->fields;
+   my @fields = $struct->fields;
 
-   my $schemaid = ++$stream->message_state->{next_schemaid};
-   $self->pack_str( $schema->name );
-   $self->pack_int( $schemaid );
+   my $structid = ++$stream->message_state->{next_structid};
+   $self->pack_str( $struct->name );
+   $self->pack_int( $structid );
    $self->pack_typed( TYPE_LIST_STR, [ map { $_->name } @fields ] );
    $self->pack_typed( TYPE_LIST_STR, [ map { $_->type->sig } @fields ] );
 
-   $stream->peer_hasschema->{$schema->perlname} = [ $schema, $schemaid ];
+   $stream->peer_hasstruct->{$struct->perlname} = [ $struct, $structid ];
 }
 
-sub unpackmeta_schema
+sub unpackmeta_struct
 {
    my $self = shift;
 
    my $stream = $self->{stream};
 
    my $name     = $self->unpack_str();
-   my $schemaid = $self->unpack_int();
+   my $structid = $self->unpack_int();
    my $names    = $self->unpack_typed( TYPE_LIST_STR );
    my $types    = $self->unpack_typed( TYPE_LIST_STR );
 
    ( my $perlname = $name ) =~ s{\.}{::}g;
 
-   my $schema = Tangence::Schema->declare(
+   my $struct = Tangence::Struct->declare(
       $perlname,
       fields => [
          map { $names->[$_] => $types->[$_] } 0 .. $#$names
       ]
    );
 
-   $stream->peer_hasschema->{$perlname} = [ $schema, $schemaid ];
-   $stream->message_state->{id2schema}{$schemaid} = $schema;
+   $stream->peer_hasstruct->{$perlname} = [ $struct, $structid ];
+   $stream->message_state->{id2struct}{$structid} = $struct;
 }
 
 # Used by pack_typed
@@ -743,9 +743,9 @@ sub pack_any
    elsif( eval { $d->isa( "Tangence::Object" ) or $d->isa( "Tangence::ObjectProxy" ) } ) {
       $self->pack_obj( $d );
    }
-   elsif( my $schema = eval { Tangence::Schema->for_perlname( ref $d ) } ) {
+   elsif( my $struct = eval { Tangence::Struct->for_perlname( ref $d ) } ) {
       $stream->_ver_has_records or croak "Cannot pack a record type as the stream version is too old";
-      $self->pack_record( $d, $schema );
+      $self->pack_record( $d, $struct );
    }
    elsif( ref $d eq "ARRAY" ) {
       $self->pack_list( $d, TYPE_LIST_ANY );

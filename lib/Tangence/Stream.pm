@@ -91,7 +91,7 @@ The following methods are provided by this mixin.
 sub message_state  { shift->{message_state} ||= {} }
 sub peer_hasobj    { shift->{peer_hasobj} ||= {} }
 sub peer_hasclass  { shift->{peer_hasclass} ||= {} }
-sub peer_hasschema { shift->{peer_hasschema} ||= {} }
+sub peer_hasstruct { shift->{peer_hasstruct} ||= {} }
 
 sub identity
 {
@@ -284,7 +284,7 @@ sub _ver_tangence_strings { shift->minor_version >= 1 }
 # wire protocol puts ID numbers on DATAMETA_CLASS and _CONSTRUCT messages
 sub _ver_class_idnums { shift->minor_version >= 1 }
 
-# wire protocol understands DATA_RECORD and DATAMETA_SCHEMA
+# wire protocol understands DATA_RECORD and DATAMETA_STRUCT
 sub _ver_has_records { shift->minor_version >= 2 }
 
 =head1 AUTHOR

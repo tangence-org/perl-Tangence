@@ -351,9 +351,9 @@ followed by a big-endian encoding of the object's ID number. Currently,
 this will always be a 4 byte number.
 
 For structured records, the size gives the count of serialied data members for
-the record. Following the leader will be the ID number of the structure schema
-type as a string, followed by the given number of data members, in the order
-that the structure schema declares.
+the record. Following the leader will be the ID number of the structure type
+as a string, followed by the given number of data members, in the order
+that the structure type declares.
 
 Meta-data items may be embedded within a data stream in order to create
 the object classes and instances which it contains. These metadata items
@@ -366,7 +366,7 @@ bottom five bits.
 
  DATAMETA_CONSTRUCT     1 1 1 0 0 0 0 1         Construct an object
  DATAMETA_CLASS         1 1 1 0 0 0 1 0         Create a new object class
- DATAMETA_SCHEMA        1 1 1 0 0 0 1 1         Create a new record schema
+ DATAMETA_STRUCT        1 1 1 0 0 0 1 1         Create a new record struct type
 
 Following each metadata item is an encoding of its arguments.
 
@@ -410,9 +410,9 @@ DATAMETA_CLASS:
 
   The smash keys will be encoded as a possibly-empty list of strings.
 
-DATAMETA_SCHEMA:
-  Schema name:   string
-  Schema ID:     int
+DATAMETA_STRUCT:
+  Struct name:   string
+  Struct ID:     int
   Field names:   list of strings
   Field types:   list of strings
 

@@ -1,11 +1,11 @@
-package Tangence::Schema;
+package Tangence::Struct;
 
 use strict;
 use warnings;
 
 use Carp;
 
-our %schemata;
+our %structta;
 
 sub new
 {
@@ -13,7 +13,7 @@ sub new
    my %args = @_;
    my $name = $args{name};
 
-   return $schemata{$name} ||= bless {
+   return $structta{$name} ||= bless {
       name   => $name,
       fields => $args{fields}
    }, $class;
@@ -45,7 +45,7 @@ sub declare
       push @fieldnames, $args{fields}[$_];
    }
 
-   my $schema = $class->new(
+   my $struct = $class->new(
       name => $name,
       fields => \@fields,
    );
@@ -64,7 +64,7 @@ sub declare
    no strict 'refs';
    defined *{"${perlname}::$_"} or *{"${perlname}::$_"} = $subs{$_} for keys %subs;
 
-   return $schema;
+   return $struct;
 }
 
 sub for_perlname
@@ -73,7 +73,7 @@ sub for_perlname
    my ( $perlname ) = @_;
 
    ( my $name = $perlname ) =~ s{::}{.}g;
-   return $schemata{$name} or croak "Unknown Tangence::Schema for '$perlname'";
+   return $structta{$name} or croak "Unknown Tangence::Struct for '$perlname'";
 }
 
 sub name
