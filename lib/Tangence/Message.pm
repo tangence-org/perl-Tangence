@@ -664,16 +664,16 @@ sub unpackmeta_struct
    my $names    = $self->unpack_typed( TYPE_LIST_STR );
    my $types    = $self->unpack_typed( TYPE_LIST_STR );
 
-   ( my $perlname = $name ) =~ s{\.}{::}g;
+   my $struct = Tangence::Struct->new( name => $name );
+   if( !$struct->defined ) {
+      $struct->define(
+         fields => [
+            map { $names->[$_] => $types->[$_] } 0 .. $#$names
+         ]
+      );
+   }
 
-   my $struct = Tangence::Struct->declare(
-      $perlname,
-      fields => [
-         map { $names->[$_] => $types->[$_] } 0 .. $#$names
-      ]
-   );
-
-   $stream->peer_hasstruct->{$perlname} = [ $struct, $structid ];
+   $stream->peer_hasstruct->{$struct->perlname} = [ $struct, $structid ];
    $stream->message_state->{id2struct}{$structid} = $struct;
 }
 
