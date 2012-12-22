@@ -106,6 +106,7 @@ definition.
 sub fields
 {
    my $self = shift;
+   $self->defined or croak $self->name . " is not yet defined";
    return @{ $self->{fields} };
 }
 
