@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 176;
+use Test::More tests => 184;
 use Test::Fatal qw( dies_ok );
 use Test::HexString;
 
@@ -442,3 +442,35 @@ test_typed_dies "any from record on minor version 1",
              "\xa2" . "\x02\1" .
                       "\x02\5" .
                       "\x216";
+
+$VERSION_MINOR = 0;
+
+test_typed "dict(string) on minor version 0",
+   sig    => "dict(str)",
+   data   => { one => "one" },
+   stream => "\x61one\0\x23one";
+
+test_specific "object on minor version 0",
+   type   => "obj",
+   data   => $ball,
+             # DATAMETA_CLASS
+   stream => "\xe2" . "t::Ball\0" .
+                      "\x64" . "events\0" . "\x62" . "bounced\0" . "\x61" . "args\0" . "\x41" . "\x23str" .
+                                                     "destroy\0" . "\x61" . "args\0" . "\x40" .
+                               "isa\0" . "\x42" . "\x27t::Ball" .
+                                                  "\x2dt::Colourable" .
+                               "methods\0" . "\x61" . "bounce\0" . "\x62" . "args\0" . "\x41" . "\x23str" .
+                                                                            "ret\0" . "\x23str" .
+                               "properties\0" . "\x62" . "colour\0" . "\x62" . "dim\0" . "\x211" .
+                                                                               "type\0" . "\x23str" .
+                                                         "size\0" . "\x63" . "dim\0" . "\x211" .
+                                                                             "smash\0" . "\x211" .
+                                                                             "type\0" . "\x23int" .
+                      "\x41" . "\x24size" .
+             # DATAMETA_CONSTRUCT
+             "\xe1" . "\0\0\0\1" .
+                      "t::Ball\0" .
+                      "\x41" . "\x80" .
+             # DATA_OBJ
+             "\x84" . "\0\0\0\1",
+   retdata => "OBJPROXY[id=1]";
