@@ -42,7 +42,7 @@ $server->send_message( $C2S{INIT} );
 
 is_hexstr( $server->recv_message, $S2C{INITED}, 'serverstream initially contains INITED message' );
 
-is( $server->minor_version, 1, '$server->minor_version after MSG_INIT' );
+is( $server->minor_version, 2, '$server->minor_version after MSG_INIT' );
 
 $server->send_message( $C2S{GETROOT} );
 

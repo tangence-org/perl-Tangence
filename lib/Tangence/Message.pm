@@ -20,6 +20,7 @@ use Carp;
 use Tangence::Constants;
 
 use Tangence::Meta::Type;
+use Tangence::Schema;
 
 use Encode qw( encode_utf8 decode_utf8 );
 use Scalar::Util qw( weaken );
@@ -124,6 +125,9 @@ sub _peek_leader_type
       }
       elsif( $num == DATAMETA_CLASS ) {
          $self->unpackmeta_class;
+      }
+      elsif( $num == DATAMETA_SCHEMA ) {
+         $self->unpackmeta_schema;
       }
       else {
          die sprintf("TODO: Data stream meta-operation 0x%02x", $num);
@@ -404,6 +408,59 @@ sub unpack_dict
    return \%h;
 }
 
+sub pack_record
+{
+   my $self = shift;
+   my ( $rec, $schema ) = @_;
+
+   my $stream = $self->{stream};
+
+   $schema ||= eval { Tangence::Schema->for_perlname( ref $rec ) } or
+      croak "No schema for " . ref $rec;
+
+   $self->packmeta_schema( $schema ) unless $stream->peer_hasschema->{$schema->perlname};
+
+   my @fields = $schema->fields;
+   $self->_pack_leader( DATA_RECORD, scalar @fields );
+   $self->pack_int( $stream->peer_hasschema->{$schema->perlname}->[1] );
+   foreach my $field ( @fields ) {
+      my $fieldname = $field->name;
+      $self->pack_typed( $field->type, $rec->$fieldname );
+   }
+
+   return $self;
+}
+
+sub unpack_record
+{
+   my $self = shift;
+   my ( $schema ) = @_;
+
+   my $stream = $self->{stream};
+
+   my ( $type, $num ) = $self->_unpack_leader();
+   $type == DATA_RECORD or croak "Expected to unpack a record but did not find one";
+
+   my $schemaid = $self->unpack_int();
+   my $got_schema = $stream->message_state->{id2schema}{$schemaid};
+   if( !$schema ) {
+      $schema = $got_schema;
+   }
+   else {
+      $schema->name eq $got_schema->name or
+         croak "Expected to unpack a ".$schema->name." but found ".$got_schema->name;
+   }
+
+   $num == $schema->fields or croak "Expected ".$schema->name." to unpack from ".(scalar $schema->fields)." fields";
+
+   my %values;
+   foreach my $field ( $schema->fields ) {
+      $values{$field->name} = $self->unpack_typed( $field->type );
+   }
+
+   return $schema->perlname->new( %values );
+}
+
 sub packmeta_construct
 {
    my $self = shift;
@@ -574,6 +631,48 @@ sub unpackmeta_class
    if( defined $classid ) {
       $stream->message_state->{id2class}{$classid} = $class;
    }
+}
+
+sub packmeta_schema
+{
+   my $self = shift;
+   my ( $schema ) = @_;
+
+   my $stream = $self->{stream};
+
+   $self->_pack_leader( DATA_META, DATAMETA_SCHEMA );
+
+   my @fields = $schema->fields;
+
+   my $schemaid = ++$stream->message_state->{next_schemaid};
+   $self->pack_str( $schema->perlname );
+   $self->pack_int( $schemaid );
+   $self->pack_typed( TYPE_LIST_STR, [ map { $_->name } @fields ] );
+   $self->pack_typed( TYPE_LIST_STR, [ map { $_->type->sig } @fields ] );
+
+   $stream->peer_hasschema->{$schema->perlname} = [ $schema, $schemaid ];
+}
+
+sub unpackmeta_schema
+{
+   my $self = shift;
+
+   my $stream = $self->{stream};
+
+   my $name     = $self->unpack_str();
+   my $schemaid = $self->unpack_int();
+   my $names    = $self->unpack_typed( TYPE_LIST_STR );
+   my $types    = $self->unpack_typed( TYPE_LIST_STR );
+
+   my $schema = Tangence::Schema->declare(
+      $name,
+      fields => [
+         map { $names->[$_] => $types->[$_] } 0 .. $#$names
+      ]
+   );
+
+   $stream->peer_hasschema->{$name} = [ $schema, $schemaid ];
+   $stream->message_state->{id2schema}{$schemaid} = $schema;
 }
 
 # Used by pack_typed

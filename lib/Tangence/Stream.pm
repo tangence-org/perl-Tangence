@@ -88,9 +88,10 @@ The following methods are provided by this mixin.
 =cut
 
 # Accessors for Tangence::Message decoupling
-sub message_state { shift->{message_state} ||= {} }
-sub peer_hasobj   { shift->{peer_hasobj} ||= {} }
-sub peer_hasclass { shift->{peer_hasclass} ||= {} }
+sub message_state  { shift->{message_state} ||= {} }
+sub peer_hasobj    { shift->{peer_hasobj} ||= {} }
+sub peer_hasclass  { shift->{peer_hasclass} ||= {} }
+sub peer_hasschema { shift->{peer_hasschema} ||= {} }
 
 sub identity
 {

@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 166;
+use Test::More tests => 170;
 use Test::Fatal qw( dies_ok );
 use Test::HexString;
 
@@ -26,6 +26,14 @@ sub _make_type { Tangence::Meta::Type->new_from_sig( shift ) }
    sub make_proxy { }
    sub get_by_id { my ( $self, $id ) = @_; "OBJPROXY[id=$id]" }
 }
+
+Tangence::Schema->declare(
+   "TestRecord",
+   fields => [
+      one => "int",
+      two => "str",
+   ],
+);
 
 sub test_specific
 {
@@ -182,6 +190,20 @@ test_specific "object",
              # DATA_OBJ
              "\x84" . "\0\0\0\1",
    retdata => "OBJPROXY[id=1]";
+
+my $record = TestRecord->new( one => 1, two => 2 );
+test_specific "record",
+   type   => "record",
+   data   => $record,
+             # DATAMETA_SCHEMA
+   stream => "\xe3" . "\x2aTestRecord" .
+                      "\x02\1" .
+                      "\x42" . "\x23one" . "\x23two" .
+                      "\x42" . "\x23int" . "\x23str" .
+             # DATA_RECORD
+             "\xa2" . "\x02\1" .
+                      "\x02\1" .
+                      "\x212";
 
 sub test_typed
 {

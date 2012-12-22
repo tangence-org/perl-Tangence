@@ -56,6 +56,7 @@ our @EXPORT = qw(
    DATA_LIST
    DATA_DICT
    DATA_OBJECT
+   DATA_RECORD
    DATA_META
 
    DATANUM_BOOLFALSE
@@ -71,6 +72,7 @@ our @EXPORT = qw(
 
    DATAMETA_CONSTRUCT
    DATAMETA_CLASS
+   DATAMETA_SCHEMA
 
    VERSION_MAJOR
    VERSION_MINOR
@@ -153,12 +155,14 @@ use constant DATA_STRING => 1;
 use constant DATA_LIST   => 2;
 use constant DATA_DICT   => 3;
 use constant DATA_OBJECT => 4;
+use constant DATA_RECORD => 5;
 use constant DATA_META   => 7;
 use constant DATAMETA_CONSTRUCT => 1;
 use constant DATAMETA_CLASS     => 2;
+use constant DATAMETA_SCHEMA    => 3;
 
 use constant VERSION_MAJOR => 0;
-use constant VERSION_MINOR => 1;
+use constant VERSION_MINOR => 2;
 
 =head1 AUTHOR
 

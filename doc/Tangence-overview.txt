@@ -81,6 +81,10 @@ introspection data; see later.
    Uses the type signature "dict(T)" where T is the type signature of its
    element type.
 
+ * Structured records of values
+
+   Uses a type signature giving the name of the structure type.
+
  * For type signatures, there is also the type of "any", which allows any
    type.
 
@@ -91,12 +95,6 @@ here is that it only considers the surface value of the types of data,
 rather than any deeper significance. It does not preserve self-referential
 data, nor can it cope with cyclic structures. More complex shaped data
 should be represented by real Tangence objects.
-
-[
- There is an unresolved issue here to deal with export to other languages.
- This is whether a new type of "structure" should be created, which allows
- for a hetrogenous collection.
-]
 
 
 3. Object Model
@@ -302,6 +300,7 @@ determines the type:
  DATA_LIST      0 1 0 s s s s s         list of values
  DATA_DICT      0 1 1 s s s s s         dictionary of string->value
  DATA_OBJECT    1 0 0 s s s s s         Tangence object reference
+ DATA_RECORD    1 0 1 s s s s s         structured record
         where 'sssss' gives the size
 
  DATA_META      1 1 1 n n n n n
@@ -351,6 +350,11 @@ For objects, the size gives the number of bytes in the object's ID number,
 followed by a big-endian encoding of the object's ID number. Currently,
 this will always be a 4 byte number.
 
+For structured records, the size gives the count of serialied data members for
+the record. Following the leader will be the ID number of the structure schema
+type as a string, followed by the given number of data members, in the order
+that the structure schema declares.
+
 Meta-data items may be embedded within a data stream in order to create
 the object classes and instances which it contains. These metadata items
 do not count towards the overall size of a collection value.
@@ -362,6 +366,7 @@ bottom five bits.
 
  DATAMETA_CONSTRUCT     1 1 1 0 0 0 0 1         Construct an object
  DATAMETA_CLASS         1 1 1 0 0 0 1 0         Create a new object class
+ DATAMETA_SCHEMA        1 1 1 0 0 0 1 1         Create a new record schema
 
 Following each metadata item is an encoding of its arguments.
 
@@ -378,10 +383,10 @@ DATAMETA_CONSTRUCT:
 DATAMETA_CLASS:
   Class name:   string
   Class ID:     int
-  Schema:       data encoded (dict)
+  Introspection:data encoded (dict)
   Smash keys:   data encoded (list)
 
-  The schema will be encoded as a dictionary, in the following layout.
+  The introspection will be encoded as a dictionary, in the following layout.
 
   DATA_DICT:
     'methods' = DATA_DICT:
@@ -404,6 +409,12 @@ DATAMETA_CLASS:
       class names
 
   The smash keys will be encoded as a possibly-empty list of strings.
+
+DATAMETA_SCHEMA:
+  Schema name:   string
+  Schema ID:     int
+  Field names:   list of strings
+  Field types:   list of strings
 
 4.3. Message Types
 
@@ -639,7 +650,7 @@ MSG_INIT (C->S) (0x7f)
   it can return MSG_ERROR. Otherwise, the accepted minor is returned in the
   MSG_INITED message.
 
-  The version specified by this document is major 0, minor 1.
+  The version specified by this document is major 0, minor 2.
 
 The following responses may be sent to a request:
 
