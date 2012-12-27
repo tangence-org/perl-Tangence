@@ -88,10 +88,21 @@ The following methods are provided by this mixin.
 =cut
 
 # Accessors for Tangence::Message decoupling
-sub message_state  { shift->{message_state} ||= {} }
-sub peer_hasobj    { shift->{peer_hasobj} ||= {} }
-sub peer_hasclass  { shift->{peer_hasclass} ||= {} }
-sub peer_hasstruct { shift->{peer_hasstruct} ||= {} }
+our $BUILTIN_STRUCTIDS;
+our %BUILTIN_ID2STRUCT;
+our %ALWAYS_PEER_HASSTRUCT;
+
+sub message_state
+{
+   shift->{message_state} ||= {
+      id2struct     => { %BUILTIN_ID2STRUCT },
+      next_structid => $BUILTIN_STRUCTIDS,
+   }
+}
+
+sub peer_hasobj    { shift->{peer_hasobj}    ||= {} }
+sub peer_hasclass  { shift->{peer_hasclass}  ||= {} }
+sub peer_hasstruct { shift->{peer_hasstruct} ||= { %ALWAYS_PEER_HASSTRUCT } }
 
 sub identity
 {

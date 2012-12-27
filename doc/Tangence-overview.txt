@@ -688,6 +688,42 @@ MSG_INITED (0xff)
   Informs the client that the initial MSG_INIT was successful, and what
   minor version was accepted.
 
+4.4 Built-in Structure Types
+
+The following structure types are built-in, with the given structure ID
+numbers. They can be assumed pre-knowledge by both ends of the stream and do
+not need serialising by DATAMETA_STRUCT records.
+
+4.4.1 Tangence.Class
+
+  Structure ID:     1
+  Fields:
+    methods       : dict(any)
+    events        : dict(any)
+    properties    : dict(any)
+    superclasses  : list(str)
+
+4.4.2 Tangence.Method
+
+  Structure ID:     2
+  Fields:
+    arguments     : list(str)
+    returns       : str
+
+4.4.3 Tangence.Event
+
+  Structure ID:     3
+  Fields:
+    arguments     : list(str)
+
+4.4.4 Tangence.Property
+
+  Structure ID:     4
+  Fields:
+    dimension     : int
+    type          : str
+    smashed       : bool
+
 
 5. Perl Distribution
 --------------------

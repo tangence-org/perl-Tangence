@@ -53,6 +53,17 @@ sub declare
    return $self;
 }
 
+sub declare_builtin
+{
+   my $class = shift;
+   my $self = $class->declare( @_ );
+
+   $Tangence::Stream::ALWAYS_PEER_HASSTRUCT{$self->perlname} = [ $self, my $structid = ++$Tangence::Struct::BUILTIN_STRUCTIDS ];
+   $Tangence::Stream::BUILTIN_ID2STRUCT{$structid} = $self;
+
+   return $self;
+}
+
 sub define
 {
    my $self = shift;
@@ -102,5 +113,43 @@ sub perlname
    ( my $perlname = $self->name ) =~ s{\.}{::}g; # s///rg in 5.14
    return $perlname;
 }
+
+Tangence::Struct->declare_builtin(
+   "Tangence::Struct::Class",
+   name => "Tangence.Class",
+   fields => [
+      methods      => "dict(any)",
+      events       => "dict(any)",
+      properties   => "dict(any)",
+      superclasses => "list(str)",
+   ],
+);
+
+Tangence::Struct->declare_builtin(
+   "Tangence::Struct::Method",
+   name => "Tangence.Method",
+   fields => [
+      arguments => "list(str)",
+      returns   => "str",
+   ],
+);
+
+Tangence::Struct->declare_builtin(
+   "Tangence::Struct::Event",
+   name => "Tangence.Event",
+   fields => [
+      arguments => "list(str)",
+   ],
+);
+
+Tangence::Struct->declare_builtin(
+   "Tangence::Struct::Property",
+   name => "Tangence.Property",
+   fields => [
+      dimension => "int",
+      type      => "str",
+      smashed   => "bool",
+   ],
+);
 
 0x55AA;
