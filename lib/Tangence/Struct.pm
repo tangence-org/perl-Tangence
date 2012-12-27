@@ -8,7 +8,8 @@ use Carp;
 
 use Tangence::Meta::Field;
 
-our %structs;
+our %STRUCTS_BY_NAME;
+our %STRUCTS_BY_PERLNAME;
 
 sub new
 {
@@ -16,7 +17,7 @@ sub new
    my %args = @_;
    my $name = $args{name};
 
-   return $structs{$name} ||= $class->SUPER::new( @_ );
+   return $STRUCTS_BY_NAME{$name} ||= $class->SUPER::new( @_ );
 }
 
 sub _new_type
@@ -31,6 +32,7 @@ sub declare
    my ( $perlname, %args ) = @_;
 
    ( my $name = $perlname ) =~ s{::}{.}g;
+   $name = $args{name} if $args{name};
 
    my @fields;
    for( $_ = 0; $_ < @{$args{fields}}; $_ += 2 ) {
@@ -41,11 +43,13 @@ sub declare
    }
 
    my $self = $class->new( name => $name );
+   $self->{perlname} = $perlname;
 
    $self->define(
       fields => \@fields,
    );
 
+   $STRUCTS_BY_PERLNAME{$perlname} = $self;
    return $self;
 }
 
@@ -75,18 +79,26 @@ sub define
    }
 }
 
+sub for_name
+{
+   my $class = shift;
+   my ( $name ) = @_;
+
+   return $STRUCTS_BY_NAME{$name} or croak "Unknown Tangence::Struct for '$name'";
+}
+
 sub for_perlname
 {
    my $class = shift;
    my ( $perlname ) = @_;
 
-   ( my $name = $perlname ) =~ s{::}{.}g;
-   return $structs{$name} or croak "Unknown Tangence::Struct for '$perlname'";
+   return $STRUCTS_BY_PERLNAME{$perlname} or croak "Unknown Tangence::Struct for '$perlname'";
 }
 
 sub perlname
 {
    my $self = shift;
+   return $self->{perlname} if $self->{perlname};
    ( my $perlname = $self->name ) =~ s{\.}{::}g; # s///rg in 5.14
    return $perlname;
 }
