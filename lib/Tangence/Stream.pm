@@ -297,6 +297,9 @@ sub minor_version
 # wire protocol understands DATA_RECORD and DATAMETA_STRUCT
 sub _ver_has_records { shift->minor_version >= 2 }
 
+# wire protocol encodes Class as record
+sub _ver_class_as_record { shift->minor_version >= 2 }
+
 =head1 AUTHOR
 
 Paul Evans <leonerd@leonerd.org.uk>

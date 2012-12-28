@@ -525,15 +525,57 @@ sub packmeta_class
 
    my $stream = $self->{stream};
 
+   my @superclasses = grep { $_->name ne "Tangence.Object" } $class->direct_superclasses;
+
+   if( $stream->_ver_class_as_record ) {
+      $stream->peer_hasclass->{$_->perlname} or $self->packmeta_class( $_ ) for @superclasses;
+   }
+
    $self->_pack_leader( DATA_META, DATAMETA_CLASS );
 
    my $introspection = _introspect_class( $class );
    my $smashkeys = $class->smashkeys;
 
    my $classid = ++$stream->message_state->{next_classid};
-   $self->pack_str( $class->perlname );
-   $self->pack_int( $classid );
-   $self->pack_typed( TYPE_DICT_ANY, $introspection );
+
+   if( $stream->_ver_class_as_record ) {
+      $self->pack_str( $class->name );
+      $self->pack_int( $classid );
+      my $classrec = Tangence::Struct::Class->new(
+         methods => {
+            pairmap {
+               $a => Tangence::Struct::Method->new(
+                  arguments => [ map { $_->type->sig } $b->arguments ],
+                  returns   => ( $b->ret ? $b->ret->sig : "" ),
+               )
+            } %{ $class->direct_methods }
+         },
+         events => {
+            pairmap {
+               $a => Tangence::Struct::Event->new(
+                  arguments => [ map { $_->type->sig } $b->arguments ],
+               )
+            } %{ $class->direct_events }
+         },
+         properties => {
+            pairmap {
+               $a => Tangence::Struct::Property->new(
+                  dimension => $b->dimension,
+                  type      => $b->type->sig,
+                  smashed   => $b->smashed,
+               )
+            } %{ $class->direct_properties }
+         },
+         superclasses => [ map { $_->name } @superclasses ],
+      );
+      $self->pack_any( $classrec );
+   }
+   else {
+      $self->pack_str( $class->perlname );
+      $self->pack_int( $classid );
+      $self->pack_typed( TYPE_DICT_ANY, $introspection );
+   }
+
    $self->pack_typed( TYPE_LIST_STR, $smashkeys );
 
    $stream->peer_hasclass->{$class->perlname} = [ $introspection, $smashkeys, $classid ];
@@ -545,10 +587,79 @@ sub unpackmeta_class
 
    my $stream = $self->{stream};
 
-   my $class         = $self->unpack_str();
-   my $classid       = $self->unpack_int();
-   my $introspection = $self->unpack_typed( TYPE_DICT_ANY );
-   my $smashkeys     = $self->unpack_typed( TYPE_LIST_STR );
+   my $perlname;
+   my $classid;
+
+   my $class;
+   my $introspection;
+   if( $stream->_ver_class_as_record ) {
+      my $name = $self->unpack_str();
+      $classid = $self->unpack_int();
+      my $classrec = $self->unpack_any();
+
+      $class = Tangence::Meta::Class->new( name => $name );
+      $class->define(
+         methods => { 
+            pairmap {
+               $a => Tangence::Meta::Method->new(
+                  class     => $class,
+                  name      => $a,
+                  ret       => Tangence::Meta::Type->new_from_sig( $b->returns ),
+                  arguments => [ map {
+                     Tangence::Meta::Argument->new(
+                        type => Tangence::Meta::Type->new_from_sig( $_ ),
+                     )
+                  } @{ $b->arguments } ],
+               )
+            } %{ $classrec->methods }
+         },
+
+         events => {
+            pairmap {
+               $a => Tangence::Meta::Event->new(
+                  class     => $class,
+                  name      => $a,
+                  arguments => [ map {
+                     Tangence::Meta::Argument->new(
+                        type => Tangence::Meta::Type->new_from_sig( $_ ),
+                     )
+                  } @{ $b->arguments } ],
+               )
+            } %{ $classrec->events }
+         },
+
+         properties => {
+            pairmap {
+               $a => Tangence::Meta::Property->new(
+                  class     => $class,
+                  name      => $a,
+                  dimension => $b->dimension,
+                  type      => Tangence::Meta::Type->new_from_sig( $b->type ),
+                  smashed   => $b->smashed,
+               )
+            } %{ $classrec->properties }
+         },
+
+         superclasses => do {
+            my @superclasses = map {
+               ( my $perlname = $_ ) =~ s/\./::/g;
+               $stream->peer_hasclass->{$perlname}->[3] or croak "Unrecognised class $perlname";
+            } @{ $classrec->superclasses };
+            
+            @superclasses ? \@superclasses : [ Tangence::Class->for_name( "Tangence.Object" ) ]
+         },
+      );
+
+      $perlname = $class->perlname;
+      $introspection = _introspect_class( $class );
+   }
+   else {
+      $perlname = $self->unpack_str();
+      $classid  = $self->unpack_int();
+      $introspection = $self->unpack_typed( TYPE_DICT_ANY );
+   }
+
+   my $smashkeys = $self->unpack_typed( TYPE_LIST_STR );
 
    foreach my $mdef ( values %{ $introspection->{methods} } ) {
       $_ = Tangence::Meta::Type->new_from_sig( $_ ) for @{ $mdef->{args} };
@@ -561,9 +672,9 @@ sub unpackmeta_class
       $_ = Tangence::Meta::Type->new_from_sig( $_ ) for $pdef->{type};
    }
 
-   $stream->peer_hasclass->{$class} = [ $introspection, $smashkeys, $classid ];
+   $stream->peer_hasclass->{$perlname} = [ $introspection, $smashkeys, $classid, $class ];
    if( defined $classid ) {
-      $stream->message_state->{id2class}{$classid} = $class;
+      $stream->message_state->{id2class}{$classid} = $perlname;
    }
 }
 

@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 176;
+use Test::More tests => 180;
 use Test::Fatal qw( dies_ok );
 use Test::HexString;
 
@@ -171,23 +171,35 @@ test_specific "object",
    type   => "obj",
    data   => $ball,
              # DATAMETA_CLASS
-   stream => "\xe2" . "\x27t::Ball" .
+   stream => "\xe2" . "\x2ct.Colourable" .
                       "\x02\1" .
-                      "\x64" . "\x26events" . "\x62" . "\x27bounced" . "\x61" . "\x24args" . "\x41" . "\x23str" .
-                                                       "\x27destroy" . "\x61" . "\x24args" . "\x40" .
-                               "\x23isa" . "\x42" . "\x27t::Ball" .
-                                                    "\x2dt::Colourable" .
-                               "\x27methods" . "\x61" . "\x26bounce" . "\x62" . "\x24args" . "\x41" . "\x23str" .
-                                                                                "\x23ret" . "\x23str" .
-                               "\x2aproperties" . "\x62" . "\x26colour" . "\x62" . "\x23dim" . "\x211" .
-                                                                                   "\x24type" . "\x23str" .
-                                                           "\x24size" . "\x63" . "\x23dim" . "\x211" .
-                                                                                 "\x25smash" . "\x211" .
-                                                                                 "\x24type" . "\x23int" .
+                      "\xa4" . "\x02\1" .
+                               "\x60" .
+                               "\x60" .
+                               "\x61" . "\x26colour" . "\xa3" . "\x02\4" .
+                                                                "\x02\1" .
+                                                                "\x23str" .
+                                                                "\x00" .
+                               "\x40" .
+                      "\x40" .
+             # DATAMETA_CLASS
+             "\xe2" . "\x26t.Ball" .
+                      "\x02\2" .
+                      "\xa4" . "\x02\1" .
+                               "\x61" . "\x26bounce" . "\xa2" . "\x02\2" .
+                                                                "\x41" . "\x23str" .
+                                                                "\x23str" .
+                               "\x61" . "\x27bounced" . "\xa1" . "\x02\3" .
+                                                                 "\x41" . "\x23str" .
+                               "\x61" . "\x24size" . "\xa3" . "\x02\4" .
+                                                              "\x02\1" .
+                                                              "\x23int" .
+                                                              "\x01" .
+                               "\x41" . "\x2ct.Colourable" .
                       "\x41" . "\x24size" .
              # DATAMETA_CONSTRUCT
              "\xe1" . "\x02\1" .
-                      "\x02\1" .
+                      "\x02\2" .
                       "\x41" . "\x80" .
              # DATA_OBJ
              "\x84" . "\0\0\0\1",
@@ -442,3 +454,30 @@ test_typed_dies "any from record on minor version 1",
              "\xa2" . "\x02\1" .
                       "\x02\5" .
                       "\x216";
+
+# Old introspection dict-based class serialisation
+test_specific "object",
+   type   => "obj",
+   data   => $ball,
+             # DATAMETA_CLASS
+   stream => "\xe2" . "\x27t::Ball" .
+                      "\x02\1" .
+                      "\x64" . "\x26events" . "\x62" . "\x27bounced" . "\x61" . "\x24args" . "\x41" . "\x23str" .
+                                                       "\x27destroy" . "\x61" . "\x24args" . "\x40" .
+                               "\x23isa" . "\x42" . "\x27t::Ball" .
+                                                    "\x2dt::Colourable" .
+                               "\x27methods" . "\x61" . "\x26bounce" . "\x62" . "\x24args" . "\x41" . "\x23str" .
+                                                                                "\x23ret" . "\x23str" .
+                               "\x2aproperties" . "\x62" . "\x26colour" . "\x62" . "\x23dim" . "\x211" .
+                                                                                   "\x24type" . "\x23str" .
+                                                           "\x24size" . "\x63" . "\x23dim" . "\x211" .
+                                                                                 "\x25smash" . "\x211" .
+                                                                                 "\x24type" . "\x23int" .
+                      "\x41" . "\x24size" .
+             # DATAMETA_CONSTRUCT
+             "\xe1" . "\x02\1" .
+                      "\x02\1" .
+                      "\x41" . "\x80" .
+             # DATA_OBJ
+             "\x84" . "\0\0\0\1",
+   retdata => "OBJPROXY[id=1]";

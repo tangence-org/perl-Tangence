@@ -136,9 +136,9 @@ implementation behaviour the server might implement.
 Each object class may define named methods that clients can invoke on
 objects in the server. Each method has:
 
-  + a name
-  + argument types
-  + a return type
+    + a name
+    + argument types
+    + a return type
 
 The arguments to a method are positional. The return is a single value
 (not a list of values, such as Perl could represent).
@@ -383,30 +383,13 @@ DATAMETA_CONSTRUCT:
 DATAMETA_CLASS:
   Class name:   string
   Class ID:     int
-  Introspection:data encoded (dict)
+  Class:        struct of type Tangence.Class
   Smash keys:   data encoded (list)
 
-  The introspection will be encoded as a dictionary, in the following layout.
-
-  DATA_DICT:
-    'methods' = DATA_DICT:
-      one key per method, values are DATA_DICT:
-        'args' = string description of argument types
-        'ret'  = string description of return type
-
-    'events' = DATA_DICT:
-      one key per event, values are DATA_DICT:
-        'args' = string description of argument types
-
-    'properties' = DATA_DICT:
-      one key per property, values are DATA_DICT:
-        'dim' = dimension, one of:
-          DIM_SCALAR, DIM_HASH, DIM_QUEUE, DIM_ARRAY, DIM_OBJSET
-        'type' = string description of the type
-        'smash' = true if this is a smashed property
-
-    'isa' = DATA_LIST:
-      class names
+  The class definition itself will be encoded as a Tangence.Class structure,
+  containing nested Tangence.Method, Tangence.Event and Tangence.Property
+  elements. If the class declares any superclasses, these will be sent in
+  other DATAMETA_CLASS metadata items before this one.
 
   The smash keys will be encoded as a possibly-empty list of strings.
 
