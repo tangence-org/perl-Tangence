@@ -17,7 +17,7 @@ use Carp;
 use Tangence::Constants;
 use Tangence::ObjectProxy;
 
-use constant VERSION_MINOR_MIN => 0;
+use constant VERSION_MINOR_MIN => 1;
 
 =head1 NAME
 

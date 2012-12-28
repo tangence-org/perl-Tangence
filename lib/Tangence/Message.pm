@@ -268,22 +268,6 @@ sub unpack_str
    return decode_utf8( $octets );
 }
 
-# Temporary methods for null-terminated strings. Will be removed once we no
-# longer support protocol version 0
-sub pack_stringZ
-{
-   my $self = shift;
-   $self->{record} .= pack( "Z*", $_[0] );
-}
-
-sub unpack_stringZ
-{
-   my $self = shift;
-   my ( $string ) = unpack( "Z*", $self->{record} );
-   substr( $self->{record}, 0, 1 + length $string, "" );
-   return $string;
-}
-
 sub pack_obj
 {
    my $self = shift;
@@ -375,12 +359,7 @@ sub pack_dict
    @keys = sort @keys if $SORT_HASH_KEYS;
 
    $self->_pack_leader( DATA_DICT, scalar @keys );
-   if( $self->{stream}->_ver_tangence_strings ) {
-      $self->pack_str( $_ ) and $self->pack_typed( $member_type, $dict->{$_} ) for @keys;
-   }
-   else {
-      $self->pack_stringZ( $_ ) and $self->pack_typed( $member_type, $dict->{$_} ) for @keys;
-   }
+   $self->pack_str( $_ ) and $self->pack_typed( $member_type, $dict->{$_} ) for @keys;
 
    return $self;
 }
@@ -396,13 +375,7 @@ sub unpack_dict
    my $member_type = $dicttype->member_type;
    my %h;
    foreach ( 1 .. $num ) {
-      my $key;
-      if( $self->{stream}->_ver_tangence_strings ) {
-         $key = $self->unpack_str();
-      }
-      else {
-         $key = $self->unpack_stringZ();
-      }
+      my $key = $self->unpack_str();
       $h{$key} = $self->unpack_typed( $member_type );
    }
    return \%h;
@@ -476,19 +449,8 @@ sub packmeta_construct
    my $smashkeys = $class->smashkeys;
 
    $self->_pack_leader( DATA_META, DATAMETA_CONSTRUCT );
-   if( $stream->_ver_class_idnums ) {
-      $self->pack_int( $id );
-      $self->pack_int( $stream->peer_hasclass->{$class->perlname}->[2] );
-   }
-   else {
-      $self->{record} .= pack( "N", $id );
-      if( $stream->_ver_tangence_strings ) {
-         $self->pack_str( $class->perlname );
-      }
-      else {
-         $self->pack_stringZ( $class->perlname );
-      }
-   }
+   $self->pack_int( $id );
+   $self->pack_int( $stream->peer_hasclass->{$class->perlname}->[2] );
 
    my $smasharr = [];
 
@@ -515,22 +477,9 @@ sub unpackmeta_construct
 
    my $stream = $self->{stream};
 
-   my $id;
-   my $class;
-   if( $stream->_ver_class_idnums ) {
-      $id = $self->unpack_int();
-      my $classid = $self->unpack_int();
-      $class = $stream->message_state->{id2class}{$classid};
-   }
-   else {
-      ( $id ) = unpack( "N", $self->{record} ); substr( $self->{record}, 0, 4, "" );
-      if( $stream->_ver_tangence_strings ) {
-         $class = $self->unpack_str();
-      }
-      else {
-         $class = $self->unpack_stringZ();
-      }
-   }
+   my $id = $self->unpack_int();
+   my $classid = $self->unpack_int();
+   my $class = $stream->message_state->{id2class}{$classid};
    my $smasharr = $self->unpack_typed( TYPE_LIST_ANY );
 
    my $smashkeys = $stream->peer_hasclass->{$class}->[1];
@@ -581,20 +530,9 @@ sub packmeta_class
    my $introspection = _introspect_class( $class );
    my $smashkeys = $class->smashkeys;
 
-   my $classid;
-   if( $stream->_ver_class_idnums ) {
-      $classid = ++$stream->message_state->{next_classid};
-      $self->pack_str( $class->perlname );
-      $self->pack_int( $classid );
-   }
-   else {
-      if( $stream->_ver_tangence_strings ) {
-         $self->pack_str( $class->perlname );
-      }
-      else {
-         $self->pack_stringZ( $class->perlname );
-      }
-   }
+   my $classid = ++$stream->message_state->{next_classid};
+   $self->pack_str( $class->perlname );
+   $self->pack_int( $classid );
    $self->pack_typed( TYPE_DICT_ANY, $introspection );
    $self->pack_typed( TYPE_LIST_STR, $smashkeys );
 
@@ -607,20 +545,8 @@ sub unpackmeta_class
 
    my $stream = $self->{stream};
 
-   my $class;
-   my $classid;
-   if( $stream->_ver_class_idnums ) {
-      $class = $self->unpack_str();
-      $classid = $self->unpack_int();
-   }
-   else {
-      if( $stream->_ver_tangence_strings ) {
-         $class = $self->unpack_str();
-      }
-      else {
-         $class = $self->unpack_stringZ();
-      }
-   }
+   my $class         = $self->unpack_str();
+   my $classid       = $self->unpack_int();
    my $introspection = $self->unpack_typed( TYPE_DICT_ANY );
    my $smashkeys     = $self->unpack_typed( TYPE_LIST_STR );
 

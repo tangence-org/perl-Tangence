@@ -289,12 +289,6 @@ sub minor_version
 
 # Some (internal) methods that control new protocol features
 
-# wire protocol uses Tangence (rather than \0-terminated) strings in all places
-sub _ver_tangence_strings { shift->minor_version >= 1 }
-
-# wire protocol puts ID numbers on DATAMETA_CLASS and _CONSTRUCT messages
-sub _ver_class_idnums { shift->minor_version >= 1 }
-
 # wire protocol understands DATA_RECORD and DATAMETA_STRUCT
 sub _ver_has_records { shift->minor_version >= 2 }
 
