@@ -541,16 +541,13 @@ sub unpackmeta_construct
    $stream->make_proxy( $id, $class, $smashdata );
 }
 
-sub packmeta_class
+# Temporarily here so we can move the logic eventually into the client
+# Longterm it won't stay because client will work directly on Meta:: objects
+sub _introspect_class
 {
-   my $self = shift;
-   my ( $class ) = @_;
+   my $class = shift;
 
-   my $stream = $self->{stream};
-
-   $self->_pack_leader( DATA_META, DATAMETA_CLASS );
-
-   my $introspection = {
+   return {
       methods    => { 
          pairmap {
             $a => { args => [ map { $_->sig } $b->argtypes ], ret => ( $b->ret ? $b->ret->sig : "" ) }
@@ -570,7 +567,18 @@ sub packmeta_class
          grep { $_ ne "Tangence::Object" } $class->perlname, map { $_->perlname } $class->superclasses
       ],
    };
+}
 
+sub packmeta_class
+{
+   my $self = shift;
+   my ( $class ) = @_;
+
+   my $stream = $self->{stream};
+
+   $self->_pack_leader( DATA_META, DATAMETA_CLASS );
+
+   my $introspection = _introspect_class( $class );
    my $smashkeys = $class->smashkeys;
 
    my $classid;
