@@ -1,5 +1,13 @@
 Revision history for Tangence
 
+0.14    CHANGES:
+         * Bumped wire protocol minor version to 2:
+            + Provide wire-level struct record serialisations
+            + Encode classes as structs rather than use introspection dict
+         * Recognise struct definitions in the tanfile parser
+         * Minimum supported minor protocol version is now 1; minor version 0
+           is no longer supported
+
 0.13    CHANGES:
          * Bumped wire protocol minor version to 1:
             + Encode strings on the wire (dict keys and class names) as
