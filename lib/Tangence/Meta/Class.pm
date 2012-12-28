@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2011 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2011-2012 -- leonerd@leonerd.org.uk
 
 package Tangence::Meta::Class;
 
@@ -106,6 +106,20 @@ sub name
 {
    my $self = shift;
    return $self->{name};
+}
+
+=head2 $perlname = $class->perlname
+
+Returns the perl name of the class. This will be the Tangence name, with dots
+replaced by double colons (C<::>).
+
+=cut
+
+sub perlname
+{
+   my $self = shift;
+   ( my $perlname = $self->name ) =~ s{\.}{::}g; # s///rg in 5.14
+   return $perlname;
 }
 
 =head2 @superclasses = $class->direct_superclasses

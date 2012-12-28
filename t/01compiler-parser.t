@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 65;
+use Test::More tests => 66;
 use Test::Identity;
 
 use Tangence::Compiler::Parser;
@@ -23,6 +23,7 @@ my $parser = Tangence::Compiler::Parser->new;
    my $colourable = $meta->{'t.Colourable'};
    isa_ok( $colourable, "Tangence::Meta::Class", 't.Colourable meta' );
    is( $colourable->name, "t.Colourable", 't.Colourable name' );
+   is( $colourable->perlname, "t::Colourable", 't.Colourable perlname' );
 
    $props = $colourable->direct_properties;
 

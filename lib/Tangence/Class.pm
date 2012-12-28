@@ -136,13 +136,6 @@ sub for_perlname
    return $metas{$name} or croak "Unknown Tangence::Class for '$perlname'";
 }
 
-sub perlname
-{
-   my $self = shift;
-   ( my $perlname = $self->name ) =~ s{\.}{::}g; # s///rg in 5.14
-   return $perlname;
-}
-
 sub superclasses
 {
    my $self = shift;
