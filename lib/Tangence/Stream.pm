@@ -152,6 +152,11 @@ sub tangence_readfrom
 
          my $type = $message->type;
 
+         if( !$self->minor_version and $type != MSG_INIT ) {
+            $self->respondERROR( $token, "Cannot accept any message except MSG_INIT before MSG_INIT" );
+            next;
+         }
+
          if( my $method = $REQ_METHOD{$type} ) {
             if( $self->can( $method ) ) {
                $self->$method( $token, $message );

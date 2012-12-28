@@ -90,4 +90,6 @@ sub handle_request_EVENT
    return 1;
 }
 
+sub minor_version { shift->VERSION_MINOR }
+
 1;
