@@ -127,6 +127,14 @@ sub define
    }
 }
 
+sub for_name
+{
+   my $class = shift;
+   my ( $name ) = @_;
+
+   return $metas{$name} or croak "Unknown Tangence::Class for '$name'";
+}
+
 sub for_perlname
 {
    my $class = shift;
