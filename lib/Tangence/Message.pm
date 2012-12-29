@@ -19,8 +19,15 @@ use Carp;
 
 use Tangence::Constants;
 
+use Tangence::Class;
+use Tangence::Meta::Method;
+use Tangence::Meta::Event;
+use Tangence::Meta::Property;
+use Tangence::Meta::Argument;
 use Tangence::Meta::Type;
 use Tangence::Struct;
+
+use Tangence::Object;
 
 use Encode qw( encode_utf8 decode_utf8 );
 use Scalar::Util qw( weaken );
