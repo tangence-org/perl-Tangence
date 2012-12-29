@@ -1,5 +1,9 @@
 Revision history for Tangence
 
+0.15    BUGFIXES:
+         * Fix Tangence::Message on clientside when dealing with minor
+           version 2 servers, by actually 'use'ing classes it requires
+
 0.14    CHANGES:
          * Bumped wire protocol minor version to 2:
             + Provide wire-level struct record serialisations
