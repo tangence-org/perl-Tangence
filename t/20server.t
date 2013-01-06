@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 32;
+use Test::More tests => 21;
 use Test::HexString;
 use Test::Identity;
 use Test::Refcount;
@@ -15,143 +15,110 @@ use t::Conversation;
 use Tangence::Server;
 $Tangence::Message::SORT_HASH_KEYS = 1;
 
-use t::Ball;
-use t::Bag;
+use t::TestObj;
 
 my $registry = Tangence::Registry->new(
-   tanfile => "t/Bag.tan",
+   tanfile => "t/TestObj.tan",
 );
-my $bag = $registry->construct(
-   "t::Bag",
-   colours => [ qw( red blue green yellow ) ],
-   size => 100,
+my $obj = $registry->construct(
+   "t::TestObj",
+   scalar   => 123,
+   s_scalar => 456,
 );
 
-is_oneref( $bag, '$bag has refcount 1 initially' );
+is_oneref( $obj, '$obj has refcount 1 initially' );
 
 my $server = TestServer->new();
 $server->registry( $registry );
 
 is_oneref( $server, '$server has refcount 1 initially' );
 
-is_deeply( $bag->get_prop_colours,
-           { red => 1, blue => 1, green => 1, yellow => 1 },
-           '$bag colours before pull' );
+# Initialisation
+{
+   $server->send_message( $C2S{INIT} );
 
-$server->send_message( $C2S{INIT} );
+   is_hexstr( $server->recv_message, $S2C{INITED}, 'serverstream initially contains INITED message' );
 
-is_hexstr( $server->recv_message, $S2C{INITED}, 'serverstream initially contains INITED message' );
+   is( $server->minor_version, 3, '$server->minor_version after MSG_INIT' );
 
-is( $server->minor_version, 3, '$server->minor_version after MSG_INIT' );
+   $server->send_message( $C2S{GETROOT} );
 
-$server->send_message( $C2S{GETROOT} );
+   is_hexstr( $server->recv_message, $S2C{GETROOT}, 'serverstream contains root object' );
 
-is_hexstr( $server->recv_message, $S2C{GETROOT}, 'serverstream contains root object' );
+   # One here, one in smashed prop watch
+   is_refcount( $obj, 2, '$obj has refcount 2 after MSG_GETROOT' );
 
-is_oneref( $bag, '$bag has refcount 1 after MSG_GETROOT' );
+   is( $server->identity, "testscript", '$server->identity' );
 
-is( $server->identity, "testscript", '$server->identity' );
+   $server->send_message( $C2S{GETREGISTRY} );
 
-$server->send_message( $C2S{GETREGISTRY} );
+   is_hexstr( $server->recv_message, $S2C{GETREGISTRY}, 'serverstream contains registry' );
+}
 
-is_hexstr( $server->recv_message, $S2C{GETREGISTRY}, 'serverstream contains registry' );
+# Methods
+{
+   $server->send_message( $C2S{CALL} );
 
-$server->send_message( $C2S{CALL_PULL} );
+   is_hexstr( $server->recv_message, $S2C{CALL}, 'serverstream after response to CALL' );
+}
 
-is_hexstr( $server->recv_message, $S2C{CALL_PULL}, 'serverstream after response to CALL' );
+# Events
+{
+   $server->send_message( $C2S{SUBSCRIBE} );
 
-is_deeply( $bag->get_prop_colours,
-           { blue => 1, green => 1, yellow => 1 },
-           '$bag colours after pull' );
+   is_hexstr( $server->recv_message, $S2C{SUBSCRIBED}, 'received MSG_SUBSCRIBED response' );
 
-my $ball = $registry->get_by_id( 2 );
+   $obj->fire_event( event => 20, "bye" );
 
-my $cb_self;
-my $howhigh;
+   is_hexstr( $server->recv_message, $S2C{EVENT}, 'received MSG_EVENT' );
 
-$ball->subscribe_event( bounced => sub { ( $cb_self, $howhigh ) = @_; } );
+   $server->send_message( $MSG_OK );
+}
 
-$server->send_message( $C2S{CALL_BOUNCE} );
+# Properties get/set
+{
+   $server->send_message( $C2S{GETPROP} );
 
-ok( defined $t::Ball::last_bounce_ctx, 'defined $last_bounce_ctx' );
+   is_hexstr( $server->recv_message, $S2C{GETPROP_123}, 'received property value after MSG_GETPROP' );
 
-isa_ok( $t::Ball::last_bounce_ctx, "Tangence::Server::Context", '$last_bounce_ctx isa Tangence::Server::Context' );
+   $server->send_message( $C2S{SETPROP} );
 
-is( $t::Ball::last_bounce_ctx->stream, $server, '$last_bounce_ctx->stream' );
+   is_hexstr( $server->recv_message, $MSG_OK, 'received OK after MSG_SETPROP' );
 
-identical( $cb_self, $ball, '$cb_self is $ball' );
-is( $howhigh, "20 metres", '$howhigh is 20 metres after CALL' );
+   is( $obj->get_prop_scalar, 135, '$obj->get_prop_scalar after set_property' );
+}
 
-undef $cb_self;
+# Properties watch
+{
+   $server->send_message( $C2S{WATCH} );
 
-is_hexstr( $server->recv_message, $S2C{CALL_BOUNCE}, 'serverstream after response to CALL' );
+   is_hexstr( $server->recv_message, $S2C{WATCHING}, 'received MSG_WATCHING response' );
 
-$server->send_message( $C2S{SUBSCRIBE_BOUNCED} );
+   $obj->set_prop_scalar( 147 );
 
-is_hexstr( $server->recv_message, $S2C{SUBSCRIBE_BOUNCED}, 'received MSG_SUBSCRIBED response' );
+   is_hexstr( $server->recv_message, $S2C{UPDATE_SCALAR_147}, 'received property MSG_UPDATE notice' );
 
-$ball->method_bounce( {}, "10 metres" );
-
-is_hexstr( $server->recv_message, $S2C{EVENT_BOUNCED}, 'received MSG_EVENT' );
-
-$server->send_message( $MSG_OK );
-
-$server->send_message( $C2S{GETPROP_COLOUR} );
-
-is_hexstr( $server->recv_message, $S2C{GETPROP_COLOUR_RED}, 'received property value after MSG_GETPROP' );
-
-$server->send_message( $C2S{SETPROP_COLOUR} );
-
-is_hexstr( $server->recv_message, $MSG_OK, 'received OK after MSG_SETPROP' );
-
-is( $ball->get_prop_colour, "blue", '$ball->colour is now blue' );
-
-# MSG_WATCH
-$server->send_message( $C2S{WATCH_COLOUR} );
-
-is_hexstr( $server->recv_message, $S2C{WATCH_COLOUR}, 'received MSG_WATCHING response' );
-
-$ball->set_prop_colour( "orange" );
-
-is_hexstr( $server->recv_message, $S2C{UPDATE_COLOUR_ORANGE}, 'received property MSG_UPDATE notice' );
-
-$server->send_message( $MSG_OK );
-
-# Test the smashed properties
-
-$ball->set_prop_size( 200 );
-
-is_hexstr( $server->recv_message, $S2C{UPDATE_SIZE_200}, 'received property MSG_UPDATE notice on smashed prop' );
-
-$server->send_message( $MSG_OK );
-
-$server->send_message( $C2S{CALL_ADD} );
-
-is_hexstr( $server->recv_message, $S2C{CALL_ADD}, 'serverstream after response to "add_ball"' );
-
-is_deeply( $bag->get_prop_colours,
-           { blue => 1, green => 1, yellow => 1, orange => 1 },
-           '$bag colours after add' );
-
-$server->send_message( $C2S{CALL_GET} );
-
-is_hexstr( $server->recv_message, $S2C{CALL_GET}, 'orange ball has same identity as red one earlier' );
+   $server->send_message( $MSG_OK );
+}
 
 # Test object destruction
+{
+   my $obj_destroyed = 0;
 
-my $obj_destroyed = 0;
+   $obj->destroy( on_destroyed => sub { $obj_destroyed = 1 } );
 
-$ball->destroy( on_destroyed => sub { $obj_destroyed = 1 } );
+   is_hexstr( $server->recv_message, $S2C{DESTROY}, 'MSG_DESTROY from server' );
 
-is_hexstr( $server->recv_message, $S2C{DESTROY}, 'MSG_DESTROY from server' );
+   $server->send_message( $MSG_OK );
 
-$server->send_message( $MSG_OK );
-
-is( $obj_destroyed, 1, 'object gets destroyed' );
-
-is_oneref( $bag, '$bag has refcount 1 before shutdown' );
+   is( $obj_destroyed, 1, 'object gets destroyed' );
+}
 
 is_oneref( $server, '$server has refcount 1 before shutdown' );
+undef $server;
+
+is_oneref( $obj, '$obj has refcount 1 before shutdown' );
+is_oneref( $registry, '$registry has refcount 1 before shutdown' );
 
 package TestServer;
 

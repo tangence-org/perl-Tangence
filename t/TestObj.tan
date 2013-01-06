@@ -1,10 +1,16 @@
 class t.TestObj {
+  method method(int i, str s) -> str;
+
+  event event(int i, str s);
+
   prop scalar =          int;
   prop hash   = hash  of int;
   prop queue  = queue of int;
   prop array  = array of int;
   prop objset = objset of obj;
   prop items  = list(obj);
+
+  smashed prop s_scalar = int;
 }
 
 struct t.TestStruct {

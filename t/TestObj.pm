@@ -9,11 +9,20 @@ use Tangence::Constants;
 sub new
 {
    my $class = shift;
+   my %args = @_;
+   my $self = $class->SUPER::new( %args );
 
-   my $self = $class->SUPER::new( @_ );
-
+   $self->set_prop_scalar( $args{scalar} ) if defined $args{scalar};
+   $self->set_prop_s_scalar( $args{s_scalar} ) if defined $args{s_scalar};
 
    return $self;
+}
+
+sub method_method
+{
+   my $self = shift;
+   my ( $ctx, $i, $s ) = @_;
+   return "$i/$s";
 }
 
 sub init_prop_scalar { 123 }

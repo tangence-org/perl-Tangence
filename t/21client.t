@@ -2,10 +2,10 @@
 
 use strict;
 
-use Test::More tests => 38;
+use Test::More tests => 31;
 use Test::Fatal qw( dies_ok );
 use Test::HexString;
-use Test::Memory::Cycle;
+use Test::Refcount;
 
 use Tangence::Constants;
 
@@ -19,237 +19,200 @@ $Tangence::Message::SORT_HASH_KEYS = 1;
 
 my $client = TestClient->new();
 
-is_hexstr( $client->recv_message, $C2S{INIT}, 'client stream initially contains MSG_INIT' );
+# Initialisation
+{
+   is_hexstr( $client->recv_message, $C2S{INIT}, 'client stream initially contains MSG_INIT' );
 
-$client->send_message( $S2C{INITED} );
+   $client->send_message( $S2C{INITED} );
 
-is_hexstr( $client->recv_message, $C2S{GETROOT} . $C2S{GETREGISTRY}, 'client stream contains MSG_GETROOT and MSG_GETREGISTRY' );
+   is_hexstr( $client->recv_message, $C2S{GETROOT} . $C2S{GETREGISTRY}, 'client stream contains MSG_GETROOT and MSG_GETREGISTRY' );
 
-$client->send_message( $S2C{GETROOT} );
-$client->send_message( $S2C{GETREGISTRY} );
+   $client->send_message( $S2C{GETROOT} );
+   $client->send_message( $S2C{GETREGISTRY} );
+}
 
-my $bagproxy = $client->rootobj;
+my $objproxy = $client->rootobj;
 
-# We'll need to wait for a result, where the result is 'undef' later... To do
-# that neatly, we'll have an array that contains one element
-my @result;
+my $bagproxy;
 
-$bagproxy->call_method(
-   method => "pull_ball",
-   args   => [ "red" ],
-   on_result => sub { push @result, shift },
-);
+# Methods
+{
+   my $result;
+   $objproxy->call_method(
+      method => "method",
+      args   => [ 10, "hello" ],
+      on_result => sub { $result = shift },
+   );
 
-is_hexstr( $client->recv_message, $C2S{CALL_PULL}, 'client stream contains MSG_CALL' );
+   is_hexstr( $client->recv_message, $C2S{CALL}, 'client stream contains MSG_CALL' );
 
-$client->send_message( $S2C{CALL_PULL} );
+   $client->send_message( $S2C{CALL} );
 
-isa_ok( $result[0], "Tangence::ObjectProxy", 'result contains an ObjectProxy' );
+   is( $result, "10/hello", 'result of call_method()' );
 
-my $ballproxy = $result[0];
+   dies_ok( sub { $objproxy->call_method(
+                    method => "no_such_method",
+                    args   => [ 123 ],
+                    on_result => sub {},
+                  ); },
+            'Calling no_such_method fails in proxy' );
+}
 
-is_deeply( $ballproxy->introspect,
-   {
-      methods => {
-         bounce  => { args => [ TYPE_STR ], ret => TYPE_STR },
+# Events
+{
+   my $event_i;
+   my $event_s;
+   my $subbed;
+   $objproxy->subscribe_event(
+      event => "event",
+      on_fire => sub {
+         ( $event_i, $event_s ) = @_;
       },
-      events  => {
-         bounced => { args => [ TYPE_STR ], },
-         destroy => { args => [] },
+      on_subscribed => sub { $subbed = 1 },
+   );
+
+   is_hexstr( $client->recv_message, $C2S{SUBSCRIBE}, 'client stream contains MSG_SUBSCRIBE' );
+
+   $client->send_message( $S2C{SUBSCRIBED} );
+
+   is( $subbed, 1, '$subbed after MSG_SUBSCRIBED' );
+
+   $client->send_message( $S2C{EVENT} );
+
+   $client->recv_message; # MSG_OK
+
+   is( $event_i, 20, '$event_i after subscribed event' );
+
+   dies_ok( sub { $objproxy->subscribe_event(
+                    event => "no_such_event",
+                    on_fire => sub {},
+                  ); },
+            'Subscribing to no_such_event fails in proxy' );
+}
+
+# Properties get/set
+{
+   is( $objproxy->prop( "s_scalar" ), 456, 'Smashed property initially set in proxy' );
+
+   my $value;
+   $objproxy->get_property(
+      property => "scalar",
+      on_value => sub { $value = shift },
+   );
+
+   is_hexstr( $client->recv_message, $C2S{GETPROP}, 'client stream contains MSG_GETPROP' );
+
+   $client->send_message( $S2C{GETPROP_123} );
+
+   is( $value, 123, '$value after get_property' );
+
+   my $didset = 0;
+   $objproxy->set_property(
+      property => "scalar",
+      value    => 135,
+      on_done  => sub { $didset = 1 },
+   );
+
+   is_hexstr( $client->recv_message, $C2S{SETPROP}, 'client stream contains MSG_SETPROP' );
+
+   $client->send_message( $MSG_OK );
+
+   is( $didset, 1, '$didset after set_property' );
+}
+
+# Properties watch
+{
+   my $value;
+   my $watched;
+   $objproxy->watch_property(
+      property => "scalar",
+      on_set => sub { $value = shift },
+      on_watched => sub { $watched = 1 },
+   );
+
+   is_hexstr( $client->recv_message, $C2S{WATCH}, 'client stream contains MSG_WATCH' );
+
+   $client->send_message( $S2C{WATCHING} );
+
+   $client->send_message( $S2C{UPDATE_SCALAR_147} );
+
+   is( $value, 147, '$value after watch_property/set_prop_scalar' );
+
+   is_hexstr( $client->recv_message, $MSG_OK, 'client stream contains MSG_OK' );
+
+   my $valuechanged = 0;
+   my $secondvalue;
+   $objproxy->watch_property(
+      property => "scalar",
+      on_set => sub {
+         $secondvalue = shift;
+         $valuechanged = 1
       },
-      properties => {
-         colour  => { type => TYPE_STR, dim => DIM_SCALAR },
-         size    => { type => TYPE_INT, dim => DIM_SCALAR, smash => 1 },
-      },
-      isa => [qw( t::Ball t::Colourable )],
-   },
-   '$ballproxy->introspect' );
+      want_initial => 1,
+   );
 
-ok( $ballproxy->proxy_isa( "t::Ball" ), 'proxy for isa t::Ball' );
+   is_hexstr( $client->recv_message, $C2S{GETPROP}, 'client stream contains MSG_GETPROP' );
 
-my $result;
+   $client->send_message( $S2C{GETPROP_147} );
 
-$ballproxy->call_method(
-   method => "bounce",
-   args   => [ "20 metres" ],
-   on_result => sub { $result = shift },
-);
+   is( $secondvalue, 147, '$secondvalue after watch_property with want_initial' );
 
-is_hexstr( $client->recv_message, $C2S{CALL_BOUNCE}, 'client stream contains MSG_CALL' );
+   $client->send_message( $S2C{UPDATE_SCALAR_159} );
 
-$client->send_message( $S2C{CALL_BOUNCE} );
+   is( $value, 159, '$value after second MSG_UPDATE' );
+   is( $valuechanged, 1, '$valuechanged is true after second MSG_UPDATE' );
 
-is( $result, "bouncing", 'result of MSG_CALL' );
+   is_hexstr( $client->recv_message, $MSG_OK, 'client stream contains MSG_OK' );
 
-dies_ok( sub { $ballproxy->call_method(
-                 method => "no_such_method",
-                 args   => [ 123 ],
-                 on_result => sub {},
-               ); },
-         'Calling no_such_method fails in proxy' );
+   dies_ok( sub { $objproxy->get_property(
+                    property => "no_such_property",
+                    on_value => sub {},
+                  ); },
+            'Getting no_such_property fails in proxy' );
+}
 
-my $howhigh;
-my $subbed;
-$ballproxy->subscribe_event(
-   event => "bounced",
-   on_fire => sub {
-      ( $howhigh ) = @_;
-   },
-   on_subscribed => sub { $subbed = 1 },
-);
+# Smashed Properties
+{
+   my $value;
+   my $watched;
+   $objproxy->watch_property(
+      property => "s_scalar",
+      on_set => sub { $value = shift },
+      on_watched => sub { $watched = 1 },
+      want_initial => 1,
+   );
 
-is_hexstr( $client->recv_message, $C2S{SUBSCRIBE_BOUNCED}, 'client stream contains MSG_SUBSCRIBE' );
+   is( $watched, 1, 'watch_property on smashed prop is synchronous' );
 
-$client->send_message( $S2C{SUBSCRIBE_BOUNCED} );
+   is( $value, 456, 'watch_property on smashed prop gives initial value' );
 
-$client->send_message( $S2C{EVENT_BOUNCED} );
+   undef $value;
+   $client->send_message( $S2C{UPDATE_S_SCALAR_468} );
 
-is( $howhigh, "10 metres", '$howhigh is 10 metres after MSG_EVENT' );
+   is_hexstr( $client->recv_message, $MSG_OK, 'client stream contains MSG_OK after smashed prop UPDATE' );
 
-is_hexstr( $client->recv_message, $MSG_OK, 'client stream contains MSG_OK' );
-
-my $bounced = 0;
-$ballproxy->subscribe_event(
-   event => "bounced",
-   on_fire => sub { $bounced = 1 }
-);
-
-$client->send_message( $S2C{EVENT_BOUNCED_5} );
-
-is( $howhigh, "5 metres", '$howhigh is orange after second MSG_EVENT' );
-is( $bounced, 1, '$bounced is true after second MSG_EVENT' );
-
-is_hexstr( $client->recv_message, $MSG_OK, 'client stream contains MSG_OK' );
-
-dies_ok( sub { $ballproxy->subscribe_event(
-                 event => "no_such_event",
-                 on_fire => sub {},
-               ); },
-         'Subscribing to no_such_event fails in proxy' );
-
-is( $ballproxy->prop( "size" ), 100, 'Smashed property initially set in proxy' );
-
-my $colour;
-
-$ballproxy->get_property(
-   property => "colour",
-   on_value => sub { $colour = shift },
-);
-
-is_hexstr( $client->recv_message, $C2S{GETPROP_COLOUR}, 'client stream contains MSG_GETPROP' );
-
-$client->send_message( $S2C{GETPROP_COLOUR_RED} );
-
-is( $colour, "red", '$colour is red' );
-
-my $didset = 0;
-$ballproxy->set_property(
-   property => "colour",
-   value    => "blue",
-   on_done  => sub { $didset = 1 },
-);
-
-is_hexstr( $client->recv_message, $C2S{SETPROP_COLOUR}, 'client stream contains MSG_SETPROP' );
-
-$client->send_message( $MSG_OK );
-
-my $watched;
-$ballproxy->watch_property(
-   property => "colour",
-   on_set => sub { $colour = shift },
-   on_watched => sub { $watched = 1 },
-);
-
-is_hexstr( $client->recv_message, $C2S{WATCH_COLOUR}, 'client stream contains MSG_WATCH' );
-
-$client->send_message( $S2C{WATCH_COLOUR} );
-
-$client->send_message( $S2C{UPDATE_COLOUR_ORANGE} );
-
-is( $colour, "orange", '$colour is orange after MSG_UPDATE' );
-
-is_hexstr( $client->recv_message, $MSG_OK, 'client stream contains MSG_OK' );
-
-my $colourchanged = 0;
-my $secondcolour;
-$ballproxy->watch_property(
-   property => "colour",
-   on_set => sub {
-      $secondcolour = shift;
-      $colourchanged = 1
-   },
-   want_initial => 1,
-);
-
-is_hexstr( $client->recv_message, $C2S{GETPROP_COLOUR}, 'client stream contains MSG_GETPROP' );
-
-$client->send_message( $S2C{GETPROP_COLOUR_GREEN} );
-
-is( $secondcolour, "green", '$secondcolour is green after second watch' );
-
-$client->send_message( $S2C{UPDATE_COLOUR_YELLOW} );
-
-is( $colour, "yellow", '$colour is yellow after second MSG_UPDATE' );
-is( $colourchanged, 1, '$colourchanged is true after second MSG_UPDATE' );
-
-is_hexstr( $client->recv_message, $MSG_OK, 'client stream contains MSG_OK' );
-
-dies_ok( sub { $ballproxy->get_property(
-                 property => "no_such_property",
-                 on_value => sub {},
-               ); },
-         'Getting no_such_property fails in proxy' );
-
-# Test the smashed properties
-
-my $size;
-$watched = 0;
-$ballproxy->watch_property(
-   property => "size",
-   on_set => sub { $size = shift },
-   on_watched => sub { $watched = 1 },
-   want_initial => 1,
-);
-
-is( $watched, 1, 'watch_property on smashed prop is synchronous' );
-
-is( $size, 100, 'watch_property on smashed prop gives initial value' );
-
-$client->send_message( $S2C{UPDATE_SIZE_200} );
-
-is( $size, 200, 'smashed prop watch succeeds' );
-
-is_hexstr( $client->recv_message, $MSG_OK, 'client stream contains MSG_OK after smashed prop UPDATE' );
-
-undef @result;
-$bagproxy->call_method(
-   method => "add_ball",
-   args   => [ $ballproxy ],
-   on_result => sub { push @result, shift },
-);
-
-is_hexstr( $client->recv_message, $C2S{CALL_ADD}, 'client stream contains MSG_CALL with an ObjectProxy' );
-
-$client->send_message( $S2C{CALL_ADD} );
-
-is( $result[0], undef, 'result is undef' );
+   is( $value, 468, 'smashed prop update succeeds' );
+}
 
 # Test object destruction
+{
+   my $proxy_destroyed = 0;
+   $objproxy->subscribe_event(
+      event => "destroy",
+      on_fire => sub { $proxy_destroyed = 1 },
+   );
 
-my $proxy_destroyed = 0;
+   $client->send_message( $S2C{DESTROY} );
 
-$ballproxy->subscribe_event(
-   event => "destroy",
-   on_fire => sub { $proxy_destroyed = 1 },
-);
+   is_hexstr( $client->recv_message, $MSG_OK, 'client stream contains MSG_OK after MSG_DESTROY' );
 
-$client->send_message( $S2C{DESTROY} );
+   is( $proxy_destroyed, 1, 'proxy gets destroyed' );
+}
 
-is( $proxy_destroyed, 1, 'proxy gets destroyed' );
+is_oneref( $client, '$client has refcount 1 before shutdown' );
+undef $client;
 
-is_hexstr( $client->recv_message, $MSG_OK, 'client stream contains MSG_OK after MSG_DESTROY' );
-
-memory_cycle_ok( $ballproxy, '$ballproxy has no memory cycles' );
+is_oneref( $objproxy, '$objproxy has refcount 1 before shutdown' );
 
 package TestClient;
 
