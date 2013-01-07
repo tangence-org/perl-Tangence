@@ -430,6 +430,101 @@ sub get_property
    );
 }
 
+=head2 $proxy->get_property_element( %args )
+
+Requests the current value of an element of the property from the server
+object, and invokes a callback function when the value is received.
+
+Takes the following named arguments
+
+=over 8
+
+=item property => STRING
+
+The name of the property
+
+=item index => INT
+
+For queue or array dimension properties, the index of the element
+
+=item key => STRING
+
+For hash dimension properties, the key of the element
+
+=item on_value => CODE
+
+Callback function to invoke when the value is returned
+
+ $on_value->( $value )
+
+=item on_error => CODE
+
+Optional. Callback function to invoke when an error is returned. The client's
+default will apply if not provided.
+
+ $on_error->( $error )
+
+=back
+
+=cut
+
+sub get_property_element
+{
+   my $self = shift;
+   my %args = @_;
+
+   my $property = delete $args{property} or croak "Need a property";
+
+   ref( my $on_value = delete $args{on_value} ) eq "CODE" 
+      or croak "Expected 'on_value' as a CODE ref";
+
+   my $on_error = delete $args{on_error} || $self->{on_error};
+   ref $on_error eq "CODE" or croak "Expected 'on_error' as a CODE ref";
+
+   my $pdef = $self->can_property( $property );
+   croak "Class ".$self->class." does not have a property $property" unless $pdef;
+
+   my $conn = $self->{conn};
+   $conn->_ver_can_getpropelem or croak "Server is too old to support MSG_GETPROPELEM";
+
+   my $request = Tangence::Message->new( $conn, MSG_GETPROPELEM )
+      ->pack_int( $self->id )
+      ->pack_str( $property );
+
+   if( $pdef->{dim} == DIM_HASH ) {
+      defined $args{key} or croak "Need a key";
+      $request->pack_str( $args{key} );
+   }
+   elsif( $pdef->{dim} == DIM_ARRAY or $pdef->{dim} == DIM_QUEUE ) {
+      defined $args{index} or croak "Need an index";
+      $request->pack_int( $args{index} );
+   }
+   else {
+      croak "Cannot get_property_element of a non hash";
+   }
+
+   $conn->request(
+      request => $request,
+
+      on_response => sub {
+         my ( $message ) = @_;
+         my $type = $message->type;
+
+         if( $type == MSG_RESULT ) {
+            my $value = $message->unpack_any();
+            $on_value->( $value );
+         }
+         elsif( $type == MSG_ERROR ) {
+            my $msg = $message->unpack_str();
+            $on_error->( $msg );
+         }
+         else {
+            $on_error->( "Unexpected response code $type" );
+         }
+      },
+   );
+}
+
 =head2 $value = $proxy->prop( $property )
 
 Returns the locally-cached value of a smashed property. If the named property

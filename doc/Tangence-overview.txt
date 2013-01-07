@@ -603,6 +603,17 @@ MSG_DESTROY (S->C) (0x0a)
   watches will have been removed by the server before this message is
   sent.
 
+MSG_GETPROPELEM (C->S) (0x0b)
+  INT           object ID
+  STRING        property name
+  INT|STRING    element index or key
+
+  Responses: MSG_RESULT
+
+  Requests the current value of a single element in a queue or array
+  (by element index), or hash (by key name). Cannot be applied to
+  scalar or objset properties.
+
 MSG_GETROOT (C->S) (0x40)
   data          identity
 

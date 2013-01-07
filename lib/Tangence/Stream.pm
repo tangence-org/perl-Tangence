@@ -25,6 +25,7 @@ my %REQ_METHOD = (
    MSG_UNSUBSCRIBE, 'handle_request_UNSUBSCRIBE',
    MSG_EVENT,       'handle_request_EVENT',
    MSG_GETPROP,     'handle_request_GETPROP',
+   MSG_GETPROPELEM, 'handle_request_GETPROPELEM',
    MSG_SETPROP,     'handle_request_SETPROP',
    MSG_WATCH,       'handle_request_WATCH',
    MSG_UNWATCH,     'handle_request_UNWATCH',
@@ -299,6 +300,9 @@ sub _ver_has_records { shift->minor_version >= 2 }
 
 # wire protocol encodes Class as record
 sub _ver_class_as_record { shift->minor_version >= 2 }
+
+# wire protocol supports MSG_GETPROPELEM
+sub _ver_can_getpropelem { shift->minor_version >= 3 }
 
 =head1 AUTHOR
 

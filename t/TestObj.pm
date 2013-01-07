@@ -12,8 +12,9 @@ sub new
    my %args = @_;
    my $self = $class->SUPER::new( %args );
 
-   $self->set_prop_scalar( $args{scalar} ) if defined $args{scalar};
-   $self->set_prop_s_scalar( $args{s_scalar} ) if defined $args{s_scalar};
+   for (qw( scalar array queue hash s_scalar )) {
+      $self->${\"set_prop_$_"}( $args{$_} ) if defined $args{$_};
+   }
 
    return $self;
 }

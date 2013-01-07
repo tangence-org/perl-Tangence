@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 31;
+use Test::More tests => 35;
 use Test::Fatal qw( dies_ok );
 use Test::HexString;
 use Test::Refcount;
@@ -105,6 +105,30 @@ my $bagproxy;
    $client->send_message( $S2C{GETPROP_123} );
 
    is( $value, 123, '$value after get_property' );
+
+   $objproxy->get_property_element(
+      property => "hash",
+      key      => "two",
+      on_value => sub { $value = shift },
+   );
+
+   is_hexstr( $client->recv_message, $C2S{GETPROPELEM_HASH}, 'client stream contains MSG_GETPROPELEM' );
+
+   $client->send_message( $S2C{GETPROPELEM_HASH} );
+
+   is( $value, 2, '$value after get_property_element hash key' );
+
+   $objproxy->get_property_element(
+      property => "array",
+      index    => 1,
+      on_value => sub { $value = shift },
+   );
+
+   is_hexstr( $client->recv_message, $C2S{GETPROPELEM_ARRAY}, 'client stream contains MSG_GETPROPELEM' );
+
+   $client->send_message( $S2C{GETPROPELEM_ARRAY} );
+
+   is( $value, 2, '$value after get_property_element array index' );
 
    my $didset = 0;
    $objproxy->set_property(

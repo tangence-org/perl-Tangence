@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 24;
+use Test::More tests => 26;
 use Test::Fatal qw( dies_ok );
 use Test::Refcount;
 
@@ -84,6 +84,22 @@ my $objproxy = $client->rootobj;
    );
 
    is( $value, 123, '$value after get_property' );
+
+   $objproxy->get_property_element(
+      property => "hash",
+      key      => "two",
+      on_value => sub { $value = shift },
+   );
+
+   is( $value, 2, '$value after get_property_element hash key' );
+
+   $objproxy->get_property_element(
+      property => "array",
+      index    => 1,
+      on_value => sub { $value = shift },
+   );
+
+   is( $value, 2, '$value after get_property_element array index' );
 
    my $didset = 0;
    $objproxy->set_property(

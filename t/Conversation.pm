@@ -154,12 +154,40 @@ $S2C{GETPROP_147} =
    "\x82" . "\0\0\0\4" .
    "\x23" . "147"; # TODO: int
 
+# MSG_GETPROPELEM
+$C2S{GETPROPELEM_HASH} =
+   "\x0b" . "\0\0\0\x0b" .
+   "\x02\1" .
+   "\x24hash" .
+   "\x23two";
+$S2C{GETPROPELEM_HASH} =
+   "\x82" . "\0\0\0\2" .
+   "\x02\2";
+$C2S{GETPROPELEM_ARRAY} =
+   "\x0b" . "\0\0\0\x0a" .
+   "\x02\1" .
+   "\x25array" .
+   "\x02\1";
+$S2C{GETPROPELEM_ARRAY} =
+   "\x82" . "\0\0\0\2" .
+   "\x02\2";
+
 # MSG_SETPROP
 $C2S{SETPROP} =
    "\6" . "\0\0\0\x0d" .
    "\x02\1" .
    "\x26scalar" .
    "\x23135"; # TODO: int
+
+# MSG_GETPROPELEM
+$C2S{GETPROPELEM_BLUE} =
+   "\x0b" . "\0\0\0\x0f" .
+   "\x02" . "\x01" .
+   "\x27" . "colours" .
+   "\x24" . "blue";
+$S2C{GETPROPELEM_BLUE} =
+   "\x82" . "\0\0\0\2" .
+   "\x02" . "\x01";
 
 # MSG_WATCH
 $C2S{WATCH} =

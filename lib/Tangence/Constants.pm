@@ -22,6 +22,7 @@ our @EXPORT = qw(
    MSG_UNWATCH
    MSG_UPDATE
    MSG_DESTROY
+   MSG_GETPROPELEM
    MSG_GETROOT
    MSG_GETREGISTRY
    MSG_INIT
@@ -91,6 +92,7 @@ use constant MSG_WATCH => 0x07;
 use constant MSG_UNWATCH => 0x08;
 use constant MSG_UPDATE => 0x09;
 use constant MSG_DESTROY => 0x0a;
+use constant MSG_GETPROPELEM => 0x0b;
 
 use constant MSG_GETROOT => 0x40;
 use constant MSG_GETREGISTRY => 0x41;

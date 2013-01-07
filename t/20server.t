@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 21;
+use Test::More tests => 23;
 use Test::HexString;
 use Test::Identity;
 use Test::Refcount;
@@ -80,6 +80,14 @@ is_oneref( $server, '$server has refcount 1 initially' );
    $server->send_message( $C2S{GETPROP} );
 
    is_hexstr( $server->recv_message, $S2C{GETPROP_123}, 'received property value after MSG_GETPROP' );
+
+   $server->send_message( $C2S{GETPROPELEM_HASH} );
+
+   is_hexstr( $server->recv_message, $S2C{GETPROPELEM_HASH}, 'received element of hash property after MSG_GETPROPELEM' );
+
+   $server->send_message( $C2S{GETPROPELEM_ARRAY} );
+
+   is_hexstr( $server->recv_message, $S2C{GETPROPELEM_ARRAY}, 'received element of array property after MSG_GETPROPELEM' );
 
    $server->send_message( $C2S{SETPROP} );
 

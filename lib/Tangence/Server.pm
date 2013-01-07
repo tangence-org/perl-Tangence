@@ -240,6 +240,24 @@ sub handle_request_GETPROP
    $ctx->respond( $response );
 }
 
+sub handle_request_GETPROPELEM
+{
+   my $self = shift;
+   my ( $token, $message ) = @_;
+
+   my $objid = $message->unpack_int();
+
+   my $ctx = Tangence::Server::Context->new( $self, $token );
+
+   my $object = $self->registry->get_by_id( $objid ) or
+      return $ctx->responderr( "No such object with id $objid" );
+
+   my $response = eval { $object->handle_request_GETPROPELEM( $ctx, $message ) };
+   $@ and return $ctx->responderr( $@ );
+
+   $ctx->respond( $response );
+}
+
 sub handle_request_SETPROP
 {
    my $self = shift;
