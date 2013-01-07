@@ -148,11 +148,11 @@ $C2S{GETPROP} =
    "\x02\1" .
    "\x26scalar";
 $S2C{GETPROP_123} =
-   "\x82" . "\0\0\0\4" .
-   "\x23" . "123"; # TODO: int
+   "\x82" . "\0\0\0\2" .
+   "\x02\x7b";
 $S2C{GETPROP_147} =
-   "\x82" . "\0\0\0\4" .
-   "\x23" . "147"; # TODO: int
+   "\x82" . "\0\0\0\2" .
+   "\x02\x93";
 
 # MSG_GETPROPELEM
 $C2S{GETPROPELEM_HASH} =

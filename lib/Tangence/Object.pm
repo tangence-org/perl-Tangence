@@ -467,7 +467,7 @@ sub handle_request_GETPROP
    my $result = $self->$m();
 
    return Tangence::Message->new( $ctx->stream, MSG_RESULT )
-      ->pack_any( $result );
+      ->pack_typed( $pdef->overall_type, $result );
 }
 
 sub handle_request_GETPROPELEM
