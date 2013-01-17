@@ -74,6 +74,10 @@ is_oneref( $server, '$server has refcount 1 initially' );
    is_hexstr( $server->recv_message, $S2C{EVENT}, 'received MSG_EVENT' );
 
    $server->send_message( $MSG_OK );
+
+   $server->send_message( $C2S{UNSUBSCRIBE} );
+
+   is_hexstr( $server->recv_message, $MSG_OK, 'received MSG_OK response to MSG_UNSUBSCRIBE' );
 }
 
 # Properties get/set
@@ -108,6 +112,10 @@ is_oneref( $server, '$server has refcount 1 initially' );
    is_hexstr( $server->recv_message, $S2C{UPDATE_SCALAR_147}, 'received property MSG_UPDATE notice' );
 
    $server->send_message( $MSG_OK );
+
+   $server->send_message( $C2S{UNWATCH} );
+
+   is_hexstr( $server->recv_message, $MSG_OK, 'received MSG_OK to MSG_UNWATCH' );
 }
 
 # Property iterators

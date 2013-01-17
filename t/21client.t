@@ -84,6 +84,14 @@ my $bagproxy;
 
    is( $event_i, 20, '$event_i after subscribed event' );
 
+   $objproxy->unsubscribe_event(
+      event => "event",
+   );
+
+   is_hexstr( $client->recv_message, $C2S{UNSUBSCRIBE}, 'client stream contains MSG_UNSUBSCRIBE' );
+
+   $client->send_message( $MSG_OK );
+
    dies_ok( sub { $objproxy->subscribe_event(
                     event => "no_such_event",
                     on_fire => sub {},
@@ -188,6 +196,14 @@ my $bagproxy;
    is( $valuechanged, 1, '$valuechanged is true after second MSG_UPDATE' );
 
    is_hexstr( $client->recv_message, $MSG_OK, 'client stream contains MSG_OK' );
+
+   $objproxy->unwatch_property(
+      property => "scalar",
+   );
+
+   is_hexstr( $client->recv_message, $C2S{UNWATCH}, 'client stream contains MSG_UNWATCH' );
+
+   $client->send_message( $MSG_OK );
 
    dies_ok( sub { $objproxy->get_property(
                     property => "no_such_property",

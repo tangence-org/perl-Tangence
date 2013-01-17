@@ -359,6 +359,45 @@ sub handle_request_EVENT
    }
 }
 
+=head2 $proxy->unsubscribe_event( %args )
+
+Removes an event subscription on the given event on the server object that was
+previously installed using C<subscribe_event>.
+
+Takes the following named arguments:
+
+=over 8
+
+=item event => STRING
+
+Name of the event
+
+=back
+
+=cut
+
+sub unsubscribe_event
+{
+   my $self = shift;
+   my %args = @_;
+
+   my $event = delete $args{event} or croak "Need a event";
+
+   my $edef = $self->can_event( $event );
+   croak "Class ".$self->class." does not have an event $event" unless $edef;
+
+   return if $event eq "destroy"; # This is automatically handled
+
+   my $conn = $self->{conn};
+   $conn->request(
+      request => Tangence::Message->new( $conn, MSG_UNSUBSCRIBE )
+         ->pack_int( $self->id )
+         ->pack_str( $event ),
+
+      on_response => sub {},
+   );
+}
+
 =head2 $proxy->get_property( %args )
 
 Requests the current value of the property from the server object, and invokes
@@ -998,6 +1037,46 @@ sub _update_property_objset
    else {
       croak "Change type $how is not valid for an objset property";
    }
+}
+
+=head2 $proxy->unwatch_property( %args )
+
+Removes a property watches on the given property on the server object that was
+previously installed using C<watch_property>.
+
+Takes the following named arguments:
+
+=over 8
+
+=item property => STRING
+
+Name of the property
+
+=back
+
+=cut
+
+sub unwatch_property
+{
+   my $self = shift;
+   my %args = @_;
+
+   my $property = delete $args{property} or croak "Need a property";
+
+   my $pdef = $self->can_property( $property );
+   croak "Class ".$self->class." does not have a property $property" unless $pdef;
+
+   # TODO: mark iterators as destroyed and invalid
+   delete $self->{props}->{$property};
+
+   my $conn = $self->{conn};
+   $conn->request(
+      request => Tangence::Message->new( $conn, MSG_UNWATCH )
+         ->pack_int( $self->id )
+         ->pack_str( $property ),
+
+      on_response => sub {},
+   );
 }
 
 package # hide from index

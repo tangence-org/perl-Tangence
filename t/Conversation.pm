@@ -133,6 +133,10 @@ $C2S{SUBSCRIBE} =
    "\x25event";
 $S2C{SUBSCRIBED} =
    "\x83" . "\0\0\0\0";
+$C2S{UNSUBSCRIBE} =
+   "\3" . "\0\0\0\x08" .
+   "\x02\1" .
+   "\x25event";
 
 # MSG_EVENT
 $S2C{EVENT} =
@@ -195,9 +199,12 @@ $C2S{WATCH} =
    "\x02\1" .
    "\x26scalar" .
    "\x00";
-# MSG_WATCHING
 $S2C{WATCHING} =
    "\x84" . "\0\0\0\0";
+$C2S{UNWATCH} =
+   "\x08" . "\0\0\0\x09" .
+   "\x02\1" .
+   "\x26scalar";
 
 # MSG_WATCH_ITER
 $C2S{WATCH_ITER} =

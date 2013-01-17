@@ -67,6 +67,10 @@ my $objproxy = $client->rootobj;
 
    is( $event_i, 20, '$event_i after subscribed event' );
 
+   $objproxy->unsubscribe_event(
+      event => "event",
+   );
+
    dies_ok( sub { $objproxy->subscribe_event(
                     event => "no_such_event",
                     on_fire => sub {},
@@ -144,6 +148,10 @@ my $objproxy = $client->rootobj;
 
    is( $value, 159, '$value after second set_prop_scalar' );
    is( $valuechanged, 1, '$valuechanged is true after second set_prop_scalar' );
+
+   $objproxy->unwatch_property(
+      property => "scalar",
+   );
 
    dies_ok( sub { $objproxy->get_property(
                     property => "no_such_property",
