@@ -1,8 +1,9 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 use strict;
+use warnings;
 
-use Test::More tests => 47;
+use Test::More;
 use Test::Fatal qw( dies_ok );
 use Test::HexString;
 use Test::Refcount;
@@ -303,6 +304,8 @@ is_oneref( $client, '$client has refcount 1 before shutdown' );
 undef $client;
 
 is_oneref( $objproxy, '$objproxy has refcount 1 before shutdown' );
+
+done_testing;
 
 package TestClient;
 

@@ -1,8 +1,9 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 use strict;
+use warnings;
 
-use Test::More tests => 14;
+use Test::More;
 use Test::Memory::Cycle;
 
 use Tangence::Constants;
@@ -107,3 +108,5 @@ memory_cycle_ok( $bag, '$bag has no memory cycles' );
 memory_cycle_ok( $bagproxy, '$bagproxy has no memory cycles' );
 memory_cycle_ok( $ball, '$ball has no memory cycles' );
 memory_cycle_ok( $ballproxy, '$ballproxy has no memory cycles' );
+
+done_testing;

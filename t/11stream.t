@@ -1,8 +1,9 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 use strict;
+use warnings;
 
-use Test::More tests => 10;
+use Test::More;
 use Test::HexString;
 
 use Tangence::Constants;
@@ -64,6 +65,8 @@ isa_ok( $stream, "Tangence::Stream", '$stream isa Tangence::Stream' );
 
    is_hexstr( $written, $expect, '$written after response' );
 }
+
+done_testing;
 
 package Testing::Stream;
 

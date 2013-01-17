@@ -1,8 +1,9 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 use strict;
+use warnings;
 
-use Test::More tests => 4;
+use Test::More;
 
 use Tangence::Constants;
 use Tangence::Registry;
@@ -50,3 +51,5 @@ $ball->set_prop_colour( "blue" );
 
 is( $conn1->{colour}, "green", '$colour is still green from (closed) connection 1' );
 is( $conn2->{colour}, "blue", '$colour is blue from connection 2' );
+
+done_testing;

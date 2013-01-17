@@ -1,8 +1,9 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 use strict;
+use warnings;
 
-use Test::More tests => 65;
+use Test::More;
 use Test::Identity;
 
 use Tangence::Constants;
@@ -216,3 +217,5 @@ is( $deleted_id, $new->id, '$deleted_id after del' );
 $obj->add_prop_objset( $new );
 is_deeply( $obj->get_prop_objset, [ $new ], 'objset after add' );
 identical( $added, $new, '$added after add' );
+
+done_testing;

@@ -1,8 +1,9 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 use strict;
+use warnings;
 
-use Test::More tests => 53;
+use Test::More;
 use Test::Identity;
 use Test::Memory::Cycle;
 use Test::Refcount;
@@ -167,3 +168,5 @@ is_oneref( $ball, '$ball has refcount 1 just before unref' );
 memory_cycle_ok( $ball, '$ball has no memory cycles' );
 
 memory_cycle_ok( $registry, '$registry has no memory cycles' );
+
+done_testing;

@@ -1,8 +1,9 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 use strict;
+use warnings;
 
-use Test::More tests => 21;
+use Test::More;
 use Test::Memory::Cycle;
 
 use Tangence::Constants;
@@ -137,3 +138,5 @@ is_deeply( $proxy->prop( "array" ),
 memory_cycle_ok( $registry, '$registry has no memory cycles' );
 memory_cycle_ok( $obj, '$obj has no memory cycles' );
 memory_cycle_ok( $proxy, '$proxy has no memory cycles' );
+
+done_testing;

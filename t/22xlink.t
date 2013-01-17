@@ -1,8 +1,9 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 use strict;
+use warnings;
 
-use Test::More tests => 33;
+use Test::More;
 use Test::Fatal qw( dies_ok );
 use Test::Refcount;
 
@@ -242,3 +243,5 @@ undef $client; undef $server;
 is_oneref( $obj, '$obj has refcount 1 before shutdown' );
 is_oneref( $objproxy, '$objproxy has refcount 1 before shutdown' );
 is_oneref( $registry, '$registry has refcount 1 before shutdown' );
+
+done_testing;

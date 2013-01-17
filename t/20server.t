@@ -1,8 +1,9 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 use strict;
+use warnings;
 
-use Test::More tests => 28;
+use Test::More;
 use Test::HexString;
 use Test::Identity;
 use Test::Refcount;
@@ -150,6 +151,8 @@ undef $server;
 
 is_oneref( $obj, '$obj has refcount 1 before shutdown' );
 is_oneref( $registry, '$registry has refcount 1 before shutdown' );
+
+done_testing;
 
 package TestServer;
 

@@ -1,8 +1,9 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 use strict;
+use warnings;
 
-use Test::More tests => 180;
+use Test::More;
 use Test::Fatal qw( dies_ok );
 use Test::HexString;
 
@@ -481,3 +482,5 @@ test_specific "object",
              # DATA_OBJ
              "\x84" . "\0\0\0\1",
    retdata => "OBJPROXY[id=1]";
+
+done_testing;

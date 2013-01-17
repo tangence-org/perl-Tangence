@@ -1,8 +1,9 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 use strict;
+use warnings;
 
-use Test::More tests => 66;
+use Test::More;
 use Test::Identity;
 
 use Tangence::Compiler::Parser;
@@ -125,3 +126,5 @@ my $parser = Tangence::Compiler::Parser->new;
    is( $fields[3]->name, "o", 't.TestStruct field o' );
    is( $fields[3]->type->sig, "obj", 't.TestStruct field o type sig' );
 }
+
+done_testing;
