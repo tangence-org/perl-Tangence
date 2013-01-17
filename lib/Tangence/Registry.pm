@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2010-2011 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2010-2013 -- leonerd@leonerd.org.uk
 
 package Tangence::Registry;
 
@@ -15,6 +15,7 @@ use Carp;
 
 use Tangence::Constants;
 use Tangence::Class;
+use Tangence::Property;
 use Tangence::Struct;
 
 use Tangence::Compiler::Parser;
@@ -197,6 +198,12 @@ sub make_struct
 {
    my $self = shift;
    return Tangence::Struct->new( @_ );
+}
+
+sub make_property
+{
+   my $self = shift;
+   return Tangence::Property->new( @_ );
 }
 
 =head1 AUTHOR
