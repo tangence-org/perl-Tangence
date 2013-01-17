@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 23;
+use Test::More tests => 28;
 use Test::HexString;
 use Test::Identity;
 use Test::Refcount;
@@ -107,6 +107,29 @@ is_oneref( $server, '$server has refcount 1 initially' );
    is_hexstr( $server->recv_message, $S2C{UPDATE_SCALAR_147}, 'received property MSG_UPDATE notice' );
 
    $server->send_message( $MSG_OK );
+}
+
+# Property iterators
+{
+   $server->send_message( $C2S{WATCH_ITER} );
+
+   is_hexstr( $server->recv_message, $S2C{WATCHING_ITER}, 'received MSG_WATCHING_ITER response' );
+
+   $server->send_message( $C2S{ITER_NEXT_1} );
+
+   is_hexstr( $server->recv_message, $S2C{ITER_NEXT_1}, 'result from MSG_ITER_NEXT 1 forward' );
+
+   $server->send_message( $C2S{ITER_NEXT_5} );
+
+   is_hexstr( $server->recv_message, $S2C{ITER_NEXT_5}, 'result from MSG_ITER_NEXT 5 forward' );
+
+   $server->send_message( $C2S{ITER_NEXT_BACK} );
+
+   is_hexstr( $server->recv_message, $S2C{ITER_NEXT_BACK}, 'result from MSG_ITER_NEXT 1 backward' );
+
+   $server->send_message( $C2S{ITER_DESTROY} );
+
+   is_hexstr( $server->recv_message, $MSG_OK, 'received OK to MSG_ITER_DESTROY' );
 }
 
 # Test object destruction

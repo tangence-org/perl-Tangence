@@ -20,21 +20,24 @@ use Tangence::Message;
 # Can't use => operator because it would quote the barewords on the left, but
 # we want them as constants
 my %REQ_METHOD = (
-   MSG_CALL,        'handle_request_CALL',
-   MSG_SUBSCRIBE,   'handle_request_SUBSCRIBE',
-   MSG_UNSUBSCRIBE, 'handle_request_UNSUBSCRIBE',
-   MSG_EVENT,       'handle_request_EVENT',
-   MSG_GETPROP,     'handle_request_GETPROP',
-   MSG_GETPROPELEM, 'handle_request_GETPROPELEM',
-   MSG_SETPROP,     'handle_request_SETPROP',
-   MSG_WATCH,       'handle_request_WATCH',
-   MSG_UNWATCH,     'handle_request_UNWATCH',
-   MSG_UPDATE,      'handle_request_UPDATE',
-   MSG_DESTROY,     'handle_request_DESTROY',
+   MSG_CALL,         'handle_request_CALL',
+   MSG_SUBSCRIBE,    'handle_request_SUBSCRIBE',
+   MSG_UNSUBSCRIBE,  'handle_request_UNSUBSCRIBE',
+   MSG_EVENT,        'handle_request_EVENT',
+   MSG_GETPROP,      'handle_request_GETPROP',
+   MSG_GETPROPELEM,  'handle_request_GETPROPELEM',
+   MSG_SETPROP,      'handle_request_SETPROP',
+   MSG_WATCH,        'handle_request_WATCH',
+   MSG_UNWATCH,      'handle_request_UNWATCH',
+   MSG_UPDATE,       'handle_request_UPDATE',
+   MSG_DESTROY,      'handle_request_DESTROY',
+   MSG_WATCH_ITER,   'handle_request_WATCH_ITER',
+   MSG_ITER_NEXT,    'handle_request_ITER_NEXT',
+   MSG_ITER_DESTROY, 'handle_request_ITER_DESTROY',
 
-   MSG_GETROOT,     'handle_request_GETROOT',
-   MSG_GETREGISTRY, 'handle_request_GETREGISTRY',
-   MSG_INIT,        'handle_request_INIT',
+   MSG_GETROOT,      'handle_request_GETROOT',
+   MSG_GETREGISTRY,  'handle_request_GETREGISTRY',
+   MSG_INIT,         'handle_request_INIT',
 );
 
 =head1 NAME
@@ -98,12 +101,14 @@ sub message_state
    shift->{message_state} ||= {
       id2struct     => { %BUILTIN_ID2STRUCT },
       next_structid => $BUILTIN_STRUCTIDS,
+      next_iterid   => 1,
    }
 }
 
 sub peer_hasobj    { shift->{peer_hasobj}    ||= {} }
 sub peer_hasclass  { shift->{peer_hasclass}  ||= {} }
 sub peer_hasstruct { shift->{peer_hasstruct} ||= { %ALWAYS_PEER_HASSTRUCT } }
+sub peer_hasiter   { shift->{peer_hasiter}   ||= {} }
 
 sub identity
 {
@@ -303,6 +308,9 @@ sub _ver_class_as_record { shift->minor_version >= 2 }
 
 # wire protocol supports MSG_GETPROPELEM
 sub _ver_can_getpropelem { shift->minor_version >= 3 }
+
+# wire protocol supports MSG_WATCH_ITER and iterators
+sub _ver_can_iter { shift->minor_version >= 3 }
 
 =head1 AUTHOR
 

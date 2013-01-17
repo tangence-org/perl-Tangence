@@ -99,6 +99,17 @@ sub _accessor_for_queue
       $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->[0] ) 
                        : $_->{on_shift}->( $self, $count ) for @$cbs;
    };
+
+   $subs->{"iter_prop_$pname"} = sub {
+      my $self = shift;
+      my ( $iter_from ) = @_;
+      my $idx = $iter_from == ITER_FIRST ? 0 :
+                $iter_from == ITER_LAST  ? scalar @{ $self->{properties}->{$pname}->[0] } :
+                                           die "Unrecognised iter_from";
+      my $iters = $self->{properties}->{$pname}->[2] ||= [];
+      push @$iters, my $iter = Tangence::Property::_Iterator->new( $self->{properties}->{$pname}->[0], $prop, $idx );
+      return $iter;
+   };
 }
 
 sub _accessor_for_array
@@ -193,6 +204,57 @@ sub _accessor_for_objset
       $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->[0] ) 
                        : $_->{on_del}->( $self, $id ) for @$cbs;
    };
+}
+
+package # hide from CPAN
+   Tangence::Property::_Iterator;
+
+use Carp;
+
+use Tangence::Constants;
+
+sub new
+{
+   my $class = shift;
+   return bless [ @_ ], $class;
+}
+
+sub queue { shift->[0] }
+sub prop  { shift->[1] }
+sub idx   { shift->[2] }
+
+sub handle_request_ITER_NEXT
+{
+   my $self = shift;
+   my ( $ctx, $message ) = @_;
+
+   my $direction = $message->unpack_int();
+   my $count     = $message->unpack_int();
+
+   my $queue = $self->queue;
+   my $idx   = $self->idx;
+
+   if( $direction == ITER_FWD ) {
+      $count = scalar @$queue - $idx if $count > scalar @$queue - $idx;
+
+      $self->[2] += $count;
+   }
+   elsif( $direction == ITER_BACK ) {
+      $count = $idx if $count > $idx;
+      $idx -= $count;
+
+      $self->[2] -= $count;
+   }
+   else {
+      return $ctx->responderr( "Unrecognised iterator direction $direction" );
+   }
+
+   my @result = @{$queue}[$idx .. $idx + $count - 1];
+
+   $ctx->respond( Tangence::Message->new( $ctx->stream, MSG_ITER_RESULT )
+      ->pack_int( $idx )
+      ->pack_all_sametype( $self->prop->type, @result )
+   );
 }
 
 0x55AA;

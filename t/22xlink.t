@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 26;
+use Test::More tests => 33;
 use Test::Fatal qw( dies_ok );
 use Test::Refcount;
 
@@ -149,6 +149,52 @@ my $objproxy = $client->rootobj;
                     on_value => sub {},
                   ); },
             'Getting no_such_property fails in proxy' );
+}
+
+# Property iterators
+{
+   my @value;
+   my $iter;
+   my $watched;
+   $objproxy->watch_property(
+      property => "queue",
+      on_set => sub { @value = @_ },
+      on_push => sub { push @value, @_ },
+      on_shift => sub { shift @value for 1 .. shift },
+      iter_from => "first",
+      on_iter => sub { $iter = shift },
+      on_watched => sub { $watched = 1 },
+   );
+
+   ok( defined $iter, '$iter defined after MSG_WATCHING_ITER' );
+
+   my $idx;
+   my @more;
+   $iter->next_forward(
+      on_more => sub { ( $idx, @more ) = @_ }
+   );
+
+   is( $idx, 0, 'next_forward starts at element 0' );
+   is_deeply( \@more, [ 1 ], 'next_forward yielded 1 element' );
+
+   undef @more;
+   $iter->next_forward(
+      count => 5,
+      on_more => sub { ( $idx, @more ) = @_ }
+   );
+
+   is( $idx, 1, 'next_forward starts at element 1' );
+   is_deeply( \@more, [ 2, 3 ], 'next_forward yielded 2 elements' );
+
+   undef @more;
+   $iter->next_backward(
+      on_more => sub { ( $idx, @more ) = @_ }
+   );
+
+   is( $idx, 2, 'next_backward starts at element 2' );
+   is_deeply( \@more, [ 3 ], 'next_forward yielded 1 element' );
+
+   undef $iter;
 }
 
 # Smashed Properties

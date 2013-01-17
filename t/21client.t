@@ -2,7 +2,7 @@
 
 use strict;
 
-use Test::More tests => 35;
+use Test::More tests => 47;
 use Test::Fatal qw( dies_ok );
 use Test::HexString;
 use Test::Refcount;
@@ -193,6 +193,72 @@ my $bagproxy;
                     on_value => sub {},
                   ); },
             'Getting no_such_property fails in proxy' );
+}
+
+# Property iterators
+{
+   my @value;
+   my $iter;
+   my $watched;
+   $objproxy->watch_property(
+      property => "queue",
+      on_set => sub { @value = @_ },
+      on_push => sub { push @value, @_ },
+      on_shift => sub { shift @value for 1 .. shift },
+      iter_from => "first",
+      on_iter => sub { $iter = shift },
+      on_watched => sub { $watched = 1 },
+   );
+
+   is_hexstr( $client->recv_message, $C2S{WATCH_ITER}, 'client stream contains MSG_WATCH_ITER' );
+
+   $client->send_message( $S2C{WATCHING_ITER} );
+
+   ok( defined $iter, '$iter defined after MSG_WATCHING_ITER' );
+
+   my $idx;
+   my @more;
+   $iter->next_forward(
+      on_more => sub { ( $idx, @more ) = @_ }
+   );
+
+   is_hexstr( $client->recv_message, $C2S{ITER_NEXT_1}, 'client stream contains MSG_ITER_NEXT' );
+
+   $client->send_message( $S2C{ITER_NEXT_1} );
+
+   is( $idx, 0, 'next_forward starts at element 0' );
+   is_deeply( \@more, [ 1 ], 'next_forward yielded 1 element' );
+
+   undef @more;
+   $iter->next_forward(
+      count => 5,
+      on_more => sub { ( $idx, @more ) = @_ }
+   );
+
+   is_hexstr( $client->recv_message, $C2S{ITER_NEXT_5}, 'client stream contains MSG_ITER_NEXT' );
+
+   $client->send_message( $S2C{ITER_NEXT_5} );
+
+   is( $idx, 1, 'next_forward starts at element 1' );
+   is_deeply( \@more, [ 2, 3 ], 'next_forward yielded 2 elements' );
+
+   undef @more;
+   $iter->next_backward(
+      on_more => sub { ( $idx, @more ) = @_ }
+   );
+
+   is_hexstr( $client->recv_message, $C2S{ITER_NEXT_BACK}, 'client stream contains MSG_ITER_NEXT' );
+
+   $client->send_message( $S2C{ITER_NEXT_BACK} );
+
+   is( $idx, 2, 'next_backward starts at element 2' );
+   is_deeply( \@more, [ 3 ], 'next_forward yielded 1 element' );
+
+   undef $iter;
+
+   is_hexstr( $client->recv_message, $C2S{ITER_DESTROY}, 'client stream contains MSG_ITER_DESTROY' );
+
+   $client->send_message( $MSG_OK );
 }
 
 # Smashed Properties

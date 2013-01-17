@@ -614,6 +614,37 @@ MSG_GETPROPELEM (C->S) (0x0b)
   (by element index), or hash (by key name). Cannot be applied to
   scalar or objset properties.
 
+MSG_WATCH_ITER (C->S) (0x0c)
+  INT           object ID
+  STRING        property name
+  INT           from
+
+  Responses: MSG_WATCHING_ITER
+
+  Similar to MSG_WATCH, requests to be informed of changes to the
+  property value, which must be a queue property. Creates a new
+  iterator for the property, beginning at the first index
+  (if from == 1) or the last (if from == 2).
+
+MSG_ITER_NEXT (C->S) (0x0d)
+  INT           iterator ID
+  INT           direction
+  INT           count
+
+  Responses: MSG_ITER_RESULT
+
+  Requests the next few items from a property iterator. It will yield a
+  MSG_RESULT message containing up to the given number of items, by
+  moving forwards (if direction == 1) or backwards (if direction == 2).
+  If the iterator is already at the edge of the queue then the MSG_RESULT
+  will contain no extra items.
+
+MSG_ITER_DESTROY (C->S) (0x0e)
+  INT           iterator ID
+
+  Informs the server that the client has finished using the iterator, and
+  it can release any resources attached to it.
+
 MSG_GETROOT (C->S) (0x40)
   data          identity
 
@@ -674,6 +705,21 @@ MSG_WATCHING (0x84)
   [no arguments]
 
   Informs the client that a MSG_WATCH was successful.
+
+MSG_WATCHING_ITER (0x85)
+  INT            iterator ID
+
+  Informs the client that a MSG_WATCH_ITER was successful, and returns
+  the new iterator ID.
+
+MSG_ITER_RESULT (0x86)
+  INT            first item index
+  data...        values
+
+  Contains the return value from a MSG_ITER_NEXT call. Gives the index
+  of the first item in the returned result, and the requested items.
+  There may fewer items than requested, if the edge of the property
+  value was reached.
 
 MSG_INITED (0xff)
   INT            major version

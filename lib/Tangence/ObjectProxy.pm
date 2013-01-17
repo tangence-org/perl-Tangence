@@ -643,6 +643,17 @@ Optional. If true, requests that the server send the current value of the
 property at the time the watch is installed, in an C<on_set> event. This is
 performed atomically with installing watch.
 
+=item iter_from => INT
+
+Optional. If defined, requests that the server create an iterator for the
+property value (whose dimension must be a queue). Its value indicates which
+end of the queue the iterator should start from; C<ITER_FIRST> to start at
+index 0, or C<ITER_LAST> to start at the highest-numbered index. The iterator
+object will be returned to the C<on_iter> callback. The iterator is
+constructed atomically with installing the watch.
+
+This option is mutually-exclusive with C<want_initial>.
+
 =item on_watched => CODE
 
 Optional. Callback function to invoke once the property watch is
@@ -661,6 +672,13 @@ Optional. Callback function to invoke whenever the property value changes.
 
 If not provided, then individual handlers for individual change types must be
 provided.
+
+=item on_iter => CODE
+
+Callback function to invoke when the iterator object is returned by the
+server. This must be provided if C<iter_from> is provided.
+
+ $on_iter->( $iter )
 
 =item on_error => CODE
 
@@ -688,6 +706,26 @@ sub watch_property
    ref $on_error eq "CODE" or croak "Expected 'on_error' as a CODE ref";
 
    my $want_initial = delete $args{want_initial};
+
+   my $iter_from = delete $args{iter_from};
+   if( !defined $iter_from ) {
+      # ignore
+   }
+   elsif( $iter_from eq "first" ) {
+      $iter_from = ITER_FIRST;
+   }
+   elsif( $iter_from eq "last" ) {
+      $iter_from = ITER_LAST;
+   }
+   else {
+      croak "Unrecognised 'iter_from' value %s";
+   }
+
+   my $on_iter;
+   if( defined $iter_from ) {
+      $on_iter = delete $args{on_iter};
+      ref $on_iter eq "CODE" or croak "Expected 'on_iter' to be a CODE ref";
+   }
 
    my $on_watched = $args{on_watched};
 
@@ -752,11 +790,25 @@ sub watch_property
    }
 
    my $conn = $self->{conn};
-   $conn->request(
-      request => Tangence::Message->new( $conn, MSG_WATCH )
+   my $request;
+   if( $iter_from ) {
+      $conn->_ver_can_iter or croak "Server is too old to support MSG_WATCH_ITER";
+      $pdef->{dim} == DIM_QUEUE or croak "Can only iterate on queue-dimension properties";
+
+      $request = Tangence::Message->new( $conn, MSG_WATCH_ITER )
          ->pack_int( $self->id )
          ->pack_str( $property )
-         ->pack_bool( $want_initial ),
+         ->pack_int( $iter_from );
+   }
+   else {
+      $request = Tangence::Message->new( $conn, MSG_WATCH )
+         ->pack_int( $self->id )
+         ->pack_str( $property )
+         ->pack_bool( $want_initial );
+   }
+
+   $conn->request(
+      request => $request,
 
       on_response => sub {
          my ( $message ) = @_;
@@ -764,6 +816,12 @@ sub watch_property
 
          if( $type == MSG_WATCHING ) {
             $on_watched->() if $on_watched;
+         }
+         elsif( $type == MSG_WATCHING_ITER ) {
+            $on_watched->() if $on_watched;
+            my $iter_id = $message->unpack_int();
+            my $iter = Tangence::ObjectProxy::_PropertyIterator->new( $self, $iter_id, $pdef->{type} );
+            $on_iter->( $iter );
          }
          elsif( $type == MSG_ERROR ) {
             my $msg = $message->unpack_str();
@@ -940,6 +998,125 @@ sub _update_property_objset
    else {
       croak "Change type $how is not valid for an objset property";
    }
+}
+
+package # hide from index
+   Tangence::ObjectProxy::_PropertyIterator;
+use Carp;
+use Tangence::Constants;
+
+=head1 ITERATOR METHODS
+
+The following methods are availilable on the property iterator objects given
+to the C<on_iter> callback of a C<watch_property> method.
+
+=cut
+
+sub new
+{
+   my $class = shift;
+   return bless [ @_ ], $class;
+}
+
+sub obj { shift->[0] }
+sub id  { shift->[1] }
+sub conn { shift->obj->{conn} }
+
+sub DESTROY
+{
+   my $self = shift;
+
+   return unless $self->obj and my $id = $self->id and my $conn = $self->conn;
+
+   $conn->request(
+      request => Tangence::Message->new( $conn, MSG_ITER_DESTROY )
+         ->pack_int( $id ),
+
+      on_response => sub {},
+   );
+}
+
+=head2 $iter->next_forward( %args )
+
+=head2 $iter->next_backward( %args )
+
+Requests the next items from the iterator. C<next_forward> moves forwards
+towards higher-numbered indices, and C<next_backward> moves backwards towards
+lower-numbered indices.
+
+The following arguments are recognised:
+
+=over 8
+
+=item count => INT
+
+Optional. Gives the number of elements requested. Will default to 1 if not
+provided.
+
+=item on_more => CODE
+
+Callback to invoke when the new elements are returned. This will be invoked
+with the index of the first element returned, and the new elements. Note that
+there may be fewer elements returned than were requested, if the end of the
+queue was reached. Specifically, there will be no new elements if the iterator
+is already at the end.
+
+ $on_more->( $index, @items )
+
+=back
+
+=cut
+
+sub next_forward
+{
+   my $self = shift;
+   $self->_next( direction => ITER_FWD, @_ );
+}
+
+sub next_backward
+{
+   my $self = shift;
+   $self->_next( direction => ITER_BACK, @_ );
+}
+
+sub _next
+{
+   my $self = shift;
+   my %args = @_;
+
+   my $obj = $self->obj;
+   my $id  = $self->id;
+   my $element_type = $self->[2];
+
+   my $on_more  = $args{on_more} or croak "Expected 'on_more' as a CODE ref";
+   my $on_error = $args{on_error} || $obj->{on_error};
+
+   my $conn = $self->conn;
+   $conn->request(
+      request => Tangence::Message->new( $conn, MSG_ITER_NEXT )
+         ->pack_int( $id )
+         ->pack_int( $args{direction} )
+         ->pack_int( $args{count} || 1 ),
+
+      on_response => sub {
+         my ( $message ) = @_;
+         my $type = $message->type;
+
+         if( $type == MSG_ITER_RESULT ) {
+            $on_more->(
+               $message->unpack_int(),
+               $message->unpack_all_sametype( $element_type ),
+            );
+         }
+         elsif( $type == MSG_ERROR ) {
+            my $msg = $message->unpack_str();
+            $on_error->( $msg );
+         }
+         else {
+            $on_error->( "Unexpected response code $type" );
+         }
+      }
+   );
 }
 
 =head1 AUTHOR
