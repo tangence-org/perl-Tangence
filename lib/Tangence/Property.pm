@@ -98,6 +98,8 @@ sub _accessor_for_queue
       my $cbs = $self->{properties}->{$pname}->[1];
       $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->[0] ) 
                        : $_->{on_shift}->( $self, $count ) for @$cbs;
+      my $iters = $self->{properties}->{$pname}->[2];
+      $_->idx -= $count for @$iters;
    };
 
    $subs->{"iter_prop_$pname"} = sub {
@@ -221,7 +223,7 @@ sub new
 
 sub queue { shift->[0] }
 sub prop  { shift->[1] }
-sub idx   { shift->[2] }
+sub idx :lvalue { shift->[2] }
 
 sub handle_request_ITER_NEXT
 {
@@ -237,13 +239,13 @@ sub handle_request_ITER_NEXT
    if( $direction == ITER_FWD ) {
       $count = scalar @$queue - $idx if $count > scalar @$queue - $idx;
 
-      $self->[2] += $count;
+      $self->idx += $count;
    }
    elsif( $direction == ITER_BACK ) {
       $count = $idx if $count > $idx;
       $idx -= $count;
 
-      $self->[2] -= $count;
+      $self->idx -= $count;
    }
    else {
       return $ctx->responderr( "Unrecognised iterator direction $direction" );
