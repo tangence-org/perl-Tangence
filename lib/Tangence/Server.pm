@@ -315,6 +315,8 @@ sub _handle_request_WATCHany
       $self->peer_hasiter->{$id} = $iter;
       $ctx->respond( Tangence::Message->new( $self, MSG_WATCHING_ITER )
          ->pack_int( $id )
+         ->pack_int( 0 ) # first index
+         ->pack_int( $#{ $object->${\"get_prop_$prop"} } ) # last index
       );
    }
 }

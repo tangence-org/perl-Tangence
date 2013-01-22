@@ -164,6 +164,7 @@ my $objproxy = $client->rootobj;
 {
    my @value;
    my $iter;
+   my ( $first_idx, $last_idx );
    my $watched;
    $objproxy->watch_property(
       property => "queue",
@@ -171,11 +172,14 @@ my $objproxy = $client->rootobj;
       on_push => sub { push @value, @_ },
       on_shift => sub { shift @value for 1 .. shift },
       iter_from => "first",
-      on_iter => sub { $iter = shift },
+      on_iter => sub { ( $iter, $first_idx, $last_idx ) = @_ },
       on_watched => sub { $watched = 1 },
    );
 
    ok( defined $iter, '$iter defined after MSG_WATCHING_ITER' );
+
+   is( $first_idx, 0, '$first_idx after MSG_WATCHING_ITER' );
+   is( $last_idx,  2, '$last_idx after MSG_WATCHING_ITER' );
 
    my $idx;
    my @more;

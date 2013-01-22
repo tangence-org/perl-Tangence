@@ -715,9 +715,11 @@ provided.
 =item on_iter => CODE
 
 Callback function to invoke when the iterator object is returned by the
-server. This must be provided if C<iter_from> is provided.
+server. This must be provided if C<iter_from> is provided. It is passed the
+iterator object, and the first and last indices that the iterator will yield
+(inclusive).
 
- $on_iter->( $iter )
+ $on_iter->( $iter, $first_idx, $last_idx )
 
 =item on_error => CODE
 
@@ -859,8 +861,11 @@ sub watch_property
          elsif( $type == MSG_WATCHING_ITER ) {
             $on_watched->() if $on_watched;
             my $iter_id = $message->unpack_int();
+            my $first_idx = $message->unpack_int();
+            my $last_idx  = $message->unpack_int();
+
             my $iter = Tangence::ObjectProxy::_PropertyIterator->new( $self, $iter_id, $pdef->{type} );
-            $on_iter->( $iter );
+            $on_iter->( $iter, $first_idx, $last_idx );
          }
          elsif( $type == MSG_ERROR ) {
             my $msg = $message->unpack_str();

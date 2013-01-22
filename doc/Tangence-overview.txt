@@ -708,9 +708,16 @@ MSG_WATCHING (0x84)
 
 MSG_WATCHING_ITER (0x85)
   INT            iterator ID
+  INT            first index (inclusive)
+  INT            last index (inclusive)
 
   Informs the client that a MSG_WATCH_ITER was successful, and returns
-  the new iterator ID.
+  the new iterator ID and the first and last indices inclusive of the
+  queue it will iterate over.
+  
+  ((The reason for using first and last indices inclusively, rather
+  than yielding the total size of the queue, is that this makes it
+  easier to support iterating over hashes in a future version))
 
 MSG_ITER_RESULT (0x86)
   INT            first item index
