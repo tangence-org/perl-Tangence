@@ -1,5 +1,11 @@
 Revision history for Tangence
 
+0.16    CHANGES:
+         * Bumped wire protocol minor version to 3:
+            + Support GETPROPELEM operation
+            + Support WATCH_ITER for queue property iteration
+         * Internal rewrites to some unit tests for neatness
+
 0.15    BUGFIXES:
          * Fix Tangence::Message on clientside when dealing with minor
            version 2 servers, by actually 'use'ing classes it requires
