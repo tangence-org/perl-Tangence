@@ -337,7 +337,7 @@ sub new
    my $self = bless { written => "" }, shift;
    $self->identity( "testscript" );
    $self->on_error( sub { die "Test failed early - $_[0]" } );
-   $self->tangence_connected( do_init => 1 );
+   $self->tangence_connected();
    return $self;
 }
 

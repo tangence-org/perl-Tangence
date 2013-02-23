@@ -20,7 +20,7 @@ sub make_serverclient
    weaken( $server->{client} = $client );
    weaken( $client->{server} = $server );
 
-   $client->tangence_connected( do_init => 1 );
+   $client->tangence_connected();
 
    return ( $server, $client );
 }
