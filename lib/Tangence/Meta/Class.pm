@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2011-2012 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2011-2013 -- leonerd@leonerd.org.uk
 
 package Tangence::Meta::Class;
 
@@ -222,6 +222,20 @@ sub methods
    return \%methods;
 }
 
+=head2 $method = $class->method( $name )
+
+Return the named method as a L<Tangence::Meta::Method> instance, or C<undef>
+if no such method exists.
+
+=cut
+
+sub method
+{
+   my $self = shift;
+   my ( $name ) = @_;
+   return $self->methods->{$name};
+}
+
 =head2 $events = $class->events
 
 Return all the events available to this class as a HASH reference mapping
@@ -240,6 +254,20 @@ sub events
    return \%events;
 }
 
+=head2 $event = $class->event( $name )
+
+Return the named event as a L<Tangence::Meta::Event> instance, or C<undef> if
+no such event exists.
+
+=cut
+
+sub event
+{
+   my $self = shift;
+   my ( $name ) = @_;
+   return $self->events->{$name};
+}
+
 =head2 $properties = $class->properties
 
 Return all the properties available to this class as a HASH reference mapping
@@ -256,6 +284,20 @@ sub properties
       $properties{$_} ||= $p->{$_} for keys %$p;
    }
    return \%properties;
+}
+
+=head2 $property = $class->property( $name )
+
+Return the named property as a L<Tangence::Meta::Property> instance, or
+C<undef> if no such property exists.
+
+=cut
+
+sub property
+{
+   my $self = shift;
+   my ( $name ) = @_;
+   return $self->properties->{$name};
 }
 
 =head1 AUTHOR

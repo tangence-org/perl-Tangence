@@ -39,6 +39,8 @@ my $parser = Tangence::Compiler::Parser->new;
 
    is_deeply( [ sort keys %{ $colourable->properties } ], [qw( colour )], 't.Colourable props' );
 
+   identical( $colourable->property( "colour" ), $props->{colour}, 't.Colourable ->property' );
+
    my $ball = $meta->{'t.Ball'};
    isa_ok( $ball, "Tangence::Meta::Class", 't.Ball meta' );
 
@@ -60,6 +62,8 @@ my $parser = Tangence::Compiler::Parser->new;
 
    is_deeply( [ sort keys %{ $ball->methods } ], [qw( bounce )], 't.Ball methods' );
 
+   identical( $ball->method( "bounce" ), $methods->{bounce}, 't.Ball ->method' );
+
    $events = $ball->direct_events;
 
    is_deeply( [ sort keys %$events ], [qw( bounced )], 't.Ball direct events' );
@@ -76,6 +80,8 @@ my $parser = Tangence::Compiler::Parser->new;
 
    is_deeply( [ sort keys %{ $ball->events } ], [qw( bounced )], 't.Ball events' );
 
+   identical( $ball->event( "bounced" ), $events->{bounced}, 't.Ball ->event' );
+
    $props = $ball->direct_properties;
 
    is_deeply( [ sort keys %$props ], [qw( size )], 't.Ball direct props' );
@@ -88,6 +94,8 @@ my $parser = Tangence::Compiler::Parser->new;
    ok( $props->{size}->smashed, 't.Ball prop size smashed' );
 
    is_deeply( [ sort keys %{ $ball->properties } ], [qw( colour size )], 't.Ball props' );
+
+   identical( $ball->property( "size" ), $props->{size}, 't.Ball ->property' );
 
    is_deeply( [ map { $_->name } $ball->direct_superclasses ], [qw( t.Colourable )], 't.Ball direct superclasses' );
    is_deeply( [ map { $_->name } $ball->superclasses ], [qw( t.Colourable )], 't.Ball superclasses' );
