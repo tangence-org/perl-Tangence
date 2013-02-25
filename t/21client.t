@@ -38,6 +38,13 @@ my $bagproxy;
 
 # Methods
 {
+   my $mdef = $objproxy->can_method( "method" );
+
+   ok( defined $mdef, 'defined $mdef' );
+   is( $mdef->name, "method", '$mdef->name' );
+   is_deeply( [ $mdef->argtypes ], [ TYPE_INT, TYPE_STR ], '$mdef->argtypes' );
+   is( $mdef->ret, TYPE_STR, '$mdef->ret' );
+
    my $result;
    $objproxy->call_method(
       method => "method",
@@ -61,6 +68,12 @@ my $bagproxy;
 
 # Events
 {
+   my $edef = $objproxy->can_event( "event" );
+
+   ok( defined $edef, 'defined $edef' );
+   is( $edef->name, "event", '$edef->event' );
+   is_deeply( [ $edef->argtypes ], [ TYPE_INT, TYPE_STR ], '$edef->argtypes' );
+
    my $event_i;
    my $event_s;
    my $subbed;
@@ -101,6 +114,13 @@ my $bagproxy;
 
 # Properties get/set
 {
+   my $pdef = $objproxy->can_property( "scalar" );
+
+   ok( defined $pdef, 'defined $pdef' );
+   is( $pdef->name, "scalar", '$pdef->name' );
+   is( $pdef->dimension, DIM_SCALAR, '$pdef->dimension' );
+   is( $pdef->type, TYPE_INT, '$pdef->type' );
+
    is( $objproxy->prop( "s_scalar" ), 456, 'Smashed property initially set in proxy' );
 
    my $value;

@@ -448,7 +448,7 @@ sub packmeta_construct
 
    my $stream = $self->{stream};
 
-   my $class = $obj->_meta;
+   my $class = $obj->class;
    my $id    = $obj->id;
 
    $self->packmeta_class( $class ) unless $stream->peer_hasclass->{$class->perlname};

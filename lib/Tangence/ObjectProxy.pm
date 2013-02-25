@@ -109,28 +109,56 @@ sub classname
    return $self->{class}->name;
 }
 
-sub _meta
+=head2 $class = $proxyobj->class
+
+Returns the L<Tangence::Meta::Class> object representing the class of this
+object.
+
+=cut
+
+sub class
 {
    my $self = shift;
    return $self->{class};
 }
 
+=head2 $method = $proxy->can_method( $name )
+
+Returns the L<Tangence::Meta::Method> object representing the named method, or
+C<undef> if no such method exists.
+
+=cut
+
 sub can_method
 {
    my $self = shift;
-   return $self->_meta->method( @_ );
+   return $self->class->method( @_ );
 }
+
+=head2 $event = $proxy->can_event( $name )
+
+Returns the L<Tangence::Meta::Event> object representing the named event, or
+C<undef> if no such event exists.
+
+=cut
 
 sub can_event
 {
    my $self = shift;
-   return $self->_meta->event( @_ );
+   return $self->class->event( @_ );
 }
+
+=head2 $property = $proxy->can_property( $name )
+
+Returns the L<Tangence::Meta::Property> object representing the named
+property, or C<undef> if no such property exists.
+
+=cut
 
 sub can_property
 {
    my $self = shift;
-   return $self->_meta->property( @_ );
+   return $self->class->property( @_ );
 }
 
 # Don't want to call it "isa"

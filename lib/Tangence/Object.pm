@@ -64,7 +64,7 @@ sub new
       properties => {}, # {$prop} => [ $value, \@callbacks ]
    }, $class;
 
-   my $properties = $self->_meta->properties;
+   my $properties = $self->class->properties;
    foreach my $prop ( keys %$properties ) {
       $self->_new_property( $prop, $properties->{$prop} );
    }
@@ -215,34 +215,62 @@ sub smash
    } @keys };
 }
 
-sub _meta
+=head2 $class = $obj->class
+
+Returns the L<Tangence::Meta::Class> object representing the class of this
+object.
+
+=cut
+
+sub class
 {
    my $self = shift;
    return ref $self ? $self->{meta} : Tangence::Class->for_perlname( $self );
 }
 
+=head2 $method = $obj->can_method( $name )
+
+Returns the L<Tangence::Meta::Method> object representing the named method, or
+C<undef> if no such method exists.
+
+=cut
+
 sub can_method
 {
    my $self = shift;
-   return $self->_meta->method( @_ );
+   return $self->class->method( @_ );
 }
+
+=head2 $event = $obj->can_event( $name )
+
+Returns the L<Tangence::Meta::Event> object representing the named event, or
+C<undef> if no such event exists.
+
+=cut
 
 sub can_event
 {
    my $self = shift;
-   return $self->_meta->event( @_ );
+   return $self->class->event( @_ );
 }
+
+=head2 $property = $obj->can_property( $name )
+
+Returns the L<Tangence::Meta::Property> object representing the named
+property, or C<undef> if no such property exists.
+
+=cut
 
 sub can_property
 {
    my $self = shift;
-   return $self->_meta->property( @_ );
+   return $self->class->property( @_ );
 }
 
 sub smashkeys
 {
    my $self = shift;
-   return $self->_meta->smashkeys;
+   return $self->class->smashkeys;
 }
 
 =head2 $obj->fire_event( $event, @args )

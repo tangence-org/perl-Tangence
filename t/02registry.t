@@ -72,10 +72,10 @@ is( $mdef->ret->sig, "str", 'can_method "bounce" ret' );
 
 ok( !$ball->can_method( "fly" ), '$ball->can_method "fly" is undef' );
 
-my $methods = $ball->_meta->methods;
+my $methods = $ball->class->methods;
 is_deeply( [ sort keys %$methods ],
            [qw( bounce )],
-           '$ball->_meta->methods yields all' );
+           '$ball->class->methods yields all' );
 
 my $edef = $ball->can_event( "bounced" );
 isa_ok( $edef, "Tangence::Meta::Event", '$ball->can_event "bounced"' );
@@ -86,10 +86,10 @@ ok( $ball->can_event( "destroy" ), '$ball->can_event "destroy"' );
 
 ok( !$ball->can_event( "flew" ), '$ball->can_event "flew" is undef' );
 
-my $events = $ball->_meta->events;
+my $events = $ball->class->events;
 is_deeply( [ sort keys %$events ],
            [qw( bounced destroy )],
-           '$ball->_meta->events yields all' );
+           '$ball->class->events yields all' );
 
 my $pdef = $ball->can_property( "colour" );
 isa_ok( $pdef, "Tangence::Meta::Property", '$ball->can_property "colour"' );
@@ -99,10 +99,10 @@ is( $pdef->type->sig, "str", 'can_property "colour" type' );
 
 ok( !$ball->can_property( "style" ), '$ball->can_property "style" is undef' );
 
-my $properties = $ball->_meta->properties;
+my $properties = $ball->class->properties;
 is_deeply( [ sort keys %$properties ],
            [qw( colour size )],
-           '$ball->_meta->properties yields all' );
+           '$ball->class->properties yields all' );
 
 is_deeply( $ball->smashkeys,
            [qw( size )],
