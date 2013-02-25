@@ -38,11 +38,7 @@ $bagproxy->call_method(
    on_result => sub { $ballproxy = shift },
 );
 
-ok( $ballproxy->proxy_isa( "t::Ball" ), 'proxy for isa t::Ball' );
-
-is_deeply( $ballproxy->can_method( "bounce" ),
-           { args => [ TYPE_STR ], ret => TYPE_STR },
-           'proxy can_method bounce' );
+ok( $ballproxy->proxy_isa( "t.Ball" ), 'proxy for isa t::Ball' );
 
 my $colour;
 

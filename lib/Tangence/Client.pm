@@ -300,16 +300,16 @@ sub get_by_id
 sub make_proxy
 {
    my $self = shift;
-   my ( $id, $class, $smashdata ) = @_;
+   my ( $id, $classname, $smashdata ) = @_;
 
    if( exists $self->objectproxies->{$id} ) {
       croak "Already have an object id $id";
    }
 
-   my $introspection;
-   if( defined $class ) {
-      $introspection = $self->peer_hasclass->{$class}->[0];
-      defined $introspection or croak "Cannot construct a proxy for class $class as no introspection exists";
+   my $class;
+   if( defined $classname ) {
+      $class = $self->peer_hasclass->{$classname}->[0];
+      defined $class or croak "Cannot construct a proxy for class $classname as no meta exists";
    }
 
    my $obj = $self->objectproxies->{$id} =
@@ -317,8 +317,7 @@ sub make_proxy
          conn => $self,
          id   => $id,
 
-         class  => $class,
-         introspection => $introspection,
+         class => $class,
 
          on_error => $self->on_error,
       );

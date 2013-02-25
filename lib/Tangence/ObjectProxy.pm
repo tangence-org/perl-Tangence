@@ -48,8 +48,7 @@ sub new
       conn => $args{conn},
       id   => $args{id},
 
-      class  => $args{class},
-      introspection => $args{introspection},
+      class => $args{class},
 
       on_error => $args{on_error},
    }, $class;
@@ -98,61 +97,52 @@ sub id
    return $self->{id};
 }
 
-=head2 $classname = $proxy->class
+=head2 $classname = $proxy->classname
 
 Returns the name of the class of the C<Tangence> object being proxied for.
 
 =cut
 
-sub class
+sub classname
+{
+   my $self = shift;
+   return $self->{class}->name;
+}
+
+sub _meta
 {
    my $self = shift;
    return $self->{class};
 }
 
-sub introspect
-{
-   my $self = shift;
-   if( !@_ ) {
-      return $self->{introspection};
-   }
-   else {
-      my $section = shift;
-      return $self->{introspection}->{$section};
-   }
-}
-
 sub can_method
 {
    my $self = shift;
-   my ( $method ) = @_;
-   return $self->{introspection}->{methods}->{$method};
+   return $self->_meta->method( @_ );
 }
 
 sub can_event
 {
    my $self = shift;
-   my ( $event ) = @_;
-   return $self->{introspection}->{events}->{$event};
+   return $self->_meta->event( @_ );
 }
 
 sub can_property
 {
    my $self = shift;
-   my ( $property ) = @_;
-   return $self->{introspection}->{properties}->{$property};
+   return $self->_meta->property( @_ );
 }
 
 # Don't want to call it "isa"
-sub proxy_isa 
+sub proxy_isa
 {
    my $self = shift;
    if( @_ ) {
       my ( $class ) = @_;
-      return !! grep { $_ eq $class } @{ $self->{introspection}->{isa} };
+      return !! grep { $_->name eq $class } $self->{class}, $self->{class}->superclasses;
    }
    else {
-      return @{ $self->{introspection}->{isa} };
+      return $self->{class}, $self->{class}->superclasses
    }
 }
 
@@ -163,7 +153,7 @@ sub grab
 
    foreach my $property ( keys %{ $smashdata } ) {
       my $value = $smashdata->{$property};
-      my $dim = $self->{introspection}->{properties}->{$property}->{dim};
+      my $dim = $self->can_property( $property )->dimension;
 
       if( $dim == DIM_OBJSET ) {
          # Comes across in a LIST. We need to map id => obj
@@ -223,23 +213,23 @@ sub call_method
    my $on_error = delete $args{on_error} || $self->{on_error};
    ref $on_error eq "CODE" or croak "Expected 'on_error' as a CODE ref";
 
-   my $mdef = $self->can_method( $method );
-   croak "Class ".$self->class." does not have a method $method" unless $mdef;
+   my $mdef = $self->can_method( $method )
+      or croak "Class ".$self->classname." does not have a method $method";
 
    my $conn = $self->{conn};
    $conn->request(
       request => Tangence::Message->new( $conn, MSG_CALL )
          ->pack_int( $self->id )
          ->pack_str( $method )
-         ->pack_all_typed( $mdef->{args}, $args ? @$args : () ),
+         ->pack_all_typed( [ $mdef->argtypes ], $args ? @$args : () ),
 
       on_response => sub {
          my ( $message ) = @_;
          my $type = $message->type;
 
          if( $type == MSG_RESULT ) {
-            my $result = $mdef->{ret} ? $message->unpack_typed( $mdef->{ret} )
-                                      : undef;
+            my $result = $mdef->ret ? $message->unpack_typed( $mdef->ret )
+                                    : undef;
             $on_result->( $result );
          }
          elsif( $type == MSG_ERROR ) {
@@ -307,8 +297,8 @@ sub subscribe_event
 
    my $on_subscribed = $args{on_subscribed};
 
-   my $edef = $self->can_event( $event );
-   croak "Class ".$self->class." does not have an event $event" unless $edef;
+   $self->can_event( $event )
+      or croak "Class ".$self->classname." does not have an event $event";
 
    if( my $cbs = $self->{subscriptions}->{$event} ) {
       push @$cbs, $callback;
@@ -352,7 +342,7 @@ sub handle_request_EVENT
    my $event = $message->unpack_str();
    my $edef = $self->can_event( $event ) or return;
 
-   my @args = $message->unpack_all_typed( $edef->{args} );
+   my @args = $message->unpack_all_typed( [ $edef->argtypes ] );
 
    if( my $cbs = $self->{subscriptions}->{$event} ) {
       foreach my $cb ( @$cbs ) { $cb->( @args ) }
@@ -383,8 +373,8 @@ sub unsubscribe_event
 
    my $event = delete $args{event} or croak "Need a event";
 
-   my $edef = $self->can_event( $event );
-   croak "Class ".$self->class." does not have an event $event" unless $edef;
+   $self->can_event( $event )
+      or croak "Class ".$self->classname." does not have an event $event";
 
    return if $event eq "destroy"; # This is automatically handled
 
@@ -441,8 +431,8 @@ sub get_property
    my $on_error = delete $args{on_error} || $self->{on_error};
    ref $on_error eq "CODE" or croak "Expected 'on_error' as a CODE ref";
 
-   my $pdef = $self->can_property( $property );
-   croak "Class ".$self->class." does not have a property $property" unless $pdef;
+   $self->can_property( $property )
+      or croak "Class ".$self->classname." does not have a property $property";
 
    my $conn = $self->{conn};
    $conn->request(
@@ -520,8 +510,8 @@ sub get_property_element
    my $on_error = delete $args{on_error} || $self->{on_error};
    ref $on_error eq "CODE" or croak "Expected 'on_error' as a CODE ref";
 
-   my $pdef = $self->can_property( $property );
-   croak "Class ".$self->class." does not have a property $property" unless $pdef;
+   my $pdef = $self->can_property( $property )
+      or croak "Class ".$self->classname." does not have a property $property";
 
    my $conn = $self->{conn};
    $conn->_ver_can_getpropelem or croak "Server is too old to support MSG_GETPROPELEM";
@@ -530,11 +520,11 @@ sub get_property_element
       ->pack_int( $self->id )
       ->pack_str( $property );
 
-   if( $pdef->{dim} == DIM_HASH ) {
+   if( $pdef->dimension == DIM_HASH ) {
       defined $args{key} or croak "Need a key";
       $request->pack_str( $args{key} );
    }
-   elsif( $pdef->{dim} == DIM_ARRAY or $pdef->{dim} == DIM_QUEUE ) {
+   elsif( $pdef->dimension == DIM_ARRAY or $pdef->dimension == DIM_QUEUE ) {
       defined $args{index} or croak "Need an index";
       $request->pack_int( $args{index} );
    }
@@ -635,8 +625,8 @@ sub set_property
    exists $args{value} or croak "Need a value";
    my $value = delete $args{value};
 
-   my $pdef = $self->can_property( $property );
-   croak "Class ".$self->class." does not have a property $property" unless $pdef;
+   $self->can_property( $property )
+      or croak "Class ".$self->classname." does not have a property $property";
 
    my $conn = $self->{conn};
    $conn->request(
@@ -770,8 +760,8 @@ sub watch_property
 
    my $on_watched = $args{on_watched};
 
-   my $pdef = $self->can_property( $property );
-   croak "Class ".$self->class." does not have a property $property" unless $pdef;
+   my $pdef = $self->can_property( $property )
+      or croak "Class ".$self->classname." does not have a property $property";
 
    my $callbacks = {};
    my $on_updated = delete $args{on_updated};
@@ -780,7 +770,7 @@ sub watch_property
       $callbacks->{on_updated} = $on_updated;
    }
 
-   foreach my $name ( @{ CHANGETYPES->{$pdef->{dim}} } ) {
+   foreach my $name ( @{ CHANGETYPES->{$pdef->dimension} } ) {
       # All of these become optional if 'on_updated' is supplied
       next if $on_updated and not exists $args{$name};
 
@@ -789,7 +779,7 @@ sub watch_property
    }
 
    # Smashed properties behave differently
-   my $smash = $pdef->{smash};
+   my $smash = $pdef->smashed;
 
    if( my $cbs = $self->{props}->{$property}->{cbs} ) {
       if( $want_initial and !$smash ) {
@@ -834,7 +824,7 @@ sub watch_property
    my $request;
    if( $iter_from ) {
       $conn->_ver_can_iter or croak "Server is too old to support MSG_WATCH_ITER";
-      $pdef->{dim} == DIM_QUEUE or croak "Can only iterate on queue-dimension properties";
+      $pdef->dimension == DIM_QUEUE or croak "Can only iterate on queue-dimension properties";
 
       $request = Tangence::Message->new( $conn, MSG_WATCH_ITER )
          ->pack_int( $self->id )
@@ -864,7 +854,7 @@ sub watch_property
             my $first_idx = $message->unpack_int();
             my $last_idx  = $message->unpack_int();
 
-            my $iter = Tangence::ObjectProxy::_PropertyIterator->new( $self, $iter_id, $pdef->{type} );
+            my $iter = Tangence::ObjectProxy::_PropertyIterator->new( $self, $iter_id, $pdef->type );
             $on_iter->( $iter, $first_idx, $last_idx );
          }
          elsif( $type == MSG_ERROR ) {
@@ -887,8 +877,8 @@ sub handle_request_UPDATE
    my $how   = $message->unpack_typed( TYPE_U8 );
 
    my $pdef = $self->can_property( $prop ) or return;
-   my $type = $pdef->{type};
-   my $dim  = $pdef->{dim};
+   my $type = $pdef->type;
+   my $dim  = $pdef->dimension;
 
    my $p = $self->{props}->{$prop} ||= {};
 
@@ -1068,8 +1058,8 @@ sub unwatch_property
 
    my $property = delete $args{property} or croak "Need a property";
 
-   my $pdef = $self->can_property( $property );
-   croak "Class ".$self->class." does not have a property $property" unless $pdef;
+   $self->can_property( $property )
+      or croak "Class ".$self->classname." does not have a property $property";
 
    # TODO: mark iterators as destroyed and invalid
    delete $self->{props}->{$property};

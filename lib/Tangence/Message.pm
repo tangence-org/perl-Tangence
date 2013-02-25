@@ -497,34 +497,6 @@ sub unpackmeta_construct
    $stream->make_proxy( $id, $class, $smashdata );
 }
 
-# Temporarily here so we can move the logic eventually into the client
-# Longterm it won't stay because client will work directly on Meta:: objects
-sub _introspect_class
-{
-   my $class = shift;
-
-   return {
-      methods    => { 
-         pairmap {
-            $a => { args => [ map { $_->sig } $b->argtypes ], ret => ( $b->ret ? $b->ret->sig : "" ) }
-         } %{ $class->methods }
-      },
-      events     => {
-         pairmap {
-            $a => { args => [ map { $_->sig } $b->argtypes ] }
-         } %{ $class->events }
-      },
-      properties => {
-         pairmap {
-            $a => { type => $b->type->sig, dim => $b->dimension, $b->smashed ? ( smash => 1 ) : () }
-         } %{ $class->properties }
-      },
-      isa        => [
-         grep { $_ ne "Tangence::Object" } $class->perlname, map { $_->perlname } $class->superclasses
-      ],
-   };
-}
-
 sub packmeta_class
 {
    my $self = shift;
@@ -538,7 +510,6 @@ sub packmeta_class
 
    $self->_pack_leader( DATA_META, DATAMETA_CLASS );
 
-   my $introspection = _introspect_class( $class );
    my $smashkeys = $class->smashkeys;
 
    my $classid = ++$stream->message_state->{next_classid};
@@ -576,7 +547,7 @@ sub packmeta_class
 
    $self->pack_typed( TYPE_LIST_STR, $smashkeys );
 
-   $stream->peer_hasclass->{$class->perlname} = [ $introspection, $smashkeys, $classid ];
+   $stream->peer_hasclass->{$class->perlname} = [ $class, $smashkeys, $classid ];
 }
 
 sub unpackmeta_class
@@ -643,22 +614,10 @@ sub unpackmeta_class
    );
 
    my $perlname = $class->perlname;
-   my $introspection = _introspect_class( $class );
 
    my $smashkeys = $self->unpack_typed( TYPE_LIST_STR );
 
-   foreach my $mdef ( values %{ $introspection->{methods} } ) {
-      $_ = Tangence::Meta::Type->new_from_sig( $_ ) for @{ $mdef->{args} };
-      length and $_ = Tangence::Meta::Type->new_from_sig( $_) for $mdef->{ret};
-   }
-   foreach my $edef ( values %{ $introspection->{events} } ) {
-      $_ = Tangence::Meta::Type->new_from_sig( $_ ) for @{ $edef->{args} };
-   }
-   foreach my $pdef ( values %{ $introspection->{properties} } ) {
-      $_ = Tangence::Meta::Type->new_from_sig( $_ ) for $pdef->{type};
-   }
-
-   $stream->peer_hasclass->{$perlname} = [ $introspection, $smashkeys, $classid, $class ];
+   $stream->peer_hasclass->{$perlname} = [ $class, $smashkeys, $classid, $class ];
    if( defined $classid ) {
       $stream->message_state->{id2class}{$classid} = $perlname;
    }
