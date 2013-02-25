@@ -19,6 +19,12 @@ sub new
    return $self;
 }
 
+sub describe
+{
+   my $self = shift;
+   return (ref $self) . qq([scalar=) . $self->get_prop_scalar . q(]);
+}
+
 sub method_method
 {
    my $self = shift;

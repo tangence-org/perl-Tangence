@@ -8,48 +8,48 @@ use Test::More;
 use Tangence::Constants;
 use Tangence::Registry;
 
-use t::Ball;
+use t::TestObj;
 use t::TestServerClient;
 
 my $registry = Tangence::Registry->new(
-   tanfile => "t/Ball.tan",
+   tanfile => "t/TestObj.tan",
 );
-my $ball = $registry->construct(
-   "t::Ball",
-   colour => "red",
-   size   => 100,
+my $obj = $registry->construct(
+   "t::TestObj",
+   scalar   => 123,
+   s_scalar => 456,
 );
 
 my ( $conn1, $conn2 ) = map {
    my ( $server, $client ) = make_serverclient( $registry );
 
-   my $ballproxy = $client->rootobj;
+   my $objproxy = $client->rootobj;
 
    my $conn = {
       server    => $server,
       client    => $client,
-      ballproxy => $ballproxy,
+      objproxy => $objproxy,
    };
 
-   $ballproxy->watch_property(
-      property => "colour",
-      on_set => sub { $conn->{colour} = shift },
+   $objproxy->watch_property(
+      property => "scalar",
+      on_set => sub { $conn->{scalar} = shift; },
    );
 
    $conn
 } 1 .. 2;
 
-$ball->set_prop_colour( "green" );
+$obj->set_prop_scalar( 789 );
 
-is( $conn1->{colour}, "green", '$colour is green from connection 1' );
-is( $conn2->{colour}, "green", '$colour is green from connection 2' );
+is( $conn1->{scalar}, 789, '$scalar from connection 1' );
+is( $conn2->{scalar}, 789, '$scalar from connection 2' );
 
 $conn1->{server}->tangence_closed;
 $conn1->{client}->tangence_closed;
 
-$ball->set_prop_colour( "blue" );
+$obj->set_prop_scalar( 101112 );
 
-is( $conn1->{colour}, "green", '$colour is still green from (closed) connection 1' );
-is( $conn2->{colour}, "blue", '$colour is blue from connection 2' );
+is( $conn1->{scalar}, 789, '$scalar unchanged from (closed) connection 1' );
+is( $conn2->{scalar}, 101112, '$scalar from connection 2' );
 
 done_testing;
