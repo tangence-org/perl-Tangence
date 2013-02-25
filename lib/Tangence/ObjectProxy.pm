@@ -653,7 +653,7 @@ sub set_property
    exists $args{value} or croak "Need a value";
    my $value = delete $args{value};
 
-   $self->can_property( $property )
+   my $pdef = $self->can_property( $property )
       or croak "Class ".$self->classname." does not have a property $property";
 
    my $conn = $self->{conn};
@@ -661,7 +661,7 @@ sub set_property
       request => Tangence::Message->new( $conn, MSG_SETPROP )
          ->pack_int( $self->id )
          ->pack_str( $property )
-         ->pack_any( $value ),
+         ->pack_typed( $pdef->type, $value ),
 
       on_response => sub {
          my ( $message ) = @_;

@@ -178,10 +178,10 @@ $S2C{GETPROPELEM_ARRAY} =
 
 # MSG_SETPROP
 $C2S{SETPROP} =
-   "\6" . "\0\0\0\x0d" .
+   "\6" . "\0\0\0\x0b" .
    "\x02\1" .
    "\x26scalar" .
-   "\x23135"; # TODO: int
+   "\x02\x87";
 
 # MSG_GETPROPELEM
 $C2S{GETPROPELEM_BLUE} =
