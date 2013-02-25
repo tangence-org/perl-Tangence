@@ -1,5 +1,10 @@
 Revision history for Tangence
 
+0.17    CHANGES:
+         * Minimal minor version 2
+         * Expose ->class and ->can_method / ->can_event / ->can_property
+           on both Tangence::Object and Tangence::ObjectProxy
+
 0.16    CHANGES:
          * Bumped wire protocol minor version to 3:
             + Support GETPROPELEM operation
