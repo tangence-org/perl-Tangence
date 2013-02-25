@@ -440,47 +440,4 @@ is_hexstr( $m->{record}, "\x02\x0a\x02\x14\x02\x1e", 'pack_all_sametype' );
 is_deeply( [ $m->unpack_all_sametype( _make_type('int') ) ], [ 10, 20, 30 ], 'unpack_all_sametype' );
 is( length $m->{record}, 0, "eats all stream for all_sametype" );
 
-$VERSION_MINOR = 1;
-# records should no longer work
-
-test_typed_dies "any from record on minor version 1",
-   sig    => "any",
-   data   => TestRecord->new( one => 5, two => 6 ),
-             # DATAMETA_STRUCT
-   stream => "\xe3" . "\x2aTestRecord" .
-                      "\x02\1" .
-                      "\x42" . "\x23one" . "\x23two" .
-                      "\x42" . "\x23int" . "\x23str" .
-             # DATA_RECORD
-             "\xa2" . "\x02\1" .
-                      "\x02\5" .
-                      "\x216";
-
-# Old introspection dict-based class serialisation
-test_specific "object",
-   type   => "obj",
-   data   => $ball,
-             # DATAMETA_CLASS
-   stream => "\xe2" . "\x27t::Ball" .
-                      "\x02\1" .
-                      "\x64" . "\x26events" . "\x62" . "\x27bounced" . "\x61" . "\x24args" . "\x41" . "\x23str" .
-                                                       "\x27destroy" . "\x61" . "\x24args" . "\x40" .
-                               "\x23isa" . "\x42" . "\x27t::Ball" .
-                                                    "\x2dt::Colourable" .
-                               "\x27methods" . "\x61" . "\x26bounce" . "\x62" . "\x24args" . "\x41" . "\x23str" .
-                                                                                "\x23ret" . "\x23str" .
-                               "\x2aproperties" . "\x62" . "\x26colour" . "\x62" . "\x23dim" . "\x211" .
-                                                                                   "\x24type" . "\x23str" .
-                                                           "\x24size" . "\x63" . "\x23dim" . "\x211" .
-                                                                                 "\x25smash" . "\x211" .
-                                                                                 "\x24type" . "\x23int" .
-                      "\x41" . "\x24size" .
-             # DATAMETA_CONSTRUCT
-             "\xe1" . "\x02\1" .
-                      "\x02\1" .
-                      "\x41" . "\x80" .
-             # DATA_OBJ
-             "\x84" . "\0\0\0\1",
-   retdata => "OBJPROXY[id=1]";
-
 done_testing;
