@@ -19,8 +19,8 @@ use Scalar::Util qw( weaken );
 use Tangence::Constants;
 use Tangence::Server::Context;
 
-# We will accept any version back to 1
-use constant VERSION_MINOR_MIN => 1;
+# We will accept any version back to 2
+use constant VERSION_MINOR_MIN => 2;
 
 BEGIN {
    if( eval { require Sub::Name } ) {

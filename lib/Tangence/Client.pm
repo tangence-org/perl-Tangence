@@ -19,7 +19,7 @@ use Tangence::ObjectProxy;
 
 use List::Util qw( max );
 
-use constant VERSION_MINOR_MIN => 1;
+use constant VERSION_MINOR_MIN => 2;
 
 =head1 NAME
 
