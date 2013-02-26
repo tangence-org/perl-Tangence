@@ -1,5 +1,9 @@
 Revision history for Tangence
 
+0.18    BUGFIXES:
+         * Handle void-returning method signatures correctly
+           (RT#83637)
+
 0.17    CHANGES:
          * Minimal minor version 2
          * Expose ->class and ->can_method / ->can_event / ->can_property

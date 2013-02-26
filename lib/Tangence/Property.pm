@@ -13,7 +13,7 @@ use Carp;
 
 use Tangence::Constants;
 
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
 sub build_accessor
 {
