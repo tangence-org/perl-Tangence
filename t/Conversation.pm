@@ -128,6 +128,12 @@ $C2S{CALL} =
 $S2C{CALL} =
    "\x82" . "\0\0\0\x09" .
    "\x2810/hello";
+$C2S{CALL_NORETURN} =
+   "\1" . "\0\0\0\x0b" .
+   "\x02\x01" .
+   "\x28noreturn";
+$S2C{CALL_NORETURN} =
+   "\x82" . "\0\0\0\0";
 
 # MSG_SUBSCRIBE
 $C2S{SUBSCRIBE} =

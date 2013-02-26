@@ -61,6 +61,10 @@ is_oneref( $server, '$server has refcount 1 initially' );
    $server->send_message( $C2S{CALL} );
 
    is_hexstr( $server->recv_message, $S2C{CALL}, 'serverstream after response to CALL' );
+
+   $server->send_message( $C2S{CALL_NORETURN} );
+
+   is_hexstr( $server->recv_message, $S2C{CALL_NORETURN}, 'serverstream after respones to void-returning CALL' );
 }
 
 # Events

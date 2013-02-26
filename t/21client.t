@@ -58,6 +58,16 @@ my $bagproxy;
 
    is( $result, "10/hello", 'result of call_method()' );
 
+   $objproxy->call_method(
+      method => "noreturn",
+      args   => [],
+      on_result => sub {},
+   );
+
+   is_hexstr( $client->recv_message, $C2S{CALL_NORETURN}, 'client stream contains MSG_CALL for void-returning method' );
+
+   $client->send_message( $S2C{CALL_NORETURN} );
+
    dies_ok( sub { $objproxy->call_method(
                     method => "no_such_method",
                     args   => [ 123 ],

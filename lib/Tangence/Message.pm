@@ -567,7 +567,8 @@ sub unpackmeta_class
             $a => Tangence::Meta::Method->new(
                class     => $class,
                name      => $a,
-               ret       => Tangence::Meta::Type->new_from_sig( $b->returns ),
+               ret       => $b->returns ? Tangence::Meta::Type->new_from_sig( $b->returns )
+                                        : undef,
                arguments => [ map {
                   Tangence::Meta::Argument->new(
                      type => Tangence::Meta::Type->new_from_sig( $_ ),
