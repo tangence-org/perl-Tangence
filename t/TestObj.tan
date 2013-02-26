@@ -1,5 +1,6 @@
 class t.TestObj {
   method method(int i, str s) -> str;
+  method noreturn();
 
   event event(int i, str s);
 

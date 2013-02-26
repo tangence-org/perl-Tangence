@@ -78,7 +78,7 @@ is( $obj->describe, 't::TestObj[scalar=12]', '$obj->describe' );
 
    my $methods = $obj->class->methods;
    is_deeply( [ sort keys %$methods ],
-              [qw( method )],
+              [qw( method noreturn )],
               '$obj->class->methods yields all' );
 }
 

@@ -32,6 +32,12 @@ sub method_method
    return "$i/$s";
 }
 
+sub method_noreturn
+{
+   my $self = shift;
+   return;
+}
+
 sub init_prop_scalar { 123 }
 sub init_prop_hash   { { one => 1, two => 2, three => 3 } }
 sub init_prop_queue  { [ 1, 2, 3 ] }

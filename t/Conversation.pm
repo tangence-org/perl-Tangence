@@ -42,14 +42,17 @@ $C2S{GETROOT} =
    "\x40" . "\0\0\0\x0b" .
    "\x2a" . "testscript";
 $S2C{GETROOT} =
-   "\x82" . "\0\0\0\xd0" .
+   "\x82" . "\0\0\0\xde" .
    "\xe2" . "\x29t.TestObj" .
             "\x02\1" .
             "\xa4" . "\x02\1" .
-                     "\x61" . "\x26method"  . "\xa2" . "\x02\2" .
+                     "\x62" . "\x26method"  . "\xa2" . "\x02\2" .
                                                        "\x42" . "\x23int" .
                                                                 "\x23str" .
                                                        "\x23str" .
+                              "\x28noreturn" . "\xa2" . "\x02\2" .
+                                                        "\x40" .
+                                                        "\x20" .
                      "\x61" . "\x25event" . "\xa1" . "\x02\3" .
                                                      "\x42" . "\x23int" .
                                                               "\x23str" .
