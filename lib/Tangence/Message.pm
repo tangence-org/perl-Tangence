@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2010-2012 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2010-2013 -- leonerd@leonerd.org.uk
 
 package Tangence::Message;
 
@@ -30,7 +30,7 @@ use Tangence::Struct;
 use Tangence::Object;
 
 use Encode qw( encode_utf8 decode_utf8 );
-use Scalar::Util qw( weaken );
+use Scalar::Util qw( weaken blessed );
 
 # Normally we don't care about hash key order. But, when writing test scripts
 # that will assert on the serialisation bytes, we do. Setting this to some
@@ -285,7 +285,7 @@ sub pack_obj
    if( !defined $d ) {
       $self->_pack_leader( DATA_OBJECT, 0 );
    }
-   elsif( eval { $d->isa( "Tangence::Object" ) } ) {
+   elsif( blessed $d and $d->isa( "Tangence::Object" ) ) {
       my $id = $d->id;
       my $preamble = "";
 
@@ -296,7 +296,7 @@ sub pack_obj
       $self->_pack_leader( DATA_OBJECT, 4 );
       $self->{record} .= pack( "N", $id );
    }
-   elsif( eval { $d->isa( "Tangence::ObjectProxy" ) } ) {
+   elsif( blessed $d and $d->isa( "Tangence::ObjectProxy" ) ) {
       $self->_pack_leader( DATA_OBJECT, 4 );
       $self->{record} .= pack( "N", $d->id );
    }
@@ -731,7 +731,7 @@ sub pack_any
       # TODO: We'd never choose to pack a number
       $self->pack_str( $d );
    }
-   elsif( eval { $d->isa( "Tangence::Object" ) or $d->isa( "Tangence::ObjectProxy" ) } ) {
+   elsif( blessed $d and $d->isa( "Tangence::Object" ) || $d->isa( "Tangence::ObjectProxy" ) ) {
       $self->pack_obj( $d );
    }
    elsif( my $struct = eval { Tangence::Struct->for_perlname( ref $d ) } ) {
