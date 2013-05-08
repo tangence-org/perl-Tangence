@@ -10,8 +10,8 @@ use Test::HexString;
 use Tangence::Message;
 $Tangence::Message::SORT_HASH_KEYS = 1;
 
-use Tangence::Meta::Type;
-sub _make_type { Tangence::Meta::Type->new_from_sig( shift ) }
+use Tangence::Type;
+sub _make_type { Tangence::Type->new_from_sig( shift ) }
 
 my $VERSION_MINOR = Tangence::Constants->VERSION_MINOR;
 

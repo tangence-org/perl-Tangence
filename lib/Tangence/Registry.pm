@@ -17,6 +17,7 @@ use Tangence::Constants;
 use Tangence::Class;
 use Tangence::Property;
 use Tangence::Struct;
+use Tangence::Type;
 
 use Tangence::Compiler::Parser;
 
@@ -204,6 +205,12 @@ sub make_property
 {
    my $self = shift;
    return Tangence::Property->new( @_ );
+}
+
+sub make_type
+{
+   my $self = shift;
+   return Tangence::Type->new( @_ );
 }
 
 =head1 AUTHOR

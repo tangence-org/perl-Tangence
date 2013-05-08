@@ -45,7 +45,7 @@ sub new
 sub _new_type
 {
    my ( $sig ) = @_;
-   return Tangence::Meta::Type->new_from_sig( $sig );
+   return Tangence::Type->new_from_sig( $sig );
 }
 
 sub declare

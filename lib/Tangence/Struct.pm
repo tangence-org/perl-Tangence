@@ -6,6 +6,7 @@ use base qw( Tangence::Meta::Struct );
 
 use Carp;
 
+use Tangence::Type;
 use Tangence::Meta::Field;
 
 our %STRUCTS_BY_NAME;
@@ -23,7 +24,7 @@ sub new
 sub _new_type
 {
    my ( $sig ) = @_;
-   return Tangence::Meta::Type->new_from_sig( $sig );
+   return Tangence::Type->new_from_sig( $sig );
 }
 
 sub declare
@@ -38,7 +39,7 @@ sub declare
    for( $_ = 0; $_ < @{$args{fields}}; $_ += 2 ) {
       push @fields, Tangence::Meta::Field->new(
          name => $args{fields}[$_],
-         type => Tangence::Meta::Type->new_from_sig( $args{fields}[$_+1] ),
+         type => Tangence::Type->new_from_sig( $args{fields}[$_+1] ),
       );
    }
 

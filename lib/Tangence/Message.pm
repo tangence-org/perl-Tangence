@@ -24,8 +24,8 @@ use Tangence::Meta::Method;
 use Tangence::Meta::Event;
 use Tangence::Meta::Property;
 use Tangence::Meta::Argument;
-use Tangence::Meta::Type;
 use Tangence::Struct;
+use Tangence::Type;
 
 use Tangence::Object;
 
@@ -37,12 +37,12 @@ use Scalar::Util qw( weaken blessed );
 # true value will sort keys first
 our $SORT_HASH_KEYS = 0;
 
-use constant TYPE_ANY      => Tangence::Meta::Type->new( "any" );
-use constant TYPE_INT      => Tangence::Meta::Type->new( "int" );
-use constant TYPE_STR      => Tangence::Meta::Type->new( "str" );
-use constant TYPE_LIST_ANY => Tangence::Meta::Type->new( list => TYPE_ANY );
-use constant TYPE_LIST_STR => Tangence::Meta::Type->new( list => TYPE_STR );
-use constant TYPE_DICT_ANY => Tangence::Meta::Type->new( dict => TYPE_ANY );
+use constant TYPE_ANY      => Tangence::Type->new( "any" );
+use constant TYPE_INT      => Tangence::Type->new( "int" );
+use constant TYPE_STR      => Tangence::Type->new( "str" );
+use constant TYPE_LIST_ANY => Tangence::Type->new( list => TYPE_ANY );
+use constant TYPE_LIST_STR => Tangence::Type->new( list => TYPE_STR );
+use constant TYPE_DICT_ANY => Tangence::Type->new( dict => TYPE_ANY );
 
 # It would be really useful to put this in List::Utils or somesuch
 sub pairmap(&@)
@@ -567,11 +567,11 @@ sub unpackmeta_class
             $a => Tangence::Meta::Method->new(
                class     => $class,
                name      => $a,
-               ret       => $b->returns ? Tangence::Meta::Type->new_from_sig( $b->returns )
+               ret       => $b->returns ? Tangence::Type->new_from_sig( $b->returns )
                                         : undef,
                arguments => [ map {
                   Tangence::Meta::Argument->new(
-                     type => Tangence::Meta::Type->new_from_sig( $_ ),
+                     type => Tangence::Type->new_from_sig( $_ ),
                   )
                } @{ $b->arguments } ],
             )
@@ -585,7 +585,7 @@ sub unpackmeta_class
                name      => $a,
                arguments => [ map {
                   Tangence::Meta::Argument->new(
-                     type => Tangence::Meta::Type->new_from_sig( $_ ),
+                     type => Tangence::Type->new_from_sig( $_ ),
                   )
                } @{ $b->arguments } ],
             )
@@ -598,7 +598,7 @@ sub unpackmeta_class
                class     => $class,
                name      => $a,
                dimension => $b->dimension,
-               type      => Tangence::Meta::Type->new_from_sig( $b->type ),
+               type      => Tangence::Type->new_from_sig( $b->type ),
                smashed   => $b->smashed,
             )
          } %{ $classrec->properties }

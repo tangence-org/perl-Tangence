@@ -14,9 +14,9 @@ use Carp;
 
 use Tangence::Constants;
 
-use Tangence::Meta::Type;
+use Tangence::Type;
 
-use constant TYPE_U8 => Tangence::Meta::Type->new( "u8" );
+use constant TYPE_U8 => Tangence::Type->new( "u8" );
 
 use Tangence::Class;
 
@@ -84,9 +84,9 @@ sub _new_property
    if( my $code = $self->can( "init_prop_$prop" ) ) {
       $initial = $code->( $self );
    }
- 
+
    elsif( $dim == DIM_SCALAR ) {
-      $initial = undef;
+      $initial = $pdef->type->default_value;
    }
    elsif( $dim == DIM_HASH ) {
       $initial = {};
