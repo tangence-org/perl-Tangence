@@ -30,6 +30,7 @@ use Tangence::Type;
 use Tangence::Object;
 
 use Encode qw( encode_utf8 decode_utf8 );
+use List::Util qw( pairmap );
 use Scalar::Util qw( weaken blessed );
 
 # Normally we don't care about hash key order. But, when writing test scripts
@@ -43,13 +44,6 @@ use constant TYPE_STR      => Tangence::Type->new( "str" );
 use constant TYPE_LIST_ANY => Tangence::Type->new( list => TYPE_ANY );
 use constant TYPE_LIST_STR => Tangence::Type->new( list => TYPE_STR );
 use constant TYPE_DICT_ANY => Tangence::Type->new( dict => TYPE_ANY );
-
-# It would be really useful to put this in List::Utils or somesuch
-sub pairmap(&@)
-{
-   my $code = shift;
-   return map { $code->( local $a = shift, local $b = shift ) } 0 .. @_/2-1;
-}
 
 sub new
 {
