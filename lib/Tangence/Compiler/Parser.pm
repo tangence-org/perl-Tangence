@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2011-2012 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2011-2013 -- leonerd@leonerd.org.uk
 
 package Tangence::Compiler::Parser;
 
@@ -10,6 +10,7 @@ use warnings;
 use base qw( Parser::MGC );
 
 use feature qw( switch ); # we like given/when
+no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 
 our $VERSION = '0.18';
 

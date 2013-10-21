@@ -8,6 +8,8 @@ package Tangence::Type;
 use strict;
 use warnings;
 use feature qw( switch );
+no if $] >= 5.017011, warnings => 'experimental::smartmatch';
+
 use base qw( Tangence::Meta::Type );
 
 sub default_value
