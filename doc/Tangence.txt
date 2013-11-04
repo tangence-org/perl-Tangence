@@ -351,8 +351,9 @@ this will always be a 4 byte number.
 
 For structured records, the size gives the count of serialied data members for
 the record. Following the leader will be the ID number of the structure type
-as a string, followed by the given number of data members, in the order
-that the structure type declares.
+as an int, followed by the given number of data members, in the order that the
+structure type declares. The field names are not serialised, as they can be
+inferred from the structure type's definition.
 
 Meta-data items may be embedded within a data stream in order to create
 the object classes and instances which it contains. These metadata items
