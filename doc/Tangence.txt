@@ -1,8 +1,7 @@
 An overview of Tangence
 =======================
 
-Before I go much further, I need to write a lot more about what Tangence
-is. Tangence is all of the following:
+Tangence is all of the following:
 
  1. A single server/multiple client protocol for sharing information
     about objects.
