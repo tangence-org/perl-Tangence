@@ -304,6 +304,9 @@ sub _ver_can_getpropelem { shift->minor_version >= 3 }
 # wire protocol supports MSG_WATCH_ITER and iterators
 sub _ver_can_iter { shift->minor_version >= 3 }
 
+# wire protocol uses typed smash data
+sub _ver_can_typed_smash { shift->minor_version >= 4 }
+
 =head1 AUTHOR
 
 Paul Evans <leonerd@leonerd.org.uk>

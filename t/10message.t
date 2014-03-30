@@ -354,7 +354,7 @@ test_typed "object",
              # DATAMETA_CONSTRUCT
              "\xe1" . "\x02\1" .
                       "\x02\2" .
-                      "\x41" . "\x80" .
+                      "\x41" . "\x02\0" .
              # DATA_OBJ
              "\x84" . "\0\0\0\1",
    retdata => "OBJPROXY[id=1]";

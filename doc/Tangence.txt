@@ -373,12 +373,13 @@ Following each metadata item is an encoding of its arguments.
 DATAMETA_CONSTRUCT:
   Object ID:    int
   Class ID:     int
-  Smash values: 0 or more bytes, data encoded (list)
+  Smash values: 0 or more bytes, encoded per type (in a list container)
 
   If the object class defines smash properties, the construct message will
   also contain the values for the smash properties. These will be sent in
   a list, one value per property, in the same order as the object class's
-  schema defines the smash keys.
+  schema defines the smash keys. Each will be encoded as per its declared
+  type.
 
 DATAMETA_CLASS:
   Class name:   string

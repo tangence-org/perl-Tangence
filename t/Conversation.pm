@@ -42,7 +42,7 @@ $C2S{GETROOT} =
    "\x40" . "\0\0\0\x0b" .
    "\x2a" . "testscript";
 $S2C{GETROOT} =
-   "\x82" . "\0\0\0\xde" .
+   "\x82" . "\0\0\0\xdd" .
    "\xe2" . "\x29t.TestObj" .
             "\x02\1" .
             "\xa4" . "\x02\1" .
@@ -88,7 +88,7 @@ $S2C{GETROOT} =
             "\x41" . "\x28s_scalar" .
    "\xe1" . "\x02\1" .
             "\x02\1" .
-            "\x41" . "\x23456" . # TODO: should be \x04..
+            "\x41" . "\x04\x01\xc8" .
    "\x84" . "\0\0\0\1";
 
 # MSG_GETREGISTRY

@@ -13,8 +13,8 @@ sub new
 
    my $self = $class->SUPER::new( %args );
 
-   $self->set_prop_colour( $args{colour} );
-   $self->set_prop_size( $args{size} );
+   $self->set_prop_colour( $args{colour} ) if defined $args{colour};
+   $self->set_prop_size( $args{size} ) if defined $args{size};
 
    return $self;
 }

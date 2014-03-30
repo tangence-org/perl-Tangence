@@ -287,18 +287,26 @@ sub packmeta_construct
    $self->pack_int( $id );
    $self->pack_int( $stream->peer_hasclass->{$class->perlname}->[2] );
 
-   my $smasharr = [];
-
    if( @$smashkeys ) {
       my $smashdata = $obj->smash( $smashkeys );
-      $smasharr = [ map { $smashdata->{$_} } @$smashkeys ];
 
       for my $prop ( @$smashkeys ) {
          $stream->_install_watch( $obj, $prop );
       }
-   }
 
-   TYPE_LIST_ANY->pack_value( $self, $smasharr );
+      if( $stream->_ver_can_typed_smash ) {
+         $self->_pack_leader( DATA_LIST, scalar @$smashkeys );
+         foreach my $prop ( @$smashkeys ) {
+            $class->property( $prop )->type->pack_value( $self, $smashdata->{$prop} );
+         }
+      }
+      else {
+         TYPE_LIST_ANY->pack_value( $self, [ map { $smashdata->{$_} } @$smashkeys ] );
+      }
+   }
+   else {
+      $self->_pack_leader( DATA_LIST, 0 );
+   }
 
    weaken( my $weakstream = $stream );
    $stream->peer_hasobj->{$id} = $obj->subscribe_event( 
@@ -314,15 +322,28 @@ sub unpackmeta_construct
 
    my $id = $self->unpack_int();
    my $classid = $self->unpack_int();
-   my $class = $stream->message_state->{id2class}{$classid};
-   my $smasharr = TYPE_LIST_ANY->unpack_value( $self );
+   my $class_perlname = $stream->message_state->{id2class}{$classid};
 
-   my $smashkeys = $stream->peer_hasclass->{$class}->[1];
+   my ( $class, $smashkeys ) = @{ $stream->peer_hasclass->{$class_perlname} };
+
+   my $smasharr;
+   if( $stream->_ver_can_typed_smash ) {
+      my ( $type, $num ) = $self->_unpack_leader;
+      $type == DATA_LIST or croak "Expected to unpack a LIST of smashed data";
+      $num == @$smashkeys or croak "Expected to unpack a LIST of " . ( scalar @$smashkeys ) . " elements";
+
+      foreach my $prop ( @$smashkeys ) {
+         push @$smasharr, $class->property( $prop )->type->unpack_value( $self );
+      }
+   }
+   else {
+      $smasharr = TYPE_LIST_ANY->unpack_value( $self );
+   }
 
    my $smashdata;
    $smashdata->{$smashkeys->[$_]} = $smasharr->[$_] for 0 .. $#$smasharr;
 
-   $stream->make_proxy( $id, $class, $smashdata );
+   $stream->make_proxy( $id, $class_perlname, $smashdata );
 }
 
 sub packmeta_class
