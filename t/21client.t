@@ -12,9 +12,7 @@ use Tangence::Constants;
 
 use t::Conversation;
 
-use Tangence::Type;
-use constant TYPE_INT => Tangence::Type->new( "int" );
-use constant TYPE_STR => Tangence::Type->new( "str" );
+use Tangence::Types;
 
 $Tangence::Message::SORT_HASH_KEYS = 1;
 

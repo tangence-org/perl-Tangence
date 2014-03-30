@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2010-2013 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2010-2014 -- leonerd@leonerd.org.uk
 
 package Tangence::Object;
 
@@ -14,9 +14,7 @@ use Carp;
 
 use Tangence::Constants;
 
-use Tangence::Type;
-
-use constant TYPE_U8 => Tangence::Type->new( "u8" );
+use Tangence::Types;
 
 use Tangence::Class;
 

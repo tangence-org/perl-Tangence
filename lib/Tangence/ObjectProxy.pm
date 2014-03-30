@@ -14,9 +14,7 @@ use Carp;
 
 use Tangence::Constants;
 
-use Tangence::Type;
-
-use constant TYPE_U8 => Tangence::Type->new( "u8" );
+use Tangence::Types;
 
 use Scalar::Util qw( weaken );
 
