@@ -457,12 +457,12 @@ sub handle_request_CALL
    my $m = "method_$method";
    $self->can( $m ) or die "Object cannot run method $method\n";
 
-   my @args = $message->unpack_all_typed( [ $mdef->argtypes ] );
+   my @args = map { $_->unpack_value( $message ) } $mdef->argtypes;
 
    my $result = $self->$m( $ctx, @args );
 
    my $response = Tangence::Message->new( $ctx->stream, MSG_RESULT );
-   $response->pack_typed( $mdef->ret, $result ) if $mdef->ret;
+   $mdef->ret->pack_value( $response, $result ) if $mdef->ret;
 
    return $response;
 }
@@ -474,10 +474,14 @@ sub generate_message_EVENT
 
    my $edef = $self->can_event( $event ) or die "Object cannot respond to event $event";
 
-   return Tangence::Message->new( $conn, MSG_EVENT )
+   my $response = Tangence::Message->new( $conn, MSG_EVENT )
       ->pack_int( $self->id )
-      ->pack_str( $event )
-      ->pack_all_typed( [ $edef->argtypes ], @args );
+      ->pack_str( $event );
+
+   my @argtypes = $edef->argtypes;
+   $argtypes[$_]->pack_value( $response, $args[$_] ) for 0..$#argtypes;
+
+   return $response;
 }
 
 sub handle_request_GETPROP
@@ -494,8 +498,10 @@ sub handle_request_GETPROP
 
    my $result = $self->$m();
 
-   return Tangence::Message->new( $ctx->stream, MSG_RESULT )
-      ->pack_typed( $pdef->overall_type, $result );
+   my $response = Tangence::Message->new( $ctx->stream, MSG_RESULT );
+   $pdef->overall_type->pack_value( $response, $result );
+
+   return $response;
 }
 
 sub handle_request_GETPROPELEM
@@ -524,8 +530,10 @@ sub handle_request_GETPROPELEM
       die "Property $prop cannot fetch elements";
    }
 
-   return Tangence::Message->new( $ctx->stream, MSG_RESULT )
-      ->pack_typed( $pdef->type, $result );
+   my $response = Tangence::Message->new( $ctx->stream, MSG_RESULT );
+   $pdef->type->pack_value( $response, $result );
+
+   return $response;
 }
 
 sub handle_request_SETPROP
@@ -534,9 +542,10 @@ sub handle_request_SETPROP
    my ( $ctx, $message ) = @_;
 
    my $prop  = $message->unpack_str();
-   my $value = $message->unpack_any();
 
    my $pdef = $self->can_property( $prop ) or die "Object does not have property $prop\n";
+
+   my $value = $pdef->type->unpack_value( $message );
 
    my $m = "set_prop_$prop";
    $self->can( $m ) or die "Object cannot set property $prop\n";
@@ -556,13 +565,13 @@ sub generate_message_UPDATE
 
    my $message = Tangence::Message->new( $conn, MSG_UPDATE )
       ->pack_int( $self->id )
-      ->pack_str( $prop )
-      ->pack_typed( TYPE_U8, $how );
+      ->pack_str( $prop );
+   TYPE_U8->pack_value( $message, $how );
 
    my $dimname = DIMNAMES->[$dim];
    if( $how == CHANGE_SET ) {
       my ( $value ) = @args;
-      $message->pack_typed( $pdef->overall_type, $value );
+      $pdef->overall_type->pack_value( $message, $value );
    }
    elsif( my $code = $self->can( "_generate_message_UPDATE_$dimname" ) ) {
       $code->( $self, $message, $how, $pdef, @args );
@@ -590,7 +599,7 @@ sub _generate_message_UPDATE_hash
    if( $how == CHANGE_ADD ) {
       my ( $key, $value ) = @args;
       $message->pack_str( $key );
-      $message->pack_typed( $pdef->type, $value );
+      $pdef->type->pack_value( $message, $value );
    }
    elsif( $how == CHANGE_DEL ) {
       my ( $key ) = @args;
@@ -653,7 +662,7 @@ sub _generate_message_UPDATE_objset
 
    if( $how == CHANGE_ADD ) {
       my ( $value ) = @args;
-      $message->pack_typed( $pdef->type, $value );
+      $pdef->type->pack_value( $message, $value );
    }
    elsif( $how == CHANGE_DEL ) {
       my ( $id ) = @args;

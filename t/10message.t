@@ -227,11 +227,11 @@ sub test_typed
    my $type = _make_type $args{sig};
 
    my $m = Tangence::Message->new( TestStream->new );
-   is( $m->pack_typed( $type, $args{data} ), $m, "pack_typed returns \$m for $name" );
+   is( $type->pack_value( $m, $args{data} ), $m, "\$type->pack_value returns \$m for $name" );
 
-   is_hexstr( $m->{record}, $args{stream}, "pack_typed $name" );
+   is_hexstr( $m->{record}, $args{stream}, "pack typed $name" );
 
-   is_deeply( $m->unpack_typed( $type ), $args{data}, "unpack_typed $name" );
+   is_deeply( $type->unpack_value( $m ), $args{data}, "\$type->unpack_value $name" );
    is( length $m->{record}, 0, "eats all stream for $name" );
 }
 
@@ -246,14 +246,14 @@ sub test_typed_dies
    dies_ok( sub {
       my $m = Tangence::Message->new( TestStream->new );
 
-      $m->pack_typed( $type, $args{data} );
-   }, "pack_typed($sig) $name dies" ) if exists $args{data};
+      $type->pack_value( $m, $args{data} );
+   }, "\$type->pack_value for ($sig) $name dies" ) if exists $args{data};
 
    dies_ok( sub {
       my $m = Tangence::Message->new( TestStream->new, undef, $args{stream} );
 
-      $m->unpack_typed( $type )
-   }, "unpack_typed($sig) $name dies" ) if exists $args{stream};
+      $type->unpack_value( $m )
+   }, "\$type->unpack_value for ($sig) $name dies" ) if exists $args{stream};
 }
 
 test_typed "bool f",
@@ -423,14 +423,6 @@ test_typed "any (record)",
                       "\x214";
 
 my $m;
-
-$m = Tangence::Message->new( 0 );
-$m->pack_all_typed( [ map _make_type($_), 'int', 'str', 'bool' ], 10, "hello", "true" );
-
-is_hexstr( $m->{record}, "\x02\x0a\x25hello\x01", 'pack_all_typed' );
-
-is_deeply( [ $m->unpack_all_typed( [ map _make_type($_), 'int', 'str', 'bool' ] ) ], [ 10, "hello", 1 ], 'unpack_all_typed' );
-is( length $m->{record}, 0, "eats all stream for all_typed" );
 
 $m = Tangence::Message->new( 0 );
 $m->pack_all_sametype( _make_type('int'), 10, 20, 30 );

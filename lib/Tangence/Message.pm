@@ -192,17 +192,6 @@ my %pack_int_format = (
    DATANUM_SINT64, [ "q>", 8 ],
 );
 
-my %int_sigs = (
-   u8  => DATANUM_UINT8,
-   s8  => DATANUM_SINT8,
-   u16 => DATANUM_UINT16,
-   s16 => DATANUM_SINT16,
-   u32 => DATANUM_UINT32,
-   s32 => DATANUM_SINT32,
-   u64 => DATANUM_UINT64,
-   s64 => DATANUM_SINT64,
-);
-
 sub _best_int_type_for
 {
    my ( $n ) = @_;
@@ -223,11 +212,11 @@ sub _best_int_type_for
 sub pack_int
 {
    my $self = shift;
-   my ( $d ) = @_;
+   my ( $d, $subtype ) = @_;
 
    defined $d or croak "cannot pack_int(undef)";
    ref $d and croak "$d is not a number";
-   my $subtype = _best_int_type_for( $d );
+   $subtype ||= _best_int_type_for( $d );
    $self->_pack_leader( DATA_NUMBER, $subtype );
    $self->{record} .= pack( $pack_int_format{$subtype}[0], $d );
    return $self;
@@ -236,10 +225,12 @@ sub pack_int
 sub unpack_int
 {
    my $self = shift;
+   my ( $subtype ) = @_;
    my ( $type, $num ) = $self->_unpack_leader();
 
    $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
    exists $pack_int_format{$num} or croak "Expected an integer subtype but got $num";
+   !$subtype or $subtype == $num or croak "Expected integer subtype $subtype, got $num";
    my ( $n ) = unpack( $pack_int_format{$num}[0], $self->{record} );
    substr( $self->{record}, 0, $pack_int_format{$num}[1] ) = "";
    return $n;
@@ -327,7 +318,7 @@ sub pack_list
    my $member_type = $listtype->member_type;
 
    $self->_pack_leader( DATA_LIST, scalar @$list );
-   $self->pack_typed( $member_type, $_ ) for @$list;
+   $member_type->pack_value( $self, $_ ) for @$list;
 
    return $self;
 }
@@ -343,7 +334,7 @@ sub unpack_list
    my $member_type = $listtype->member_type;
    my @a;
    foreach ( 1 .. $num ) {
-      push @a, $self->unpack_typed( $member_type );
+      push @a, $member_type->unpack_value( $self );
    }
    return \@a;
 }
@@ -360,7 +351,7 @@ sub pack_dict
    @keys = sort @keys if $SORT_HASH_KEYS;
 
    $self->_pack_leader( DATA_DICT, scalar @keys );
-   $self->pack_str( $_ ) and $self->pack_typed( $member_type, $dict->{$_} ) for @keys;
+   $self->pack_str( $_ ) and $member_type->pack_value( $self, $dict->{$_} ) for @keys;
 
    return $self;
 }
@@ -377,7 +368,7 @@ sub unpack_dict
    my %h;
    foreach ( 1 .. $num ) {
       my $key = $self->unpack_str();
-      $h{$key} = $self->unpack_typed( $member_type );
+      $h{$key} = $member_type->unpack_value( $self );
    }
    return \%h;
 }
@@ -399,7 +390,7 @@ sub pack_record
    $self->pack_int( $stream->peer_hasstruct->{$struct->perlname}->[1] );
    foreach my $field ( @fields ) {
       my $fieldname = $field->name;
-      $self->pack_typed( $field->type, $rec->$fieldname );
+      $field->type->pack_value( $self, $rec->$fieldname );
    }
 
    return $self;
@@ -429,7 +420,7 @@ sub unpack_record
 
    my %values;
    foreach my $field ( $struct->fields ) {
-      $values{$field->name} = $self->unpack_typed( $field->type );
+      $values{$field->name} = $field->type->unpack_value( $self );
    }
 
    return $struct->perlname->new( %values );
@@ -464,7 +455,7 @@ sub packmeta_construct
       }
    }
 
-   $self->pack_typed( TYPE_LIST_ANY, $smasharr );
+   TYPE_LIST_ANY->pack_value( $self, $smasharr );
 
    weaken( my $weakstream = $stream );
    $stream->peer_hasobj->{$id} = $obj->subscribe_event( 
@@ -481,7 +472,7 @@ sub unpackmeta_construct
    my $id = $self->unpack_int();
    my $classid = $self->unpack_int();
    my $class = $stream->message_state->{id2class}{$classid};
-   my $smasharr = $self->unpack_typed( TYPE_LIST_ANY );
+   my $smasharr = TYPE_LIST_ANY->unpack_value( $self );
 
    my $smashkeys = $stream->peer_hasclass->{$class}->[1];
 
@@ -539,7 +530,7 @@ sub packmeta_class
    );
    $self->pack_any( $classrec );
 
-   $self->pack_typed( TYPE_LIST_STR, $smashkeys );
+   TYPE_LIST_STR->pack_value( $self, $smashkeys );
 
    $stream->peer_hasclass->{$class->perlname} = [ $class, $smashkeys, $classid ];
 }
@@ -610,7 +601,7 @@ sub unpackmeta_class
 
    my $perlname = $class->perlname;
 
-   my $smashkeys = $self->unpack_typed( TYPE_LIST_STR );
+   my $smashkeys = TYPE_LIST_STR->unpack_value( $self );
 
    $stream->peer_hasclass->{$perlname} = [ $class, $smashkeys, $classid, $class ];
    if( defined $classid ) {
@@ -632,8 +623,8 @@ sub packmeta_struct
    my $structid = ++$stream->message_state->{next_structid};
    $self->pack_str( $struct->name );
    $self->pack_int( $structid );
-   $self->pack_typed( TYPE_LIST_STR, [ map { $_->name } @fields ] );
-   $self->pack_typed( TYPE_LIST_STR, [ map { $_->type->sig } @fields ] );
+   TYPE_LIST_STR->pack_value( $self, [ map { $_->name } @fields ] );
+   TYPE_LIST_STR->pack_value( $self, [ map { $_->type->sig } @fields ] );
 
    $stream->peer_hasstruct->{$struct->perlname} = [ $struct, $structid ];
 }
@@ -646,8 +637,8 @@ sub unpackmeta_struct
 
    my $name     = $self->unpack_str();
    my $structid = $self->unpack_int();
-   my $names    = $self->unpack_typed( TYPE_LIST_STR );
-   my $types    = $self->unpack_typed( TYPE_LIST_STR );
+   my $names    = TYPE_LIST_STR->unpack_value( $self );
+   my $types    = TYPE_LIST_STR->unpack_value( $self );
 
    my $struct = Tangence::Struct->new( name => $name );
    if( !$struct->defined ) {
@@ -660,55 +651,6 @@ sub unpackmeta_struct
 
    $stream->peer_hasstruct->{$struct->perlname} = [ $struct, $structid ];
    $stream->message_state->{id2struct}{$structid} = $struct;
-}
-
-# Used by pack_typed
-sub pack_prim
-{
-   my $self = shift;
-   my ( $d, $type ) = @_;
-
-   my $sig = $type->sig;
-
-   if( my $code = $self->can( "pack_$sig" ) ) {
-      $code->( $self, $d );
-   }
-   elsif( exists $int_sigs{$sig} ) {
-      ref $d and croak "$d is not a number";
-      my $subtype = $int_sigs{$sig};
-      $self->_pack_leader( DATA_NUMBER, $subtype );
-      $self->{record} .= pack( $pack_int_format{$subtype}[0], $d );
-   }
-   else {
-      croak "Unrecognised type signature $sig";
-   }
-
-   return $self;
-}
-
-# Used by unpack_typed
-sub unpack_prim
-{
-   my $self = shift;
-   my ( $type ) = @_;
-
-   my $sig = $type->sig;
-
-   if( my $code = $self->can( "unpack_$sig" ) ) {
-      return $code->( $self );
-   }
-   elsif( exists $int_sigs{$sig} ) {
-      my ( $type, $num ) = $self->_unpack_leader();
-
-      $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
-      $num == $int_sigs{$sig} or croak "Expected subtype $int_sigs{$sig} but got $num";
-      my ( $n ) = unpack( $pack_int_format{$num}[0], $self->{record} );
-      substr( $self->{record}, 0, $pack_int_format{$num}[1] ) = "";
-      return $n;
-   }
-   else {
-      croak "Unrecognised type signature $sig";
-   }
 }
 
 sub pack_any
@@ -775,47 +717,12 @@ sub unpack_any
    }
 }
 
-sub pack_typed
-{
-   my $self = shift;
-   my ( $type, $d ) = @_;
-
-   my $code = $self->can( "pack_" . $type->aggregate ) or die "Unrecognised type aggregation " . $type->aggregate;
-   return $code->( $self, $d, $type );
-}
-
-sub unpack_typed
-{
-   my $self = shift;
-   my $type = shift;
-
-   my $code = $self->can( "unpack_" . $type->aggregate ) or die "Unrecognised type aggregation " . $type->aggregate;
-   return $code->( $self, $type );
-}
-
-sub pack_all_typed
-{
-   my $self = shift;
-   my ( $types, @args ) = @_;
-
-   $self->pack_typed( $_, shift @args ) for @$types;
-   return $self;
-}
-
-sub unpack_all_typed
-{
-   my $self = shift;
-   my ( $types ) = @_;
-
-   return map { $self->unpack_typed( $_ ) } @$types;
-}
-
 sub pack_all_sametype
 {
    my $self = shift;
    my $type = shift;
 
-   $self->pack_typed( $type, $_ ) for @_;
+   $type->pack_value( $self, $_ ) for @_;
 
    return $self;
 }
@@ -825,7 +732,7 @@ sub unpack_all_sametype
    my $self = shift;
    my ( $type ) = @_;
    my @data;
-   push @data, $self->unpack_typed( $type ) while length $self->{record};
+   push @data, $type->unpack_value( $self ) while length $self->{record};
 
    return @data;
 }

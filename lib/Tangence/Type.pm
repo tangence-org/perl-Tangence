@@ -45,11 +45,39 @@ use base qw( Tangence::Type );
 
 sub default_value { [] }
 
+sub pack_value
+{
+   my $self = shift;
+   my ( $message, $value ) = @_;
+   $message->pack_list( $value, $self );
+}
+
+sub unpack_value
+{
+   my $self = shift;
+   my ( $message ) = @_;
+   return $message->unpack_list( $self );
+}
+
 package
    Tangence::Type::Dict;
 use base qw( Tangence::Type );
 
 sub default_value { {} }
+
+sub pack_value
+{
+   my $self = shift;
+   my ( $message, $value ) = @_;
+   $message->pack_dict( $value, $self );
+}
+
+sub unpack_value
+{
+   my $self = shift;
+   my ( $message ) = @_;
+   return $message->unpack_dict( $self );
+}
 
 =head1 AUTHOR
 
