@@ -66,17 +66,17 @@ sub _best_int_type_for
 {
    my ( $n ) = @_;
 
-   # TODO: Consider 64bit values
-
    if( $n < 0 ) {
       return DATANUM_SINT8  if $n >= -0x80;
       return DATANUM_SINT16 if $n >= -0x8000;
-      return DATANUM_SINT32;
+      return DATANUM_SINT32 if $n >= -0x80000000;
+      return DATANUM_SINT64;
    }
 
    return DATANUM_UINT8  if $n <= 0xff;
    return DATANUM_UINT16 if $n <= 0xffff;
-   return DATANUM_UINT32;
+   return DATANUM_UINT32 if $n <= 0xffffffff;
+   return DATANUM_UINT64;
 }
 
 sub pack_value
