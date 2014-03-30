@@ -22,7 +22,7 @@ use Tangence::Constants;
 use Tangence::Class;
 use Tangence::Meta::Method;
 use Tangence::Meta::Event;
-use Tangence::Meta::Property;
+use Tangence::Property;
 use Tangence::Meta::Argument;
 use Tangence::Struct;
 use Tangence::Types;
@@ -300,7 +300,7 @@ sub packmeta_construct
       if( $stream->_ver_can_typed_smash ) {
          $self->_pack_leader( DATA_LIST, scalar @$smashkeys );
          foreach my $prop ( @$smashkeys ) {
-            $class->property( $prop )->type->pack_value( $self, $smashdata->{$prop} );
+            $class->property( $prop )->overall_type->pack_value( $self, $smashdata->{$prop} );
          }
       }
       else {
@@ -336,7 +336,7 @@ sub unpackmeta_construct
       $num == @$smashkeys or croak "Expected to unpack a LIST of " . ( scalar @$smashkeys ) . " elements";
 
       foreach my $prop ( @$smashkeys ) {
-         push @$smasharr, $class->property( $prop )->type->unpack_value( $self );
+         push @$smasharr, $class->property( $prop )->overall_type->unpack_value( $self );
       }
    }
    else {
@@ -446,7 +446,9 @@ sub unpackmeta_class
 
       properties => {
          pairmap {
-            $a => Tangence::Meta::Property->new(
+            # Need to use non-Meta:: Property so it can generate overall type
+            # using Tangence::Type instead of Tangence::Meta::Type
+            $a => Tangence::Property->new(
                class     => $class,
                name      => $a,
                dimension => $b->dimension,

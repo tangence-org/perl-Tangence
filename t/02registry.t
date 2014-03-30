@@ -13,6 +13,8 @@ use Tangence::Constants;
 use Tangence::Registry;
 use t::TestObj;
 
+$Tangence::Message::SORT_HASH_KEYS = 1;
+
 my $registry = Tangence::Registry->new(
    tanfile => "t/TestObj.tan",
 );
@@ -112,11 +114,11 @@ is( $obj->describe, 't::TestObj[scalar=12]', '$obj->describe' );
 
    my $properties = $obj->class->properties;
    is_deeply( [ sort keys %$properties ],
-              [qw( array hash items objset queue s_scalar scalar )],
+              [qw( array hash items objset queue s_array s_scalar scalar )],
               '$obj->class->properties yields all' );
 
    is_deeply( $obj->smashkeys,
-              [qw( s_scalar )],
+              [qw( s_array s_scalar )],
               '$obj->smashkeys' );
 }
 

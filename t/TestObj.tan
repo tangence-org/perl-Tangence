@@ -12,6 +12,7 @@ class t.TestObj {
   prop items  = list(obj);
 
   smashed prop s_scalar = int;
+  smashed prop s_array  = array of int;
 }
 
 struct t.TestStruct {
