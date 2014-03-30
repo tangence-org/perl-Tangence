@@ -425,6 +425,7 @@ use Tangence::Constants;
 # We can't use Tangence::Types here without a dependency cycle
 # However, it's OK to create even TYPE_ANY right here, because the 'any' class
 # now exists.
+use constant TYPE_BOOL  => Tangence::Type->new( 'bool' );
 use constant TYPE_INT   => Tangence::Type->new( 'int' );
 use constant TYPE_FLOAT => Tangence::Type->new( 'float' );
 use constant TYPE_STR   => Tangence::Type->new( 'str' );
@@ -482,7 +483,10 @@ sub unpack_value
 
    if( $type == DATA_NUMBER ) {
       my ( undef, $num ) = $message->_unpack_leader( "peek" );
-      if( $num >= DATANUM_UINT8 and $num <= DATANUM_SINT64 ) {
+      if( $num >= DATANUM_BOOLFALSE and $num <= DATANUM_BOOLTRUE ) {
+         return TYPE_BOOL->unpack_value( $message );
+      }
+      elsif( $num >= DATANUM_UINT8 and $num <= DATANUM_SINT64 ) {
          return TYPE_INT->unpack_value( $message );
       }
       elsif( $num >= DATANUM_FLOAT16 and $num <= DATANUM_FLOAT64 ) {
