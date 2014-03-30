@@ -216,20 +216,6 @@ sub unpack_str
    return TYPE_STR->unpack_value( $self );
 }
 
-sub pack_obj
-{
-   my $self = shift;
-   my ( $d ) = @_;
-   TYPE_OBJ->pack_value( $self, $d );
-   return $self;
-}
-
-sub unpack_obj
-{
-   my $self = shift;
-   return TYPE_OBJ->unpack_value( $self );
-}
-
 sub pack_record
 {
    my $self = shift;
@@ -518,14 +504,14 @@ sub pack_any
    my $stream = $self->{stream};
 
    if( !defined $d ) {
-      $self->pack_obj( undef );
+      TYPE_OBJ->pack_value( $self, undef );
    }
    elsif( !ref $d ) {
       # TODO: We'd never choose to pack a number
       $self->pack_str( $d );
    }
    elsif( blessed $d and $d->isa( "Tangence::Object" ) || $d->isa( "Tangence::ObjectProxy" ) ) {
-      $self->pack_obj( $d );
+      TYPE_OBJ->pack_value( $self, $d );
    }
    elsif( my $struct = eval { Tangence::Struct->for_perlname( ref $d ) } ) {
       $self->pack_record( $d, $struct );
@@ -558,7 +544,7 @@ sub unpack_any
       return $self->unpack_str();
    }
    elsif( $type == DATA_OBJECT ) {
-      return $self->unpack_obj();
+      return TYPE_OBJ->unpack_value( $self );
    }
    elsif( $type == DATA_LIST ) {
       return TYPE_LIST_ANY->unpack_value( $self );

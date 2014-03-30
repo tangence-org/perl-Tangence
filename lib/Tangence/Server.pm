@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2011-2013 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2011-2014 -- leonerd@leonerd.org.uk
 
 package Tangence::Server;
 
@@ -17,6 +17,7 @@ use Carp;
 use Scalar::Util qw( weaken );
 
 use Tangence::Constants;
+use Tangence::Types;
 use Tangence::Server::Context;
 
 # We will accept any version back to 2
@@ -445,9 +446,10 @@ sub handle_request_GETROOT
 
    $self->identity( $identity );
 
-   $ctx->respond( Tangence::Message->new( $self, MSG_RESULT )
-      ->pack_obj( $root )
-   );
+   my $response = Tangence::Message->new( $self, MSG_RESULT );
+   TYPE_OBJ->pack_value( $response, $root );
+
+   $ctx->respond( $response );
 }
 
 sub handle_request_GETREGISTRY
@@ -457,9 +459,10 @@ sub handle_request_GETREGISTRY
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
-   $ctx->respond( Tangence::Message->new( $self, MSG_RESULT )
-      ->pack_obj( $self->registry )
-   );
+   my $response = Tangence::Message->new( $self, MSG_RESULT );
+   TYPE_OBJ->pack_value( $response, $self->registry );
+
+   $ctx->respond( $response );
 }
 
 my %change_values = (

@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2010-2013 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2010-2014 -- leonerd@leonerd.org.uk
 
 package Tangence::Client;
 
@@ -15,6 +15,7 @@ our $VERSION = '0.18';
 use Carp;
 
 use Tangence::Constants;
+use Tangence::Types;
 use Tangence::ObjectProxy;
 
 use List::Util qw( max );
@@ -209,7 +210,7 @@ sub tangence_initialised
          my $type = $message->type;
 
          if( $type == MSG_RESULT ) {
-            $self->rootobj( $message->unpack_obj() );
+            $self->rootobj( TYPE_OBJ->unpack_value( $message ) );
             $args{on_root}->( $self->rootobj ) if $args{on_root};
          }
          elsif( $type == MSG_ERROR ) {
@@ -230,7 +231,7 @@ sub tangence_initialised
          my $type = $message->type;
 
          if( $type == MSG_RESULT ) {
-            $self->registry( $message->unpack_obj() );
+            $self->registry( TYPE_OBJ->unpack_value( $message ) );
             $args{on_registry}->( $self->registry ) if $args{on_registry};
          }
          elsif( $type == MSG_ERROR ) {

@@ -168,44 +168,6 @@ test_specific_dies "string from undef",
    data   => undef,
    stream => "\x80";
 
-test_specific "object",
-   type   => "obj",
-   data   => $ball,
-             # DATAMETA_CLASS
-   stream => "\xe2" . "\x2ct.Colourable" .
-                      "\x02\1" .
-                      "\xa4" . "\x02\1" .
-                               "\x60" .
-                               "\x60" .
-                               "\x61" . "\x26colour" . "\xa3" . "\x02\4" .
-                                                                "\x02\1" .
-                                                                "\x23str" .
-                                                                "\x00" .
-                               "\x40" .
-                      "\x40" .
-             # DATAMETA_CLASS
-             "\xe2" . "\x26t.Ball" .
-                      "\x02\2" .
-                      "\xa4" . "\x02\1" .
-                               "\x61" . "\x26bounce" . "\xa2" . "\x02\2" .
-                                                                "\x41" . "\x23str" .
-                                                                "\x23str" .
-                               "\x61" . "\x27bounced" . "\xa1" . "\x02\3" .
-                                                                 "\x41" . "\x23str" .
-                               "\x61" . "\x24size" . "\xa3" . "\x02\4" .
-                                                              "\x02\1" .
-                                                              "\x23int" .
-                                                              "\x01" .
-                               "\x41" . "\x2ct.Colourable" .
-                      "\x41" . "\x24size" .
-             # DATAMETA_CONSTRUCT
-             "\xe1" . "\x02\1" .
-                      "\x02\2" .
-                      "\x41" . "\x80" .
-             # DATA_OBJ
-             "\x84" . "\0\0\0\1",
-   retdata => "OBJPROXY[id=1]";
-
 test_specific "record",
    type   => "record",
    data   => TestRecord->new( one => 1, two => 2 ),
@@ -231,7 +193,7 @@ sub test_typed
 
    is_hexstr( $m->{record}, $args{stream}, "pack typed $name" );
 
-   is_deeply( $type->unpack_value( $m ), $args{data}, "\$type->unpack_value $name" );
+   is_deeply( $type->unpack_value( $m ), exists $args{retdata} ? $args{retdata} : $args{data}, "\$type->unpack_value $name" );
    is( length $m->{record}, 0, "eats all stream for $name" );
 }
 
@@ -358,6 +320,44 @@ test_typed_dies "dict(string) from HASH(ARRAY)",
    sig    => 'dict(str)',
    data   => { splot => [] },
    stream => "\x61\x65splot\x40";
+
+test_typed "object",
+   sig    => "obj",
+   data   => $ball,
+             # DATAMETA_CLASS
+   stream => "\xe2" . "\x2ct.Colourable" .
+                      "\x02\1" .
+                      "\xa4" . "\x02\1" .
+                               "\x60" .
+                               "\x60" .
+                               "\x61" . "\x26colour" . "\xa3" . "\x02\4" .
+                                                                "\x02\1" .
+                                                                "\x23str" .
+                                                                "\x00" .
+                               "\x40" .
+                      "\x40" .
+             # DATAMETA_CLASS
+             "\xe2" . "\x26t.Ball" .
+                      "\x02\2" .
+                      "\xa4" . "\x02\1" .
+                               "\x61" . "\x26bounce" . "\xa2" . "\x02\2" .
+                                                                "\x41" . "\x23str" .
+                                                                "\x23str" .
+                               "\x61" . "\x27bounced" . "\xa1" . "\x02\3" .
+                                                                 "\x41" . "\x23str" .
+                               "\x61" . "\x24size" . "\xa3" . "\x02\4" .
+                                                              "\x02\1" .
+                                                              "\x23int" .
+                                                              "\x01" .
+                               "\x41" . "\x2ct.Colourable" .
+                      "\x41" . "\x24size" .
+             # DATAMETA_CONSTRUCT
+             "\xe1" . "\x02\1" .
+                      "\x02\2" .
+                      "\x41" . "\x80" .
+             # DATA_OBJ
+             "\x84" . "\0\0\0\1",
+   retdata => "OBJPROXY[id=1]";
 
 test_typed "any (undef)",
    sig    => "any",
