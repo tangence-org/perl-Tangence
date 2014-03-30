@@ -201,9 +201,11 @@ sub tangence_initialised
    my $self = shift;
    my %args = @_;
 
+   my $request = Tangence::Message->new( $self, MSG_GETROOT );
+   TYPE_ANY->pack_value( $request, $self->identity );
+
    $self->request(
-      request => Tangence::Message->new( $self, MSG_GETROOT )
-         ->pack_any( $self->identity ),
+      request => $request,
 
       on_response => sub {
          my ( $message ) = @_;

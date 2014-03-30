@@ -437,8 +437,8 @@ sub handle_request_GETROOT
 {
    my $self = shift;
    my ( $token, $message ) = @_;
-   
-   my $identity = $message->unpack_any();
+
+   my $identity = TYPE_ANY->unpack_value( $message );
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
