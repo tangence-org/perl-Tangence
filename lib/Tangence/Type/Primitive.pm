@@ -492,6 +492,9 @@ sub unpack_value
       elsif( $num >= DATANUM_FLOAT16 and $num <= DATANUM_FLOAT64 ) {
          return TYPE_FLOAT->unpack_value( $message );
       }
+      else {
+         croak "Do not know how to unpack DATA_NUMBER subtype $num";
+      }
    }
    if( $type == DATA_STRING ) {
       return TYPE_STR->unpack_value( $message );
