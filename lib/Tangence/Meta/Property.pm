@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2011 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2011-2014 -- leonerd@leonerd.org.uk
 
 package Tangence::Meta::Property;
 
@@ -140,10 +140,10 @@ sub overall_type
          $type;
       }
       elsif( $dim == DIM_HASH ) {
-         Tangence::Meta::Type->new( dict => $type );
+         $self->make_type( dict => $type );
       }
       elsif( $dim == DIM_ARRAY or $dim == DIM_QUEUE or $dim == DIM_OBJSET ) {
-         Tangence::Meta::Type->new( list => $type );
+         $self->make_type( list => $type );
       }
       else {
          die "Unrecognised dimension $dim for ->overall_type";
@@ -161,6 +161,13 @@ sub smashed
 {
    my $self = shift;
    return $self->{smashed};
+}
+
+# For subclasses to override if required
+sub make_type
+{
+   shift;
+   return Tangence::Meta::Type->new( @_ );
 }
 
 =head1 AUTHOR
