@@ -462,7 +462,7 @@ sub get_property
    my $on_error = delete $args{on_error} || $self->{on_error};
    ref $on_error eq "CODE" or croak "Expected 'on_error' as a CODE ref";
 
-   $self->can_property( $property )
+   my $pdef = $self->can_property( $property )
       or croak "Class ".$self->classname." does not have a property $property";
 
    my $conn = $self->{conn};
@@ -476,7 +476,7 @@ sub get_property
          my $code = $message->code;
 
          if( $code == MSG_RESULT ) {
-            my $value = $message->unpack_any();
+            my $value = $pdef->overall_type->unpack_value( $message );
             $on_value->( $value );
          }
          elsif( $code == MSG_ERROR ) {
@@ -571,7 +571,7 @@ sub get_property_element
          my $code = $message->code;
 
          if( $code == MSG_RESULT ) {
-            my $value = $message->unpack_any();
+            my $value = $pdef->type->unpack_value( $message );
             $on_value->( $value );
          }
          elsif( $code == MSG_ERROR ) {
