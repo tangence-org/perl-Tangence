@@ -227,7 +227,7 @@ sub test_typed
    my $type = _make_type $args{sig};
 
    my $m = Tangence::Message->new( TestStream->new );
-   is( $type->pack_value( $m, $args{data} ), $m, "\$type->pack_value returns \$m for $name" );
+   $type->pack_value( $m, $args{data} );
 
    is_hexstr( $m->{record}, $args{stream}, "pack typed $name" );
 
