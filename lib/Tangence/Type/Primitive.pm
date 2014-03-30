@@ -51,65 +51,67 @@ use constant SUBTYPE => undef;
 
 sub default_value { 0 }
 
-my %format = (
-   DATANUM_UINT8,  [ "C",  1 ],
-   DATANUM_SINT8,  [ "c",  1 ],
-   DATANUM_UINT16, [ "S>", 2 ],
-   DATANUM_SINT16, [ "s>", 2 ],
-   DATANUM_UINT32, [ "L>", 4 ],
-   DATANUM_SINT32, [ "l>", 4 ],
-   DATANUM_UINT64, [ "Q>", 8 ],
-   DATANUM_SINT64, [ "q>", 8 ],
-);
-
-sub _best_int_type_for
 {
-   my ( $n ) = @_;
+   my %format = (
+      DATANUM_UINT8,  [ "C",  1 ],
+      DATANUM_SINT8,  [ "c",  1 ],
+      DATANUM_UINT16, [ "S>", 2 ],
+      DATANUM_SINT16, [ "s>", 2 ],
+      DATANUM_UINT32, [ "L>", 4 ],
+      DATANUM_SINT32, [ "l>", 4 ],
+      DATANUM_UINT64, [ "Q>", 8 ],
+      DATANUM_SINT64, [ "q>", 8 ],
+   );
 
-   if( $n < 0 ) {
-      return DATANUM_SINT8  if $n >= -0x80;
-      return DATANUM_SINT16 if $n >= -0x8000;
-      return DATANUM_SINT32 if $n >= -0x80000000;
-      return DATANUM_SINT64;
+   sub _best_int_type_for
+   {
+      my ( $n ) = @_;
+
+      if( $n < 0 ) {
+         return DATANUM_SINT8  if $n >= -0x80;
+         return DATANUM_SINT16 if $n >= -0x8000;
+         return DATANUM_SINT32 if $n >= -0x80000000;
+         return DATANUM_SINT64;
+      }
+
+      return DATANUM_UINT8  if $n <= 0xff;
+      return DATANUM_UINT16 if $n <= 0xffff;
+      return DATANUM_UINT32 if $n <= 0xffffffff;
+      return DATANUM_UINT64;
    }
 
-   return DATANUM_UINT8  if $n <= 0xff;
-   return DATANUM_UINT16 if $n <= 0xffff;
-   return DATANUM_UINT32 if $n <= 0xffffffff;
-   return DATANUM_UINT64;
-}
+   sub pack_value
+   {
+      my $self = shift;
+      my ( $message, $value ) = @_;
 
-sub pack_value
-{
-   my $self = shift;
-   my ( $message, $value ) = @_;
+      defined $value or croak "cannot pack_int(undef)";
+      ref $value and croak "$value is not a number";
 
-   defined $value or croak "cannot pack_int(undef)";
-   ref $value and croak "$value is not a number";
+      my $subtype = $self->SUBTYPE || _best_int_type_for( $value );
+      $message->_pack_leader( DATA_NUMBER, $subtype );
 
-   my $subtype = $self->SUBTYPE || _best_int_type_for( $value );
-   $message->_pack_leader( DATA_NUMBER, $subtype );
-
-   $message->_pack( pack( $format{$subtype}[0], $value ) );
-}
-
-sub unpack_value
-{
-   my $self = shift;
-   my ( $message ) = @_;
-
-   my ( $type, $num ) = $message->_unpack_leader();
-
-   $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
-   exists $format{$num} or croak "Expected an integer subtype but got $num";
-
-   if( my $subtype = $self->SUBTYPE ) {
-      $subtype == $num or croak "Expected integer subtype $subtype, got $num";
+      $message->_pack( pack( $format{$subtype}[0], $value ) );
    }
 
-   my ( $n ) = unpack( $format{$num}[0], $message->_unpack( $format{$num}[1] ) );
+   sub unpack_value
+   {
+      my $self = shift;
+      my ( $message ) = @_;
 
-   return $n;
+      my ( $type, $num ) = $message->_unpack_leader();
+
+      $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
+      exists $format{$num} or croak "Expected an integer subtype but got $num";
+
+      if( my $subtype = $self->SUBTYPE ) {
+         $subtype == $num or croak "Expected integer subtype $subtype, got $num";
+      }
+
+      my ( $n ) = unpack( $format{$num}[0], $message->_unpack( $format{$num}[1] ) );
+
+      return $n;
+   }
 }
 
 package
