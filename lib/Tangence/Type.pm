@@ -12,6 +12,34 @@ use base qw( Tangence::Meta::Type );
 
 require Tangence::Type::Primitive;
 
+=head1 NAME
+
+C<Tangence::Type> - represent a C<Tangence> value type
+
+=head1 DESCRIPTION
+
+Objects in this class represent individual types that are sent over the wire
+in L<Tangence> messages. This is a subclass of L<Tangence::Meta::Type> which
+provides additional methods that may be useful in server or client
+implementations.
+
+=cut
+
+=head1 CONSTRUCTOR
+
+=head2 $type = Tangence::Type->new( $primitive_sig )
+
+Returns an instance to represent a primitive type of the given signature.
+
+=head2 $type = Tangence::Type->new( list => $member_type )
+
+=head2 $type = Tangence::Type->new( dict => $member_type )
+
+Returns an instance to represent a list or dict aggregation containing members
+of the given type.
+
+=cut
+
 sub new
 {
    # Subtle trickery is at work here
@@ -38,6 +66,22 @@ sub new
       die "TODO: Not sure how to make a Tangence::Type->new( @_ )";
    }
 }
+
+=head1 METHODS
+
+=head2 $value = $type->default_value
+
+Returns a value suitable to use as an initial value for object properties.
+
+=head2 $type->pack_value( $message, $value )
+
+Appends a value of this type to the end of a L<Tangence::Message>.
+
+=head2 $value = $type->unpack_value( $message )
+
+Removes a value of this type from the start of a L<Tangence::Message>.
+
+=cut
 
 package
    Tangence::Type::List;
