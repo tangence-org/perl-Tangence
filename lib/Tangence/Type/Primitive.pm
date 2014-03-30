@@ -15,6 +15,8 @@ use base qw( Tangence::Type );
 package
    Tangence::Type::Primitive::bool;
 use base qw( Tangence::Type::Primitive );
+use Carp;
+use Tangence::Constants;
 
 sub default_value { "" }
 
@@ -22,36 +24,92 @@ sub pack_value
 {
    my $self = shift;
    my ( $message, $value ) = @_;
-   $message->pack_bool( $value );
+
+   $message->_pack_leader( DATA_NUMBER, $value ? DATANUM_BOOLTRUE : DATANUM_BOOLFALSE );
 }
 
 sub unpack_value
 {
    my $self = shift;
    my ( $message ) = @_;
-   return $message->unpack_bool;
+
+   my ( $type, $num ) = $message->_unpack_leader();
+
+   $type == DATA_NUMBER or croak "Expected to unpack a number(bool) but did not find one";
+   $num == DATANUM_BOOLFALSE and return 0;
+   $num == DATANUM_BOOLTRUE  and return 1;
+   croak "Expected to find a DATANUM_BOOL subtype but got $num";
 }
 
 package
    Tangence::Type::Primitive::_integral;
 use base qw( Tangence::Type::Primitive );
+use Carp;
+use Tangence::Constants;
 
 use constant SUBTYPE => undef;
 
 sub default_value { 0 }
 
+my %format = (
+   DATANUM_UINT8,  [ "C",  1 ],
+   DATANUM_SINT8,  [ "c",  1 ],
+   DATANUM_UINT16, [ "S>", 2 ],
+   DATANUM_SINT16, [ "s>", 2 ],
+   DATANUM_UINT32, [ "L>", 4 ],
+   DATANUM_SINT32, [ "l>", 4 ],
+   DATANUM_UINT64, [ "Q>", 8 ],
+   DATANUM_SINT64, [ "q>", 8 ],
+);
+
+sub _best_int_type_for
+{
+   my ( $n ) = @_;
+
+   # TODO: Consider 64bit values
+
+   if( $n < 0 ) {
+      return DATANUM_SINT8  if $n >= -0x80;
+      return DATANUM_SINT16 if $n >= -0x8000;
+      return DATANUM_SINT32;
+   }
+
+   return DATANUM_UINT8  if $n <= 0xff;
+   return DATANUM_UINT16 if $n <= 0xffff;
+   return DATANUM_UINT32;
+}
+
 sub pack_value
 {
    my $self = shift;
    my ( $message, $value ) = @_;
-   $message->pack_int( $value, $self->SUBTYPE );
+
+   defined $value or croak "cannot pack_int(undef)";
+   ref $value and croak "$value is not a number";
+
+   my $subtype = $self->SUBTYPE || _best_int_type_for( $value );
+   $message->_pack_leader( DATA_NUMBER, $subtype );
+
+   $message->_pack( pack( $format{$subtype}[0], $value ) );
 }
 
 sub unpack_value
 {
    my $self = shift;
    my ( $message ) = @_;
-   return $message->unpack_int( $self->SUBTYPE );
+
+   my ( $type, $num ) = $message->_unpack_leader();
+
+   $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
+   exists $format{$num} or croak "Expected an integer subtype but got $num";
+
+   if( my $subtype = $self->SUBTYPE ) {
+      $subtype == $num or croak "Expected integer subtype $subtype, got $num";
+   }
+
+   my ( $n ) = unpack( $format{$num}[0], $message->_unpack( $format{$num}[1] ) );
+
+   return $n;
 }
 
 package
@@ -101,6 +159,9 @@ use base qw( Tangence::Type::Primitive::_integral );
 package
    Tangence::Type::Primitive::str;
 use base qw( Tangence::Type::Primitive );
+use Carp;
+use Encode qw( encode_utf8 decode_utf8 );
+use Tangence::Constants;
 
 sub default_value { "" }
 
@@ -108,14 +169,24 @@ sub pack_value
 {
    my $self = shift;
    my ( $message, $value ) = @_;
-   $message->pack_str( $value );
+
+   defined $value or croak "cannot pack_str(undef)";
+   ref $value and croak "$value is not a string";
+   my $octets = encode_utf8( $value );
+   $message->_pack_leader( DATA_STRING, length($octets) );
+   $message->_pack( $octets );
 }
 
 sub unpack_value
 {
    my $self = shift;
    my ( $message ) = @_;
-   return $message->unpack_str;
+
+   my ( $type, $num ) = $message->_unpack_leader();
+
+   $type == DATA_STRING or croak "Expected to unpack a string but did not find one";
+   my $octets = $message->_unpack( $num );
+   return decode_utf8( $octets );
 }
 
 package

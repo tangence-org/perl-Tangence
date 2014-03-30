@@ -29,7 +29,6 @@ use Tangence::Types;
 
 use Tangence::Object;
 
-use Encode qw( encode_utf8 decode_utf8 );
 use List::Util qw( pairmap );
 use Scalar::Util qw( weaken blessed );
 
@@ -155,102 +154,60 @@ sub _unpack_leader
    return $type, $num;
 }
 
+sub _pack
+{
+   my $self = shift;
+   $self->{record} .= $_[0];
+}
+
+sub _unpack
+{
+   my $self = shift;
+   my ( $num ) = @_;
+   length $self->{record} >= $num or croak "Can't pull $num bytes as there aren't enough";
+   return substr( $self->{record}, 0, $num, "" );
+}
+
 sub pack_bool
 {
    my $self = shift;
    my ( $d ) = @_;
-   $self->_pack_leader( DATA_NUMBER, $d ? DATANUM_BOOLTRUE : DATANUM_BOOLFALSE );
+   TYPE_BOOL->pack_value( $self, $d );
    return $self;
 }
 
 sub unpack_bool
 {
    my $self = shift;
-   my ( $type, $num ) = $self->_unpack_leader();
-
-   $type == DATA_NUMBER or croak "Expected to unpack a number(bool) but did not find one";
-   $num == DATANUM_BOOLFALSE and return 0;
-   $num == DATANUM_BOOLTRUE  and return 1;
-   croak "Expected to find a DATANUM_BOOL subtype but got $num";
-}
-
-my %pack_int_format = (
-   DATANUM_UINT8,  [ "C",  1 ],
-   DATANUM_SINT8,  [ "c",  1 ],
-   DATANUM_UINT16, [ "S>", 2 ],
-   DATANUM_SINT16, [ "s>", 2 ],
-   DATANUM_UINT32, [ "L>", 4 ],
-   DATANUM_SINT32, [ "l>", 4 ],
-   DATANUM_UINT64, [ "Q>", 8 ],
-   DATANUM_SINT64, [ "q>", 8 ],
-);
-
-sub _best_int_type_for
-{
-   my ( $n ) = @_;
-
-   # TODO: Consider 64bit values
-
-   if( $n < 0 ) {
-      return DATANUM_SINT8  if $n >= -0x80;
-      return DATANUM_SINT16 if $n >= -0x8000;
-      return DATANUM_SINT32;
-   }
-
-   return DATANUM_UINT8  if $n <= 0xff;
-   return DATANUM_UINT16 if $n <= 0xffff;
-   return DATANUM_UINT32;
+   return TYPE_BOOL->unpack_value( $self );
 }
 
 sub pack_int
 {
    my $self = shift;
-   my ( $d, $subtype ) = @_;
-
-   defined $d or croak "cannot pack_int(undef)";
-   ref $d and croak "$d is not a number";
-   $subtype ||= _best_int_type_for( $d );
-   $self->_pack_leader( DATA_NUMBER, $subtype );
-   $self->{record} .= pack( $pack_int_format{$subtype}[0], $d );
+   my ( $d ) = @_;
+   TYPE_INT->pack_value( $self, $d );
    return $self;
 }
 
 sub unpack_int
 {
    my $self = shift;
-   my ( $subtype ) = @_;
-   my ( $type, $num ) = $self->_unpack_leader();
-
-   $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
-   exists $pack_int_format{$num} or croak "Expected an integer subtype but got $num";
-   !$subtype or $subtype == $num or croak "Expected integer subtype $subtype, got $num";
-   my ( $n ) = unpack( $pack_int_format{$num}[0], $self->{record} );
-   substr( $self->{record}, 0, $pack_int_format{$num}[1] ) = "";
-   return $n;
+   return TYPE_INT->unpack_value( $self );
 }
 
 sub pack_str
 {
    my $self = shift;
    my ( $d ) = @_;
-
-   defined $d or croak "cannot pack_str(undef)";
-   ref $d and croak "$d is not a string";
-   my $octets = encode_utf8( $d );
-   $self->_pack_leader( DATA_STRING, length($octets) );
-   $self->{record} .= $octets;
+   TYPE_STR->pack_value( $self, $d );
    return $self;
 }
 
 sub unpack_str
 {
    my $self = shift;
-   my ( $type, $num ) = $self->_unpack_leader();
-
-   $type == DATA_STRING or croak "Expected to unpack a string but did not find one";
-   length $self->{record} >= $num or croak "Can't pull $num bytes for string as there aren't enough";
-   my $octets = substr( $self->{record}, 0, $num, "" );
-   return decode_utf8( $octets );
+   return TYPE_STR->unpack_value( $self );
 }
 
 sub pack_obj
