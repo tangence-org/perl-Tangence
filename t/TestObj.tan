@@ -17,6 +17,7 @@ class t.TestObj {
 struct t.TestStruct {
   field b = bool;
   field i = int;
+  field f = float;
   field s = str;
   field o = obj;
 }

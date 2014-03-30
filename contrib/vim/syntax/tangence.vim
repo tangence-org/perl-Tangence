@@ -23,7 +23,7 @@ syntax keyword TangenceKeyword prop   nextgroup=TangenceIdentifier skipwhite
 syntax keyword TangenceKeyword field  nextgroup=TangenceIdentifier skipwhite
 
 syntax keyword TangenceDim  scalar hash queue array objset
-syntax keyword TangenceType bool int str obj any
+syntax keyword TangenceType bool int float str obj any
 syntax region  TangenceType start=/\(list\|dict\)(/ end=/)/ contains=TangenceType
 
 syntax region TangenceArglist start="(" end=")" contains=TangenceType,TangenceIdentifier skipwhite

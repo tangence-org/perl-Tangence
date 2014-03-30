@@ -129,10 +129,12 @@ my $parser = Tangence::Compiler::Parser->new;
    is( $fields[0]->type->sig, "bool", 't.TestStruct field b type sig' );
    is( $fields[1]->name, "i", 't.TestStruct field i' );
    is( $fields[1]->type->sig, "int", 't.TestStruct field i type sig' );
-   is( $fields[2]->name, "s", 't.TestStruct field s' );
-   is( $fields[2]->type->sig, "str", 't.TestStruct field s type sig' );
-   is( $fields[3]->name, "o", 't.TestStruct field o' );
-   is( $fields[3]->type->sig, "obj", 't.TestStruct field o type sig' );
+   is( $fields[2]->name, "f", 't.TestStruct field f' );
+   is( $fields[2]->type->sig, "float", 't.TestStruct field f type sig' );
+   is( $fields[3]->name, "s", 't.TestStruct field s' );
+   is( $fields[3]->type->sig, "str", 't.TestStruct field s type sig' );
+   is( $fields[4]->name, "o", 't.TestStruct field o' );
+   is( $fields[4]->type->sig, "obj", 't.TestStruct field o type sig' );
 }
 
 done_testing;

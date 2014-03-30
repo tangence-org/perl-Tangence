@@ -281,6 +281,56 @@ test_typed_dies "int from ARRAY",
    data   => [],
    stream => "\x40";
 
+test_typed "float16 zero",
+   sig    => "float16",
+   data   => 0,
+   stream => "\x10\0\0";
+
+test_typed "float16",
+   sig    => "float16",
+   data   => 1.25,
+   stream => "\x10\x3d\x00";
+
+test_typed "float32 zero",
+   sig    => "float32",
+   data   => 0,
+   stream => "\x11\0\0\0\0";
+
+test_typed "float32",
+   sig    => "float32",
+   data   => 1.25,
+   stream => "\x11\x3f\xa0\x00\x00";
+
+test_typed "float64 zero",
+   sig    => "float64",
+   data   => 0,
+   stream => "\x12\0\0\0\0\0\0\0\0";
+
+test_typed "float64",
+   sig    => "float64",
+   data   => 1588.625,
+   stream => "\x12\x40\x98\xd2\x80\x00\x00\x00\x00";
+
+test_typed "float one",
+   sig    => "float",
+   data   => 1,
+   stream => "\x10\x3c\x00";
+
+test_typed "float +100",
+   sig    => "float",
+   data   => 100,
+   stream => "\x10\x56\x40";
+
+test_typed "float +1E8",
+   sig    => "float",
+   data   => 1E8,
+   stream => "\x11\x4c\xbe\xbc\x20";
+
+test_typed "float +1E20",
+   sig    => "float",
+   data   => 1E20,
+   stream => "\x12\x44\x15\xaf\x1d\x78\xb5\x8c\x40";
+
 test_typed "string",
    sig    => "str",
    data   => "hello",

@@ -159,6 +159,171 @@ package
 use base qw( Tangence::Type::Primitive::_integral );
 
 package
+   Tangence::Type::Primitive::float;
+use base qw( Tangence::Type::Primitive );
+use Carp;
+use Tangence::Constants;
+
+use constant SUBTYPE => undef;
+
+sub default_value { 0.0 }
+
+{
+   my %format = (
+      DATANUM_FLOAT32, [ "f>", 4 ],
+      DATANUM_FLOAT64, [ "d>", 8 ],
+   );
+
+   sub _best_type_for
+   {
+      my ( $value ) = @_;
+
+      # Unpack as 64bit float and see if it's within limits
+      my $float64BIN = pack "d>", $value;
+
+      # float64 == 1 / 11 / 52
+      my $exp64 = ( unpack "Q>", $float64BIN & "\x7f\xf0\x00\x00\x00\x00\x00\x00" ) >> 52;
+
+      # Zero is smallest
+      return DATANUM_FLOAT16 if $exp64 == 0;
+
+      # De-bias
+      $exp64 -= 1023;
+
+      # Smaller types are OK if the exponent will fit and there's no loss of
+      # mantissa precision
+
+      return DATANUM_FLOAT16 if abs($exp64) < 15  &&
+         ($float64BIN & "\x00\x00\x03\xff\xff\xff\xff\xff") eq "\x00"x8;
+
+      return DATANUM_FLOAT32 if abs($exp64) < 127 &&
+         ($float64BIN & "\x00\x00\x00\x00\x1f\xff\xff\xff") eq "\x00"x8;
+
+      return DATANUM_FLOAT64;
+   }
+
+   sub pack_value
+   {
+      my $self = shift;
+      my ( $message, $value ) = @_;
+
+      defined $value or croak "cannot pack undef as float";
+      ref $value and croak "$value is not a number";
+
+      my $subtype = $self->SUBTYPE || _best_type_for( $value );
+
+      return Tangence::Type::Primitive::float16->pack_value( $message, $value ) if $subtype == DATANUM_FLOAT16;
+
+      $message->_pack_leader( DATA_NUMBER, $subtype );
+      $message->_pack( pack( $format{$subtype}[0], $value ) );
+   }
+
+   sub unpack_value
+   {
+      my $self = shift;
+      my ( $message ) = @_;
+
+      my ( $type, $num ) = $message->_unpack_leader( "peek" );
+
+      $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
+      exists $format{$num} or $num == DATANUM_FLOAT16 or
+         croak "Expected a float subtype but got $num";
+
+      if( my $subtype = $self->SUBTYPE ) {
+         $subtype == $num or croak "Expected float subtype $subtype, got $num";
+      }
+
+      return Tangence::Type::Primitive::float16->unpack_value( $message ) if $num == DATANUM_FLOAT16;
+
+      $message->_unpack_leader; # no-peek
+
+      my ( $n ) = unpack( $format{$num}[0], $message->_unpack( $format{$num}[1] ) );
+
+      return $n;
+   }
+}
+
+package
+   Tangence::Type::Primitive::float16;
+use base qw( Tangence::Type::Primitive::float );
+use Carp;
+use Tangence::Constants;
+
+use constant SUBTYPE => DATANUM_FLOAT16;
+
+# TODO: This code doesn't correctly cope with Inf, -Inf or NaN
+
+sub pack_value
+{
+   my $self = shift;
+   my ( $message, $value ) = @_;
+
+   defined $value or croak "cannot pack undef as float";
+   ref $value and croak "$value is not a number";
+
+   my $float32 = unpack( "N", pack "f>", $value );
+
+   # float32 == 1 / 8 / 23
+   my $sign   = ( $float32 & 0x80000000 ) >> 31;
+   my $exp32  = ( $float32 & 0x7f800000 ) >> 23;
+   my $mant32 = ( $float32 & 0x007fffff );
+
+   # float16 == 1 / 5 / 10
+   # TODO: if $exp > 7: become (-)Inf
+   my $exp16 = $exp32 ? $exp32 - 127 + 15 : 0; # Preserve zero
+   my $mant16 = $mant32 >> 13;
+
+   my $float16 = $sign   << 15 |
+                 $exp16  << 10 |
+                 $mant16;
+
+   $message->_pack_leader( DATA_NUMBER, DATANUM_FLOAT16 );
+   $message->_pack( pack "n", $float16 );
+}
+
+sub unpack_value
+{
+   my $self = shift;
+   my ( $message ) = @_;
+
+   my ( $type, $num ) = $message->_unpack_leader;
+
+   $type == DATA_NUMBER or croak "Expected to unpack a number but did not find one";
+   $num == DATANUM_FLOAT16 or croak "Expected to unpack a float16 but found $num";
+
+   my $float16 = unpack "n", $message->_unpack( 2 );
+
+   # float16 == 1 / 5 / 10
+   my $sign   = ( $float16 & 0x8000 ) >> 15;
+   my $exp16  = ( $float16 & 0x7c00 ) >> 10;
+   my $mant16 = ( $float16 & 0x03ff );
+
+   # float32 == 1 / 8 / 23
+   my $exp32 = $exp16 ? $exp16 - 15 + 127 : 0; # Preserve zero
+   my $mant32 = $mant16 << 13;
+
+   my $float32 = $sign   << 31 |
+                 $exp32  << 23 |
+                 $mant32;
+
+   return unpack( "f>", pack "N", $float32 );
+}
+
+package
+   Tangence::Type::Primitive::float32;
+use base qw( Tangence::Type::Primitive::float );
+use Tangence::Constants;
+
+use constant SUBTYPE => DATANUM_FLOAT32;
+
+package
+   Tangence::Type::Primitive::float64;
+use base qw( Tangence::Type::Primitive::float );
+use Tangence::Constants;
+
+use constant SUBTYPE => DATANUM_FLOAT64;
+
+package
    Tangence::Type::Primitive::str;
 use base qw( Tangence::Type::Primitive );
 use Carp;

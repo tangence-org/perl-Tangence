@@ -137,25 +137,28 @@ sub _peek_leader_type
 sub _unpack_leader
 {
    my $self = shift;
+   my ( $peek ) = @_;
 
    my $type = $self->_peek_leader_type;
    my ( $typenum ) = unpack( "C", $self->{record} );
-   substr( $self->{record}, 0, 1, "" );
 
    my $num  = $typenum & 0x1f;
 
+   my $len = 1;
    if( $num == 0x1f ) {
-      ( $num ) = unpack( "C", $self->{record} );
+      ( $num ) = unpack( "x C", $self->{record} );
 
       if( $num < 0x80 ) {
-         substr( $self->{record}, 0, 1, "" );
+         $len = 2;
       }
       else {
-         ( $num ) = unpack( "N", $self->{record} );
+         ( $num ) = unpack( "x N", $self->{record} );
          $num &= 0x7fffffff;
-         substr( $self->{record}, 0, 4, "" );
+         $len = 5;
       }
    }
+
+   substr( $self->{record}, 0, $len ) = "" if !$peek;
 
    return $type, $num;
 }

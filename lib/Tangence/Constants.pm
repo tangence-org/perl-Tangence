@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2010-2013 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2010-2014 -- leonerd@leonerd.org.uk
 
 package Tangence::Constants;
 
@@ -80,6 +80,9 @@ our @EXPORT = qw(
    DATANUM_SINT32
    DATANUM_UINT64
    DATANUM_SINT64
+   DATANUM_FLOAT16
+   DATANUM_FLOAT32
+   DATANUM_FLOAT64
 
    DATAMETA_CONSTRUCT
    DATAMETA_CLASS
@@ -174,6 +177,9 @@ use constant DATANUM_UINT32    => 6;
 use constant DATANUM_SINT32    => 7;
 use constant DATANUM_UINT64    => 8;
 use constant DATANUM_SINT64    => 9;
+use constant DATANUM_FLOAT16   => 16;
+use constant DATANUM_FLOAT32   => 17;
+use constant DATANUM_FLOAT64   => 18;
 use constant DATA_STRING => 1;
 use constant DATA_LIST   => 2;
 use constant DATA_DICT   => 3;

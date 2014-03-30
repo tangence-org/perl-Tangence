@@ -62,6 +62,15 @@ introspection data; see later.
    Specific sized integers use the type signatures
      "s8", "s16", "s32", "s64", "u8", "u16", "u32", "u64"
 
+ * Floating-point numbers, in 16, 32 and 64bit lengths
+
+   A float of unspecified size uses the type signature "float".
+   Specific sized floats use the type signatures
+     "float16", "float32", "float64"
+
+   Note that the Intel-specific 80bit "extended double" format is not
+   supported
+
  * Unicode strings
 
    Uses the type signature "str".
@@ -320,8 +329,22 @@ how many more bytes will be used
  DATANUM_SINT32         0 0 1 1 1       4               Signed 32bit
  DATANUM_UINT64         0 1 0 0 0       8               Unsigned 64bit
  DATANUM_SINT64         0 1 0 0 1       8               Signed 64bit
+ DATANUM_FLOAT16        1 0 0 0 0       2               Floating 16bit
+ DATANUM_FLOAT32        1 0 0 0 1       4               Floating 32bit
+ DATANUM_FLOAT64        1 0 0 1 0       8               Floating 64bit
 
 All multi-byte integers are always stored in big-endian form.
+
+Floating-point values are stored in IEEE 754 form, as three bitfields
+containing sign, exponent and mantissa. The sign always has one bit, clear for
+positive, set for negative. The exponent and mantissa have the following sizes
+and bias.
+
+ Subtype               Exponent   Bias    Mantissa
+
+ DATANUM_FLOAT16       5 bits     +15     10 bits
+ DATANUM_FLOAT32       8 bits     +127    23 bits
+ DATANUM_FLOAT64       11 bits    +1023   52 bits
 
 For string, list, dict and object types, the lower five bits give a
 number, 0 to 31, which helps encode the size. For items of size 30 or
