@@ -192,6 +192,9 @@ sub unpack_value
 package
    Tangence::Type::Primitive::obj;
 use base qw( Tangence::Type::Primitive );
+use Carp;
+use Scalar::Util qw( blessed );
+use Tangence::Constants;
 
 sub default_value { undef }
 
@@ -199,14 +202,50 @@ sub pack_value
 {
    my $self = shift;
    my ( $message, $value ) = @_;
-   $message->pack_obj( $value );
+
+   my $stream = $message->stream;
+
+   if( !defined $value ) {
+      $message->_pack_leader( DATA_OBJECT, 0 );
+   }
+   elsif( blessed $value and $value->isa( "Tangence::Object" ) ) {
+      my $id = $value->id;
+      my $preamble = "";
+
+      $value->{destroyed} and croak "Cannot pack destroyed object $value";
+
+      $message->packmeta_construct( $value ) unless $stream->peer_hasobj->{$id};
+
+      $message->_pack_leader( DATA_OBJECT, 4 );
+      $message->_pack( pack( "N", $id ) );
+   }
+   elsif( blessed $value and $value->isa( "Tangence::ObjectProxy" ) ) {
+      $message->_pack_leader( DATA_OBJECT, 4 );
+      $message->_pack( pack( "N", $value->id ) );
+   }
+   else {
+      croak "Do not know how to pack a " . ref($value);
+   }
 }
 
 sub unpack_value
 {
    my $self = shift;
    my ( $message ) = @_;
-   return $message->unpack_obj;
+
+   my ( $type, $num ) = $message->_unpack_leader();
+
+   my $stream = $message->stream;
+
+   $type == DATA_OBJECT or croak "Expected to unpack an object but did not find one";
+   return undef unless $num;
+   if( $num == 4 ) {
+      my ( $id ) = unpack( "N", $message->_unpack( 4 ) );
+      return $stream->get_by_id( $id );
+   }
+   else {
+      croak "Unexpected number of bits to encode an OBJECT";
+   }
 }
 
 package

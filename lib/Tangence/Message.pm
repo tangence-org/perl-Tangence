@@ -68,6 +68,12 @@ sub try_new_from_bytes
    return $class->new( $stream, $type, $record );
 }
 
+sub stream
+{
+   my $self = shift;
+   return $self->{stream};
+}
+
 sub type
 {
    my $self = shift;
@@ -214,49 +220,14 @@ sub pack_obj
 {
    my $self = shift;
    my ( $d ) = @_;
-
-   my $stream = $self->{stream};
-
-   if( !defined $d ) {
-      $self->_pack_leader( DATA_OBJECT, 0 );
-   }
-   elsif( blessed $d and $d->isa( "Tangence::Object" ) ) {
-      my $id = $d->id;
-      my $preamble = "";
-
-      $d->{destroyed} and croak "Cannot pack destroyed object $d";
-
-      $self->packmeta_construct( $d ) unless $stream->peer_hasobj->{$id};
-
-      $self->_pack_leader( DATA_OBJECT, 4 );
-      $self->{record} .= pack( "N", $id );
-   }
-   elsif( blessed $d and $d->isa( "Tangence::ObjectProxy" ) ) {
-      $self->_pack_leader( DATA_OBJECT, 4 );
-      $self->{record} .= pack( "N", $d->id );
-   }
-   else {
-      croak "Do not know how to pack a " . ref($d);
-   }
+   TYPE_OBJ->pack_value( $self, $d );
    return $self;
 }
 
 sub unpack_obj
 {
    my $self = shift;
-   my ( $type, $num ) = $self->_unpack_leader();
-
-   my $stream = $self->{stream};
-
-   $type == DATA_OBJECT or croak "Expected to unpack an object but did not find one";
-   return undef unless $num;
-   if( $num == 4 ) {
-      my ( $id ) = unpack( "N", $self->{record} ); substr( $self->{record}, 0, 4, "" );
-      return $stream->get_by_id( $id );
-   }
-   else {
-      croak "Unexpected number of bits to encode an OBJECT";
-   }
+   return TYPE_OBJ->unpack_value( $self );
 }
 
 sub pack_record
