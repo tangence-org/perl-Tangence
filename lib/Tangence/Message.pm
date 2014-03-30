@@ -521,7 +521,7 @@ sub packmeta_class
       },
       superclasses => [ map { $_->name } @superclasses ],
    );
-   $self->pack_any( $classrec );
+   $self->pack_record( $classrec );
 
    TYPE_LIST_STR->pack_value( $self, $smashkeys );
 
@@ -536,7 +536,7 @@ sub unpackmeta_class
 
    my $name = $self->unpack_str();
    my $classid = $self->unpack_int();
-   my $classrec = $self->unpack_any();
+   my $classrec = $self->unpack_record();
 
    my $class = Tangence::Meta::Class->new( name => $name );
    $class->define(
