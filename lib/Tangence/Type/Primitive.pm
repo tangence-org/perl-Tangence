@@ -425,10 +425,11 @@ use Tangence::Constants;
 # We can't use Tangence::Types here without a dependency cycle
 # However, it's OK to create even TYPE_ANY right here, because the 'any' class
 # now exists.
-use constant TYPE_INT => Tangence::Type->new( 'int' );
-use constant TYPE_STR => Tangence::Type->new( 'str' );
-use constant TYPE_OBJ => Tangence::Type->new( 'obj' );
-use constant TYPE_ANY => Tangence::Type->new( 'any' );
+use constant TYPE_INT   => Tangence::Type->new( 'int' );
+use constant TYPE_FLOAT => Tangence::Type->new( 'float' );
+use constant TYPE_STR   => Tangence::Type->new( 'str' );
+use constant TYPE_OBJ   => Tangence::Type->new( 'obj' );
+use constant TYPE_ANY   => Tangence::Type->new( 'any' );
 
 use constant TYPE_LIST_ANY => Tangence::Type->new( list => TYPE_ANY );
 use constant TYPE_DICT_ANY => Tangence::Type->new( dict => TYPE_ANY );
@@ -447,6 +448,9 @@ sub pack_value
       no warnings 'numeric';
       if( int($value) eq $value ) {
          TYPE_INT->pack_value( $message, $value );
+      }
+      elsif( $message->stream->_ver_can_num_float and $value+0 eq $value ) {
+         TYPE_FLOAT->pack_value( $message, $value );
       }
       else {
          TYPE_STR->pack_value( $message, $value );
@@ -477,7 +481,13 @@ sub unpack_value
    my $type = $message->_peek_leader_type();
 
    if( $type == DATA_NUMBER ) {
-      return TYPE_INT->unpack_value( $message );
+      my ( undef, $num ) = $message->_unpack_leader( "peek" );
+      if( $num >= DATANUM_UINT8 and $num <= DATANUM_SINT64 ) {
+         return TYPE_INT->unpack_value( $message );
+      }
+      elsif( $num >= DATANUM_FLOAT16 and $num <= DATANUM_FLOAT64 ) {
+         return TYPE_FLOAT->unpack_value( $message );
+      }
    }
    if( $type == DATA_STRING ) {
       return TYPE_STR->unpack_value( $message );

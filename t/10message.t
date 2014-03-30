@@ -419,6 +419,11 @@ test_typed "any (int)",
    data   => 0x1234,
    stream => "\x04\x12\x34";
 
+test_typed "any (float)",
+   sig    => "any",
+   data   => 123.45,
+   stream => "\x12\x40\x5e\xdc\xcc\xcc\xcc\xcc\xcd";
+
 test_typed "any (string)",
    sig    => "any",
    data   => "hello",
