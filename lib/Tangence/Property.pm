@@ -15,7 +15,7 @@ use Tangence::Constants;
 
 require Tangence::Type;
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 sub build_accessor
 {

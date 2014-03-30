@@ -1,5 +1,19 @@
 Revision history for Tangence
 
+0.19    2014/03/30 13:33:40
+        [CHANGES]
+         * Created new Tangence::Type classes to represent the type system as
+           firstclass objects
+         * Have Tangence::Type provide a suitable default value for
+           uninitialised properties
+         * Move most of the value pack/unpack code out of Tangence::Message
+           into the Type classes
+         * Support floating-point numbers as a native format
+         * Pack/unpack smashed objects using type-specific serialisation
+
+        [BUGFIXES]
+         * Quiet 'experimental' warnings about given/when
+
 0.18    BUGFIXES:
          * Handle void-returning method signatures correctly
            (RT#83637)

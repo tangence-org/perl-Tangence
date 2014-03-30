@@ -12,7 +12,7 @@ use base qw( Parser::MGC );
 use feature qw( switch ); # we like given/when
 no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 use File::Basename qw( dirname );
 
