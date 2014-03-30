@@ -40,7 +40,7 @@ is_oneref( $server, '$server has refcount 1 initially' );
 
    is_hexstr( $server->recv_message, $S2C{INITED}, 'serverstream initially contains INITED message' );
 
-   is( $server->minor_version, 3, '$server->minor_version after MSG_INIT' );
+   is( $server->minor_version, 4, '$server->minor_version after MSG_INIT' );
 
    $server->send_message( $C2S{GETROOT} );
 

@@ -185,7 +185,7 @@ use constant DATAMETA_CLASS     => 2;
 use constant DATAMETA_STRUCT    => 3;
 
 use constant VERSION_MAJOR => 0;
-use constant VERSION_MINOR => 3;
+use constant VERSION_MINOR => 4;
 
 =head1 AUTHOR
 

@@ -675,7 +675,7 @@ MSG_INIT (C->S) (0x7f)
   it can return MSG_ERROR. Otherwise, the accepted minor is returned in the
   MSG_INITED message.
 
-  The version specified by this document is major 0, minor 3.
+  The version specified by this document is major 0, minor 4.
 
 The following responses may be sent to a request:
 
