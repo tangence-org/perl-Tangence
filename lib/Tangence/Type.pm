@@ -1,46 +1,60 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2013 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2013-2014 -- leonerd@leonerd.org.uk
 
 package Tangence::Type;
 
 use strict;
 use warnings;
-use feature qw( switch );
-no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 
 use base qw( Tangence::Meta::Type );
 
-sub default_value
-{
-   my $self = shift;
+require Tangence::Type::Primitive;
 
-   given( $self->aggregate ) {
-      when( "prim" ) {
-         given( $self->sig ) {
-            when( "bool" ) {
-               return "";
-            }
-            when( [ "int", "u8", "s8", "u16", "s16", "u32", "s32", "u64", "s64" ] ) {
-               return 0;
-            }
-            when( "str" ) {
-               return "";
-            }
-            when( "obj" ) {
-               return undef;
-            }
-            when( "any" ) {
-               return undef;
-            }
-            default { die "TODO: unknown prim signature $_" }
-         }
-      }
-      when( "list" ) { return [] }
-      when( "dict" ) { return {} }
-      default { die "TODO: unknown aggregate $_" }
+sub new
+{
+   # Subtle trickery is at work here
+   # Invoke our own superclass constructor, but pretend to be some higher
+   # subclass that's appropriate
+
+   shift;
+   if( @_ == 1 ) {
+      my ( $type ) = @_;
+      my $class = "Tangence::Type::Primitive::$type";
+      $class->can( "new" ) or die "TODO: Need $class";
+
+      return $class->SUPER::new( $type );
+   }
+   elsif( $_[0] eq "list" ) {
+      shift;
+      return Tangence::Type::List->SUPER::new( list => @_ );
+   }
+   elsif( $_[0] eq "dict" ) {
+      shift;
+      return Tangence::Type::Dict->SUPER::new( dict => @_ );
+   }
+   else {
+      die "TODO: Not sure how to make a Tangence::Type->new( @_ )";
    }
 }
+
+package
+   Tangence::Type::List;
+use base qw( Tangence::Type );
+
+sub default_value { [] }
+
+package
+   Tangence::Type::Dict;
+use base qw( Tangence::Type );
+
+sub default_value { {} }
+
+=head1 AUTHOR
+
+Paul Evans <leonerd@leonerd.org.uk>
+
+=cut
 
 0x55AA;
