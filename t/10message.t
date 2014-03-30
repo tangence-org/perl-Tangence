@@ -364,6 +364,11 @@ test_typed "any (undef)",
    data   => undef,
    stream => "\x80";
 
+test_typed "any (int)",
+   sig    => "any",
+   data   => 0x1234,
+   stream => "\x04\x12\x34";
+
 test_typed "any (string)",
    sig    => "any",
    data   => "hello",

@@ -277,8 +277,13 @@ sub pack_value
       TYPE_OBJ->pack_value( $message, undef );
    }
    elsif( !ref $value ) {
-      # TODO: We'd never choose to pack a number
-      TYPE_STR->pack_value( $message, $value );
+      no warnings 'numeric';
+      if( int($value) eq $value ) {
+         TYPE_INT->pack_value( $message, $value );
+      }
+      else {
+         TYPE_STR->pack_value( $message, $value );
+      }
    }
    elsif( blessed $value and $value->isa( "Tangence::Object" ) || $value->isa( "Tangence::ObjectProxy" ) ) {
       TYPE_OBJ->pack_value( $message, $value );
