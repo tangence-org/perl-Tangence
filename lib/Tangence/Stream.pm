@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2011-2013 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2011-2014 -- leonerd@leonerd.org.uk
 
 package Tangence::Stream;
 
@@ -16,7 +16,7 @@ use Carp;
 use Tangence::Constants;
 use Tangence::Message;
 
-# A map from request types to method names
+# A map from request codes to method names
 # Can't use => operator because it would quote the barewords on the left, but
 # we want them as constants
 my %REQ_METHOD = (
@@ -55,8 +55,8 @@ are used to wrap this functionallity, and provide implementations of methods
 to handle the messages received.
 
 When a message is received, it will be passed to a method whose name depends
-on the type of message received. The name will be C<handle_request_>, followed
-by the name of the message type, in uppercase; for example
+on the code of message received. The name will be C<handle_request_>, followed
+by the name of the message code, in uppercase; for example
 C<handle_request_CALL>. 
 
 =cut
@@ -75,9 +75,9 @@ string.
 
 =cut
 
-=head2 $stream->handle_request_$TYPE( $token, $message )
+=head2 $stream->handle_request_$CODE( $token, $message )
 
-Invoked on receipt of a given message type. C<$token> will be some opaque perl
+Invoked on receipt of a given message code. C<$token> will be some opaque perl
 scalar value, and C<$message> will be an instance of L<Tangence::Message>.
 
 The value of the token has no particular meaning, other than to be passed to
@@ -150,29 +150,27 @@ sub tangence_readfrom
    my $self = shift;
 
    while( my $message = Tangence::Message->try_new_from_bytes( $self, $_[0] ) ) {
-      my $type = $message->type;
+      my $code = $message->code;
 
-      if( $type < 0x80 ) {
+      if( $code < 0x80 ) {
          push @{ $self->{request_queue} }, undef;
          my $token = \$self->{request_queue}[-1];
 
-         my $type = $message->type;
-
-         if( !$self->minor_version and $type != MSG_INIT ) {
+         if( !$self->minor_version and $code != MSG_INIT ) {
             $self->respondERROR( $token, "Cannot accept any message except MSG_INIT before MSG_INIT" );
             next;
          }
 
-         if( my $method = $REQ_METHOD{$type} ) {
+         if( my $method = $REQ_METHOD{$code} ) {
             if( $self->can( $method ) ) {
                $self->$method( $token, $message );
             }
             else {
-               $self->respondERROR( $token, sprintf( "Cannot respond to request type 0x%02x", $type ) );
+               $self->respondERROR( $token, sprintf( "Cannot respond to request code 0x%02x", $code ) );
             }
          }
          else {
-            $self->respondERROR( $token, sprintf( "Unrecognised request type 0x%02x", $type ) );
+            $self->respondERROR( $token, sprintf( "Unrecognised request code 0x%02x", $code ) );
          }
       }
       else {
@@ -199,17 +197,17 @@ sub object_destroyed
 
       on_response => sub {
          my ( $message ) = @_;
-         my $type = $message->type;
+         my $code = $message->code;
 
-         if( $type == MSG_OK ) {
+         if( $code == MSG_OK ) {
             $donesub->();
          }
-         elsif( $type == MSG_ERROR ) {
+         elsif( $code == MSG_ERROR ) {
             my $msg = $message->unpack_str();
             print STDERR "Cannot get connection $self to destroy object $objid - error $msg\n";
          }
          else {
-            print STDERR "Cannot get connection $self to destroy object $objid - code $type\n";
+            print STDERR "Cannot get connection $self to destroy object $objid - code $code\n";
          }
       },
    );

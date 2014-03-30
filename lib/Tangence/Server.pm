@@ -288,10 +288,10 @@ sub _handle_request_WATCHany
    my $prop  = $message->unpack_str();
    my $want_initial;
    my $iter_from;
-   if( $message->type == MSG_WATCH ) {
+   if( $message->code == MSG_WATCH ) {
       $want_initial = $message->unpack_bool();
    }
-   elsif( $message->type == MSG_WATCH_ITER ) {
+   elsif( $message->code == MSG_WATCH_ITER ) {
       $iter_from = $message->unpack_int();
    }
 
@@ -305,11 +305,11 @@ sub _handle_request_WATCHany
 
    $self->_install_watch( $object, $prop );
 
-   if( $message->type == MSG_WATCH ) {
+   if( $message->code == MSG_WATCH ) {
       $ctx->respond( Tangence::Message->new( $self, MSG_WATCHING ) );
       $self->_send_initial( $object, $prop ) if $want_initial;
    }
-   elsif( $message->type == MSG_WATCH_ITER ) {
+   elsif( $message->code == MSG_WATCH_ITER ) {
       my $m = "iter_prop_$prop";
       my $iter = $object->$m( $iter_from );
       my $id = $self->message_state->{next_iterid}++;

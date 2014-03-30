@@ -40,7 +40,7 @@ isa_ok( $stream, "Tangence::Stream", '$stream isa Tangence::Stream' );
 
    is( length $read, 0, '$read completely consumed from response' );
 
-   is( $response->type, MSG_RESULT, '$response->type to initial call' );
+   is( $response->code, MSG_RESULT, '$response->code to initial call' );
    is( $response->unpack_str, "response", '$response->unpack_str to initial call' );
 }
 

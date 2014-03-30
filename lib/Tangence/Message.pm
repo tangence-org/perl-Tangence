@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2010-2013 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2010-2014 -- leonerd@leonerd.org.uk
 
 package Tangence::Message;
 
@@ -40,13 +40,13 @@ our $SORT_HASH_KEYS = 0;
 sub new
 {
    my $class = shift;
-   my ( $stream, $type, $record ) = @_;
+   my ( $stream, $code, $record ) = @_;
 
    $record = "" unless defined $record;
 
    return bless {
       stream => $stream,
-      type   => $type,
+      code   => $code,
       record => $record,
    }, $class;
 }
@@ -58,14 +58,14 @@ sub try_new_from_bytes
 
    return undef unless length $_[0] >= 5;
 
-   my ( $type, $len ) = unpack( "CN", $_[0] );
+   my ( $code, $len ) = unpack( "CN", $_[0] );
    return 0 unless length $_[0] >= 5 + $len;
 
    substr( $_[0], 0, 5, "" );
 
    my $record = substr( $_[0], 0, $len, "" );
 
-   return $class->new( $stream, $type, $record );
+   return $class->new( $stream, $code, $record );
 }
 
 sub stream
@@ -74,10 +74,10 @@ sub stream
    return $self->{stream};
 }
 
-sub type
+sub code
 {
    my $self = shift;
-   return $self->{type};
+   return $self->{code};
 }
 
 sub bytes
@@ -85,7 +85,7 @@ sub bytes
    my $self = shift;
 
    my $record = $self->{record};
-   return pack( "CNa*", $self->{type}, length($record), $record );
+   return pack( "CNa*", $self->{code}, length($record), $record );
 }
 
 sub _pack_leader

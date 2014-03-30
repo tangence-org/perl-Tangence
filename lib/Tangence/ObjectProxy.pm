@@ -256,19 +256,19 @@ sub call_method
 
       on_response => sub {
          my ( $message ) = @_;
-         my $type = $message->type;
+         my $code = $message->code;
 
-         if( $type == MSG_RESULT ) {
+         if( $code == MSG_RESULT ) {
             my $result = $mdef->ret ? $mdef->ret->unpack_value( $message )
                                     : undef;
             $on_result->( $result );
          }
-         elsif( $type == MSG_ERROR ) {
+         elsif( $code == MSG_ERROR ) {
             my $msg = $message->unpack_str();
             $on_error->( $msg );
          }
          else {
-            $on_error->( "Unexpected response code $type" );
+            $on_error->( "Unexpected response code $code" );
          }
       },
    );
@@ -349,17 +349,17 @@ sub subscribe_event
 
       on_response => sub {
          my ( $message ) = @_;
-         my $type = $message->type;
+         my $code = $message->code;
 
-         if( $type == MSG_SUBSCRIBED ) {
+         if( $code == MSG_SUBSCRIBED ) {
             $on_subscribed->() if $on_subscribed;
          }
-         elsif( $type == MSG_ERROR ) {
+         elsif( $code == MSG_ERROR ) {
             my $msg = $message->unpack_str();
             $on_error->( $msg );
          }
          else {
-            $on_error->( "Unexpected response code $type" );
+            $on_error->( "Unexpected response code $code" );
          }
       },
    );
@@ -473,18 +473,18 @@ sub get_property
 
       on_response => sub {
          my ( $message ) = @_;
-         my $type = $message->type;
+         my $code = $message->code;
 
-         if( $type == MSG_RESULT ) {
+         if( $code == MSG_RESULT ) {
             my $value = $message->unpack_any();
             $on_value->( $value );
          }
-         elsif( $type == MSG_ERROR ) {
+         elsif( $code == MSG_ERROR ) {
             my $msg = $message->unpack_str();
             $on_error->( $msg );
          }
          else {
-            $on_error->( "Unexpected response code $type" );
+            $on_error->( "Unexpected response code $code" );
          }
       },
    );
@@ -568,18 +568,18 @@ sub get_property_element
 
       on_response => sub {
          my ( $message ) = @_;
-         my $type = $message->type;
+         my $code = $message->code;
 
-         if( $type == MSG_RESULT ) {
+         if( $code == MSG_RESULT ) {
             my $value = $message->unpack_any();
             $on_value->( $value );
          }
-         elsif( $type == MSG_ERROR ) {
+         elsif( $code == MSG_ERROR ) {
             my $msg = $message->unpack_str();
             $on_error->( $msg );
          }
          else {
-            $on_error->( "Unexpected response code $type" );
+            $on_error->( "Unexpected response code $code" );
          }
       },
    );
@@ -670,17 +670,17 @@ sub set_property
 
       on_response => sub {
          my ( $message ) = @_;
-         my $type = $message->type;
+         my $code = $message->code;
 
-         if( $type == MSG_OK ) {
+         if( $code == MSG_OK ) {
             $on_done->() if $on_done;
          }
-         elsif( $type == MSG_ERROR ) {
+         elsif( $code == MSG_ERROR ) {
             my $msg = $message->unpack_str();
             $on_error->( $msg );
          }
          else {
-            $on_error->( "Unexpected response code $type" );
+            $on_error->( "Unexpected response code $code" );
          }
       },
    );
@@ -876,12 +876,12 @@ sub watch_property
 
       on_response => sub {
          my ( $message ) = @_;
-         my $type = $message->type;
+         my $code = $message->code;
 
-         if( $type == MSG_WATCHING ) {
+         if( $code == MSG_WATCHING ) {
             $on_watched->() if $on_watched;
          }
-         elsif( $type == MSG_WATCHING_ITER ) {
+         elsif( $code == MSG_WATCHING_ITER ) {
             $on_watched->() if $on_watched;
             my $iter_id = $message->unpack_int();
             my $first_idx = $message->unpack_int();
@@ -890,12 +890,12 @@ sub watch_property
             my $iter = Tangence::ObjectProxy::_PropertyIterator->new( $self, $iter_id, $pdef->type );
             $on_iter->( $iter, $first_idx, $last_idx );
          }
-         elsif( $type == MSG_ERROR ) {
+         elsif( $code == MSG_ERROR ) {
             my $msg = $message->unpack_str();
             $on_error->( $msg );
          }
          else {
-            $on_error->( "Unexpected response code $type" );
+            $on_error->( "Unexpected response code $code" );
          }
       },
    );
@@ -1207,20 +1207,20 @@ sub _next
 
       on_response => sub {
          my ( $message ) = @_;
-         my $type = $message->type;
+         my $code = $message->code;
 
-         if( $type == MSG_ITER_RESULT ) {
+         if( $code == MSG_ITER_RESULT ) {
             $on_more->(
                $message->unpack_int(),
                $message->unpack_all_sametype( $element_type ),
             );
          }
-         elsif( $type == MSG_ERROR ) {
+         elsif( $code == MSG_ERROR ) {
             my $msg = $message->unpack_str();
             $on_error->( $msg );
          }
          else {
-            $on_error->( "Unexpected response code $type" );
+            $on_error->( "Unexpected response code $code" );
          }
       }
    );

@@ -176,21 +176,21 @@ sub tangence_connected
 
       on_response => sub {
          my ( $message ) = @_;
-         my $type = $message->type;
+         my $code = $message->code;
 
-         if( $type == MSG_INITED ) {
+         if( $code == MSG_INITED ) {
             my $major = $message->unpack_int();
             my $minor = $message->unpack_int();
 
             $self->minor_version( $minor );
             $self->tangence_initialised( %args );
          }
-         elsif( $type == MSG_ERROR ) {
+         elsif( $code == MSG_ERROR ) {
             my $msg = $message->unpack_str();
             print STDERR "Cannot initialise stream - error $msg";
          }
          else {
-            print STDERR "Cannot initialise stream - code $type\n";
+            print STDERR "Cannot initialise stream - code $code\n";
          }
       },
    );
@@ -207,18 +207,18 @@ sub tangence_initialised
 
       on_response => sub {
          my ( $message ) = @_;
-         my $type = $message->type;
+         my $code = $message->code;
 
-         if( $type == MSG_RESULT ) {
+         if( $code == MSG_RESULT ) {
             $self->rootobj( TYPE_OBJ->unpack_value( $message ) );
             $args{on_root}->( $self->rootobj ) if $args{on_root};
          }
-         elsif( $type == MSG_ERROR ) {
+         elsif( $code == MSG_ERROR ) {
             my $msg = $message->unpack_str();
             print STDERR "Cannot get root object - error $msg";
          }
          else {
-            print STDERR "Cannot get root object - code $type\n";
+            print STDERR "Cannot get root object - code $code\n";
          }
       }
    );
@@ -228,18 +228,18 @@ sub tangence_initialised
 
       on_response => sub {
          my ( $message ) = @_;
-         my $type = $message->type;
+         my $code = $message->code;
 
-         if( $type == MSG_RESULT ) {
+         if( $code == MSG_RESULT ) {
             $self->registry( TYPE_OBJ->unpack_value( $message ) );
             $args{on_registry}->( $self->registry ) if $args{on_registry};
          }
-         elsif( $type == MSG_ERROR ) {
+         elsif( $code == MSG_ERROR ) {
             my $msg = $message->unpack_str();
             print STDERR "Cannot get registry - error $msg";
          }
          else {
-            print STDERR "Cannot get registry - code $type\n";
+            print STDERR "Cannot get registry - code $code\n";
          }
       }
    );

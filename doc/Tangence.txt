@@ -256,11 +256,11 @@ sending another.
 The basic message format is a binary exchange of messages in the following
 format:
 
- Type:    1 byte  integer
+ Code:    1 byte  integer
  Length:  4 bytes integer, big-endian
  Payload: n bytes
 
-The type is a single byte which defines the message type. The collection 
+The code is a single byte which defines the message type. The collection 
 of message types is given below. The length is a big-endian 4 byte integer
 which gives the size of the message payload, excluding this header. Thus,
 the length of the entire message will always be 5 bytes more. The data
