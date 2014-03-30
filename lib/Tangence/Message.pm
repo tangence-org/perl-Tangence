@@ -302,70 +302,6 @@ sub unpack_obj
    }
 }
 
-sub pack_list
-{
-   my $self = shift;
-   my ( $list, $listtype ) = @_;
-
-   ref $list eq "ARRAY" or croak "Cannot pack a list from non-ARRAY reference";
-   my $member_type = $listtype->member_type;
-
-   $self->_pack_leader( DATA_LIST, scalar @$list );
-   $member_type->pack_value( $self, $_ ) for @$list;
-
-   return $self;
-}
-
-sub unpack_list
-{
-   my $self = shift;
-   my ( $listtype ) = @_;
-
-   my ( $type, $num ) = $self->_unpack_leader();
-   $type == DATA_LIST or croak "Expected to unpack a list but did not find one";
-
-   my $member_type = $listtype->member_type;
-   my @a;
-   foreach ( 1 .. $num ) {
-      push @a, $member_type->unpack_value( $self );
-   }
-   return \@a;
-}
-
-sub pack_dict
-{
-   my $self = shift;
-   my ( $dict, $dicttype ) = @_;
-
-   ref $dict eq "HASH" or croak "Cannot pack a dict from non-HASH reference";
-   my $member_type = $dicttype->member_type;
-
-   my @keys = keys %$dict;
-   @keys = sort @keys if $SORT_HASH_KEYS;
-
-   $self->_pack_leader( DATA_DICT, scalar @keys );
-   $self->pack_str( $_ ) and $member_type->pack_value( $self, $dict->{$_} ) for @keys;
-
-   return $self;
-}
-
-sub unpack_dict
-{
-   my $self = shift;
-   my ( $dicttype ) = @_;
-
-   my ( $type, $num ) = $self->_unpack_leader();
-   $type == DATA_DICT or croak "Expected to unpack a dict but did not find one";
-
-   my $member_type = $dicttype->member_type;
-   my %h;
-   foreach ( 1 .. $num ) {
-      my $key = $self->unpack_str();
-      $h{$key} = $member_type->unpack_value( $self );
-   }
-   return \%h;
-}
-
 sub pack_record
 {
    my $self = shift;
@@ -667,10 +603,10 @@ sub pack_any
       $self->pack_record( $d, $struct );
    }
    elsif( ref $d eq "ARRAY" ) {
-      $self->pack_list( $d, TYPE_LIST_ANY );
+      TYPE_LIST_ANY->pack_value( $self, $d );
    }
    elsif( ref $d eq "HASH" ) {
-      $self->pack_dict( $d, TYPE_DICT_ANY );
+      TYPE_DICT_ANY->pack_value( $self, $d );
    }
    else {
       croak "Do not know how to pack a " . ref($d);
@@ -697,10 +633,10 @@ sub unpack_any
       return $self->unpack_obj();
    }
    elsif( $type == DATA_LIST ) {
-      return $self->unpack_list( TYPE_LIST_ANY );
+      return TYPE_LIST_ANY->unpack_value( $self );
    }
    elsif( $type == DATA_DICT ) {
-      return $self->unpack_dict( TYPE_DICT_ANY );
+      return TYPE_DICT_ANY->unpack_value( $self );
    }
    elsif( $type == DATA_RECORD ) {
       return $self->unpack_record( undef );

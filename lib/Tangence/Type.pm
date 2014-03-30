@@ -42,6 +42,8 @@ sub new
 package
    Tangence::Type::List;
 use base qw( Tangence::Type );
+use Carp;
+use Tangence::Constants;
 
 sub default_value { [] }
 
@@ -49,19 +51,37 @@ sub pack_value
 {
    my $self = shift;
    my ( $message, $value ) = @_;
-   $message->pack_list( $value, $self );
+
+   ref $value eq "ARRAY" or croak "Cannot pack a list from non-ARRAY reference";
+
+   $message->_pack_leader( DATA_LIST, scalar @$value );
+
+   my $member_type = $self->member_type;
+   $member_type->pack_value( $message, $_ ) for @$value;
 }
 
 sub unpack_value
 {
    my $self = shift;
    my ( $message ) = @_;
-   return $message->unpack_list( $self );
+
+   my ( $type, $num ) = $message->_unpack_leader();
+   $type == DATA_LIST or croak "Expected to unpack a list but did not find one";
+
+   my $member_type = $self->member_type;
+   my @values;
+   foreach ( 1 .. $num ) {
+      push @values, $member_type->unpack_value( $message );
+   }
+
+   return \@values;
 }
 
 package
    Tangence::Type::Dict;
 use base qw( Tangence::Type );
+use Carp;
+use Tangence::Constants;
 
 sub default_value { {} }
 
@@ -69,14 +89,34 @@ sub pack_value
 {
    my $self = shift;
    my ( $message, $value ) = @_;
-   $message->pack_dict( $value, $self );
+
+   ref $value eq "HASH" or croak "Cannot pack a dict from non-HASH reference";
+
+   my @keys = keys %$value;
+   @keys = sort @keys if $Tangence::Message::SORT_HASH_KEYS;
+
+   $message->_pack_leader( DATA_DICT, scalar @keys );
+
+   my $member_type = $self->member_type;
+   $message->pack_str( $_ ), $member_type->pack_value( $message, $value->{$_} ) for @keys;
 }
 
 sub unpack_value
 {
    my $self = shift;
    my ( $message ) = @_;
-   return $message->unpack_dict( $self );
+
+   my ( $type, $num ) = $message->_unpack_leader();
+   $type == DATA_DICT or croak "Expected to unpack a dict but did not find one";
+
+   my $member_type = $self->member_type;
+   my %values;
+   foreach ( 1 .. $num ) {
+      my $key = $message->unpack_str();
+      $values{$key} = $member_type->unpack_value( $message );
+   }
+
+   return \%values;
 }
 
 =head1 AUTHOR
