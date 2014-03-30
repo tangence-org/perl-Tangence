@@ -508,7 +508,7 @@ sub pack_any
    }
    elsif( !ref $d ) {
       # TODO: We'd never choose to pack a number
-      $self->pack_str( $d );
+      TYPE_STR->pack_value( $self, $d );
    }
    elsif( blessed $d and $d->isa( "Tangence::Object" ) || $d->isa( "Tangence::ObjectProxy" ) ) {
       TYPE_OBJ->pack_value( $self, $d );
@@ -541,7 +541,7 @@ sub unpack_any
       return $self->unpack_int();
    }
    if( $type == DATA_STRING ) {
-      return $self->unpack_str();
+      return TYPE_STR->unpack_value( $self );
    }
    elsif( $type == DATA_OBJECT ) {
       return TYPE_OBJ->unpack_value( $self );
