@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use base qw( Tangence::Meta::Struct );
 
+our $VERSION = '0.19';
+
 use Carp;
 
 use Tangence::Type;
