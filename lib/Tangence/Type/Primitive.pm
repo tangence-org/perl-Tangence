@@ -251,6 +251,20 @@ sub unpack_value
 package
    Tangence::Type::Primitive::any;
 use base qw( Tangence::Type::Primitive );
+use Carp;
+use Scalar::Util qw( blessed );
+use Tangence::Constants;
+
+# We can't use Tangence::Types here without a dependency cycle
+# However, it's OK to create even TYPE_ANY right here, because the 'any' class
+# now exists.
+use constant TYPE_INT => Tangence::Type->new( 'int' );
+use constant TYPE_STR => Tangence::Type->new( 'str' );
+use constant TYPE_OBJ => Tangence::Type->new( 'obj' );
+use constant TYPE_ANY => Tangence::Type->new( 'any' );
+
+use constant TYPE_LIST_ANY => Tangence::Type->new( list => TYPE_ANY );
+use constant TYPE_DICT_ANY => Tangence::Type->new( dict => TYPE_ANY );
 
 sub default_value { undef }
 
@@ -258,14 +272,59 @@ sub pack_value
 {
    my $self = shift;
    my ( $message, $value ) = @_;
-   $message->pack_any( $value );
+
+   if( !defined $value ) {
+      TYPE_OBJ->pack_value( $message, undef );
+   }
+   elsif( !ref $value ) {
+      # TODO: We'd never choose to pack a number
+      TYPE_STR->pack_value( $message, $value );
+   }
+   elsif( blessed $value and $value->isa( "Tangence::Object" ) || $value->isa( "Tangence::ObjectProxy" ) ) {
+      TYPE_OBJ->pack_value( $message, $value );
+   }
+   elsif( my $struct = eval { Tangence::Struct->for_perlname( ref $value ) } ) {
+      $message->pack_record( $value, $struct );
+   }
+   elsif( ref $value eq "ARRAY" ) {
+      TYPE_LIST_ANY->pack_value( $message, $value );
+   }
+   elsif( ref $value eq "HASH" ) {
+      TYPE_DICT_ANY->pack_value( $message, $value );
+   }
+   else {
+      croak "Do not know how to pack a " . ref($value);
+   }
 }
 
 sub unpack_value
 {
    my $self = shift;
    my ( $message ) = @_;
-   return $message->unpack_any;
+
+   my $type = $message->_peek_leader_type();
+
+   if( $type == DATA_NUMBER ) {
+      return TYPE_INT->unpack_value( $message );
+   }
+   if( $type == DATA_STRING ) {
+      return TYPE_STR->unpack_value( $message );
+   }
+   elsif( $type == DATA_OBJECT ) {
+      return TYPE_OBJ->unpack_value( $message );
+   }
+   elsif( $type == DATA_LIST ) {
+      return TYPE_LIST_ANY->unpack_value( $message );
+   }
+   elsif( $type == DATA_DICT ) {
+      return TYPE_DICT_ANY->unpack_value( $message );
+   }
+   elsif( $type == DATA_RECORD ) {
+      return $message->unpack_record( undef );
+   }
+   else {
+      croak "Do not know how to unpack record of type $type";
+   }
 }
 
 =head1 AUTHOR
