@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2010-2013 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2010-2014 -- leonerd@leonerd.org.uk
 
 package Tangence::Registry;
 
@@ -91,7 +91,7 @@ sub new
       meta => Tangence::Class->for_perlname( $class ),
    );
    weaken( $self->{registry} = $self );
-   
+
    $self->{objects} = { $id => $self };
    weaken( $self->{objects}{$id} );
    $self->add_prop_objects( $id => $self->describe );
@@ -99,13 +99,7 @@ sub new
    $self->{nextid}  = 1;
    $self->{freeids} = []; # free'd ids we can reuse
 
-   my $parsed = Tangence::Registry::Parser->new->from_file( $tanfile );
-
-   $self->{classes} = \my %classes;
-
-   foreach ( values %$parsed ) {
-      $classes{$_->perlname} = $_;
-   }
+   $self->load_tanfile( $tanfile );
 
    return $self;
 }
@@ -151,9 +145,11 @@ sub construct
 
    my $id = shift @{ $self->{freeids} } || ( $self->{nextid}++ );
 
-   exists $self->{classes}{$type} or croak "Registry cannot construct a '$type' as no class definition exists";
+   Tangence::Class->for_perlname( $type ) or
+      croak "Registry cannot construct a '$type' as no class definition exists";
 
-   eval { $type->can( "new" ) } or croak "Registry cannot construct a '$type' as it has no ->new() method";
+   eval { $type->can( "new" ) } or
+      croak "Registry cannot construct a '$type' as it has no ->new() method";
 
    my $obj = $type->new(
       registry => $self,
@@ -183,6 +179,22 @@ sub destroy_object
    $self->fire_event( "object_destroyed", $id );
 
    push @{ $self->{freeids} }, $id; # Recycle the ID
+}
+
+=head2 $registry->load_tanfile( $tanfile )
+
+Loads additional Tangence class and struct definitions from the given F<.tan>
+file.
+
+=cut
+
+sub load_tanfile
+{
+   my $self = shift;
+   my ( $tanfile ) = @_;
+
+   # Merely constructing this has the side-effect of declaring all the classes
+   Tangence::Registry::Parser->new->from_file( $tanfile );
 }
 
 package # hide from CPAN
