@@ -193,7 +193,15 @@ sub test_typed
 
    is_hexstr( $m->{record}, $args{stream}, "pack typed $name" );
 
-   is_deeply( $type->unpack_value( $m ), exists $args{retdata} ? $args{retdata} : $args{data}, "\$type->unpack_value $name" );
+   my $value = $type->unpack_value( $m );
+   my $expect = exists $args{retdata} ? $args{retdata} : $args{data};
+
+   if( defined $expect and !ref $expect and $expect =~ m/^-?\d+\.\d+/ ) {
+      # Approximate comparison for floats
+      $_ = sprintf "%.5f", $_ for $expect, $value;
+   }
+
+   is_deeply( $value, $expect, "\$type->unpack_value $name" );
    is( length $m->{record}, 0, "eats all stream for $name" );
 }
 
