@@ -28,9 +28,9 @@ syntax region  TangenceType start=/\(list\|dict\)(/ end=/)/ contains=TangenceTyp
 
 syntax region TangenceArglist start="(" end=")" contains=TangenceType,TangenceIdentifier skipwhite
 
-syntax region TangenceClassBlock start="{" end="}" fold transparent
+syntax region TangenceClassBlock start="{" end="}" fold transparent contained
 
-syntax region TangenceStructBlock start="{" end="}" fold transparent
+syntax region TangenceStructBlock start="{" end="}" fold transparent contained
 
 if version >= 508 || !exists("did_tangence_syn_inits")
     if version < 508
