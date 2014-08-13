@@ -1,5 +1,15 @@
 Revision history for Tangence
 
+0.20    2014/08/13 23:23:11
+        [CHANGES]
+         * Better support for late declaration of Tangence class definitions
+           after the main tanfile is loaded
+
+        [BUGFIXES]
+         * Fix 'return or' operator precedence (RT97483)
+         * Compare floats by approximation during unit tests (RT94404)
+         * Fix block folding in syntax/tangence.vim
+
 0.19    2014/03/30 13:33:40
         [CHANGES]
          * Created new Tangence::Type classes to represent the type system as
