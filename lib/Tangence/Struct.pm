@@ -98,7 +98,7 @@ sub for_name
    my $class = shift;
    my ( $name ) = @_;
 
-   return $STRUCTS_BY_NAME{$name} or croak "Unknown Tangence::Struct for '$name'";
+   return $STRUCTS_BY_NAME{$name} || croak "Unknown Tangence::Struct for '$name'";
 }
 
 sub for_perlname
@@ -106,7 +106,7 @@ sub for_perlname
    my $class = shift;
    my ( $perlname ) = @_;
 
-   return $STRUCTS_BY_PERLNAME{$perlname} or croak "Unknown Tangence::Struct for '$perlname'";
+   return $STRUCTS_BY_PERLNAME{$perlname} || croak "Unknown Tangence::Struct for '$perlname'";
 }
 
 sub perlname

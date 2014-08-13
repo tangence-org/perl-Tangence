@@ -133,7 +133,7 @@ sub for_name
    my $class = shift;
    my ( $name ) = @_;
 
-   return $metas{$name} or croak "Unknown Tangence::Class for '$name'";
+   return $metas{$name} || croak "Unknown Tangence::Class for '$name'";
 }
 
 sub for_perlname
@@ -142,7 +142,7 @@ sub for_perlname
    my ( $perlname ) = @_;
 
    ( my $name = $perlname ) =~ s{::}{.}g;
-   return $metas{$name} or croak "Unknown Tangence::Class for '$perlname'";
+   return $metas{$name} || croak "Unknown Tangence::Class for '$perlname'";
 }
 
 sub superclasses
