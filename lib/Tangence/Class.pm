@@ -101,10 +101,16 @@ sub declare
       );
    }
 
+   my @superclasses;
+   foreach ( @{ $args{superclasses} } ) {
+      push @superclasses, Tangence::Class->for_perlname( $_ );
+   }
+
    $self->define(
-      methods    => \%methods,
-      events     => \%events,
-      properties => \%properties,
+      methods      => \%methods,
+      events       => \%events,
+      properties   => \%properties,
+      superclasses => \@superclasses,
    );
 }
 
