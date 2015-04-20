@@ -40,20 +40,12 @@ my $objproxy = $client->rootobj;
    is_deeply( [ $mdef->argtypes ], [ TYPE_INT, TYPE_STR ], '$mdef->argtypes' );
    is( $mdef->ret, TYPE_STR, '$mdef->ret' );
 
-   my $result;
-   $objproxy->call_method(
-      method => "method",
-      args   => [ 10, "hello" ],
-      on_result => sub { $result = shift },
-   );
+   my $f = $objproxy->call_method( method => 10, "hello" );
 
-   is( $result, "10/hello", 'result of call_method()' );
+   ok( $f->is_ready, '$f ready after MSG_RESULT' );
+   is( scalar $f->get, "10/hello", 'result of call_method()' );
 
-   dies_ok( sub { $objproxy->call_method(
-                    method => "no_such_method",
-                    args   => [ 123 ],
-                    on_result => sub {},
-                  ); },
+   dies_ok( sub { $objproxy->call_method( no_such_method => 123 ) },
             'Calling no_such_method fails in proxy' );
 }
 

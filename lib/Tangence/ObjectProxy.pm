@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2010-2013 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2010-2015 -- leonerd@leonerd.org.uk
 
 package Tangence::ObjectProxy;
 
@@ -72,6 +72,9 @@ sub destroy
 }
 
 =head1 METHODS
+
+The following methods documented with a trailing call to C<< ->get >> return
+L<Future> instances.
 
 =cut
 
@@ -191,53 +194,21 @@ sub grab
    }
 }
 
-=head2 $proxy->call_method( %args )
+=head2 $result = $proxy->call_method( $mname, @args )->get
 
-Calls the given method on the server object and invokes a callback function
-when a result is received.
-
-Takes the following named arguments:
-
-=over 8
-
-=item method => STRING
-
-The name of the method
-
-=item args => ARRAY
-
-Optional. If provided, gives positional arguments for the method.
-
-=item on_result => CODE
-
-Callback function to invoke when a result is returned
-
- $on_result->( $result )
-
-=item on_error => CODE
-
-Optional. Callback function to invoke when an error is returned. The client's
-default will apply if not provided.
-
- $on_error->( $error )
-
-=back
+Calls the given method on the server object, passing in the given arguments.
+Returns a L<Future> that will yield the method's result.
 
 =cut
 
 sub call_method
 {
    my $self = shift;
-   my %args = @_;
+   my ( $method, @args ) = @_;
 
-   my $method = delete $args{method} or croak "Need a method";
-   my $args   = delete $args{args};
-
-   ref( my $on_result = delete $args{on_result} ) eq "CODE" 
-      or croak "Expected 'on_result' as a CODE ref";
-
-   my $on_error = delete $args{on_error} || $self->{on_error};
-   ref $on_error eq "CODE" or croak "Expected 'on_error' as a CODE ref";
+   # Detect void-context legacy uses
+   defined wantarray or
+      croak "->call_method in void context no longer useful - it now returns a Future";
 
    my $mdef = $self->can_method( $method )
       or croak "Class ".$self->classname." does not have a method $method";
@@ -249,7 +220,9 @@ sub call_method
          ->pack_str( $method );
 
    my @argtypes = $mdef->argtypes;
-   $argtypes[$_]->pack_value( $request, $args ? $args->[$_] : undef ) for 0..$#argtypes;
+   $argtypes[$_]->pack_value( $request, $args[$_] ) for 0..$#argtypes;
+
+   my $f = $conn->new_future;
 
    $conn->request(
       request => $request,
@@ -261,17 +234,19 @@ sub call_method
          if( $code == MSG_RESULT ) {
             my $result = $mdef->ret ? $mdef->ret->unpack_value( $message )
                                     : undef;
-            $on_result->( $result );
+            $f->done( $result );
          }
          elsif( $code == MSG_ERROR ) {
             my $msg = $message->unpack_str();
-            $on_error->( $msg );
+            $f->fail( $msg, tangence => );
          }
          else {
-            $on_error->( "Unexpected response code $code" );
+            $f->fail( "Unexpected response code $code", tangence => );
          }
       },
    );
+
+   return $f;
 }
 
 =head2 $proxy->subscribe_event( %args )
