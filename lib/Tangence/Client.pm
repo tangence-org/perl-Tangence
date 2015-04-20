@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2010-2014 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2010-2015 -- leonerd@leonerd.org.uk
 
 package Tangence::Client;
 
@@ -17,6 +17,8 @@ use Carp;
 use Tangence::Constants;
 use Tangence::Types;
 use Tangence::ObjectProxy;
+
+use Future;
 
 use List::Util qw( max );
 
@@ -328,6 +330,23 @@ sub make_proxy
    $obj->grab( $smashdata ) if defined $smashdata;
 
    return $obj;
+}
+
+=head1 SUBCLASSING METHODS
+
+These methods are intended for implementation classes to override.
+
+=cut
+
+=head2 $f = $client->new_future
+
+Returns a new L<Future> instance for basing asynchronous operations on.
+
+=cut
+
+sub new_future
+{
+   return Future->new;
 }
 
 =head1 AUTHOR
