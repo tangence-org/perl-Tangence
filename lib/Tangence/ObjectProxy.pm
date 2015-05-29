@@ -249,7 +249,7 @@ sub call_method
    return $f;
 }
 
-=head2 $proxy->subscribe_event( %args )
+=head2 $proxy->subscribe_event( %args )->get
 
 Subscribes to the given event on the server object, installing a callback
 function which will be invoked whenever the event is fired.
@@ -268,22 +268,8 @@ Callback function to invoke whenever the event is fired
 
  $on_fire->( @args )
 
-=item on_subscribed => CODE
-
-Optional. Callback function to invoke once the event subscription is
-successfully installed by the server.
-
- $on_subscribed->()
-
-If this is provided, it is guaranteed to be invoked before any invocation of
-the C<on_fire> event handler.
-
-=item on_error => CODE
-
-Optional. Callback function to invoke when an error is returned. The client's
-default will apply if not provided.
-
- $on_error->( $error )
+The returned C<Future> it is guaranteed to be completed before any invocation
+of the C<on_fire> event handler.
 
 =back
 
@@ -298,25 +284,22 @@ sub subscribe_event
    ref( my $callback = delete $args{on_fire} ) eq "CODE"
       or croak "Expected 'on_fire' as a CODE ref";
 
-   my $on_error = delete $args{on_error} || $self->{on_error};
-   ref $on_error eq "CODE" or croak "Expected 'on_error' as a CODE ref";
-
-   my $on_subscribed = $args{on_subscribed};
-
    $self->can_event( $event )
       or croak "Class ".$self->classname." does not have an event $event";
 
    if( my $cbs = $self->{subscriptions}->{$event} ) {
       push @$cbs, $callback;
-      return;
+      return Future->done;
    }
 
    my @cbs = ( $callback );
    $self->{subscriptions}->{$event} = \@cbs;
 
-   return if $event eq "destroy"; # This is automatically handled
+   return Future->done if $event eq "destroy"; # This is automatically handled
 
    my $conn = $self->{conn};
+   my $f = $conn->new_future;
+
    $conn->request(
       request => Tangence::Message->new( $conn, MSG_SUBSCRIBE )
          ->pack_int( $self->id )
@@ -327,17 +310,19 @@ sub subscribe_event
          my $code = $message->code;
 
          if( $code == MSG_SUBSCRIBED ) {
-            $on_subscribed->() if $on_subscribed;
+            $f->done;
          }
          elsif( $code == MSG_ERROR ) {
             my $msg = $message->unpack_str();
-            $on_error->( $msg );
+            $f->fail( $msg, tangence => );
          }
          else {
-            $on_error->( "Unexpected response code $code" );
+            $f->fail( "Unexpected response code $code", tangence => );
          }
       },
    );
+
+   return $f;
 }
 
 sub handle_request_EVENT

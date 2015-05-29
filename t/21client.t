@@ -72,20 +72,18 @@ my $bagproxy;
 
    my $event_i;
    my $event_s;
-   my $subbed;
-   $objproxy->subscribe_event(
+   my $f = $objproxy->subscribe_event(
       event => "event",
       on_fire => sub {
          ( $event_i, $event_s ) = @_;
       },
-      on_subscribed => sub { $subbed = 1 },
    );
 
    is_hexstr( $client->recv_message, $C2S{SUBSCRIBE}, 'client stream contains MSG_SUBSCRIBE' );
 
    $client->send_message( $S2C{SUBSCRIBED} );
 
-   is( $subbed, 1, '$subbed after MSG_SUBSCRIBED' );
+   ok( $f->is_ready, '$f is ready after MSG_SUBSCRIBED' );
 
    $client->send_message( $S2C{EVENT} );
 
@@ -327,7 +325,7 @@ my $bagproxy;
    $objproxy->subscribe_event(
       event => "destroy",
       on_fire => sub { $proxy_destroyed = 1 },
-   );
+   )->get;
 
    $client->send_message( $S2C{DESTROY} );
 

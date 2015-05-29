@@ -59,16 +59,14 @@ my $objproxy = $client->rootobj;
 
    my $event_i;
    my $event_s;
-   my $subbed;
-   $objproxy->subscribe_event(
+   my $f = $objproxy->subscribe_event(
       event => "event",
       on_fire => sub {
          ( $event_i, $event_s ) = @_;
       },
-      on_subscribed => sub { $subbed = 1 },
    );
 
-   is( $subbed, 1, '$subbed after subscribe_event' );
+   ok( $f->is_ready, '$f is ready after subscribe_event' );
 
    $obj->fire_event( event => 20, "bye" );
 
@@ -251,7 +249,7 @@ my $objproxy = $client->rootobj;
    $objproxy->subscribe_event(
       event => "destroy",
       on_fire => sub { $proxy_destroyed = 1 },
-   );
+   )->get;
 
    my $obj_destroyed = 0;
 
