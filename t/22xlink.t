@@ -94,29 +94,17 @@ my $objproxy = $client->rootobj;
 
    is( $objproxy->prop( "s_scalar" ), 456, 'Smashed property initially set in proxy' );
 
-   my $value;
-   $objproxy->get_property(
-      property => "scalar",
-      on_value => sub { $value = shift },
-   );
+   my $f = $objproxy->get_property( "scalar" );
 
-   is( $value, 123, '$value after get_property' );
+   is( scalar $f->get, 123, '$f->get after get_property' );
 
-   $objproxy->get_property_element(
-      property => "hash",
-      key      => "two",
-      on_value => sub { $value = shift },
-   );
+   $f = $objproxy->get_property_element( "hash", "two" );
 
-   is( $value, 2, '$value after get_property_element hash key' );
+   is( scalar $f->get, 2, '$f->get after get_property_element hash key' );
 
-   $objproxy->get_property_element(
-      property => "array",
-      index    => 1,
-      on_value => sub { $value = shift },
-   );
+   $f = $objproxy->get_property_element( "array", 1 );
 
-   is( $value, 2, '$value after get_property_element array index' );
+   is( scalar $f->get, 2, '$f->get after get_property_element array index' );
 
    my $didset = 0;
    $objproxy->set_property(
@@ -165,10 +153,7 @@ my $objproxy = $client->rootobj;
       property => "scalar",
    );
 
-   dies_ok( sub { $objproxy->get_property(
-                    property => "no_such_property",
-                    on_value => sub {},
-                  ); },
+   dies_ok( sub { $objproxy->get_property( "no_such_property" ) },
             'Getting no_such_property fails in proxy' );
 }
 

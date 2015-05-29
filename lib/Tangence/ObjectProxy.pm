@@ -379,53 +379,23 @@ sub unsubscribe_event
    );
 }
 
-=head2 $proxy->get_property( %args )
+=head2 $value = $proxy->get_property( $prop )->get
 
-Requests the current value of the property from the server object, and invokes
-a callback function when the value is received.
-
-Takes the following named arguments
-
-=over 8
-
-=item property => STRING
-
-The name of the property
-
-=item on_value => CODE
-
-Callback function to invoke when the value is returned
-
- $on_value->( $value )
-
-=item on_error => CODE
-
-Optional. Callback function to invoke when an error is returned. The client's
-default will apply if not provided.
-
- $on_error->( $error )
-
-=back
+Requests the current value of the property from the server object.
 
 =cut
 
 sub get_property
 {
    my $self = shift;
-   my %args = @_;
-
-   my $property = delete $args{property} or croak "Need a property";
-
-   ref( my $on_value = delete $args{on_value} ) eq "CODE" 
-      or croak "Expected 'on_value' as a CODE ref";
-
-   my $on_error = delete $args{on_error} || $self->{on_error};
-   ref $on_error eq "CODE" or croak "Expected 'on_error' as a CODE ref";
+   my ( $property ) = @_;
 
    my $pdef = $self->can_property( $property )
       or croak "Class ".$self->classname." does not have a property $property";
 
    my $conn = $self->{conn};
+   my $f = $conn->new_future;
+
    $conn->request(
       request => Tangence::Message->new( $conn, MSG_GETPROP )
          ->pack_int( $self->id )
@@ -437,69 +407,32 @@ sub get_property
 
          if( $code == MSG_RESULT ) {
             my $value = $pdef->overall_type->unpack_value( $message );
-            $on_value->( $value );
+            $f->done( $value );
          }
          elsif( $code == MSG_ERROR ) {
             my $msg = $message->unpack_str();
-            $on_error->( $msg );
+            $f->fail( $msg, tangence => );
          }
          else {
-            $on_error->( "Unexpected response code $code" );
+            $f->fail( "Unexpected response code $code", tangence => );
          }
       },
    );
+
+   return $f;
 }
 
-=head2 $proxy->get_property_element( %args )
+=head2 $value = $proxy->get_property_element( $property, $index_or_key )->get
 
 Requests the current value of an element of the property from the server
-object, and invokes a callback function when the value is received.
-
-Takes the following named arguments
-
-=over 8
-
-=item property => STRING
-
-The name of the property
-
-=item index => INT
-
-For queue or array dimension properties, the index of the element
-
-=item key => STRING
-
-For hash dimension properties, the key of the element
-
-=item on_value => CODE
-
-Callback function to invoke when the value is returned
-
- $on_value->( $value )
-
-=item on_error => CODE
-
-Optional. Callback function to invoke when an error is returned. The client's
-default will apply if not provided.
-
- $on_error->( $error )
-
-=back
+object.
 
 =cut
 
 sub get_property_element
 {
    my $self = shift;
-   my %args = @_;
-
-   my $property = delete $args{property} or croak "Need a property";
-
-   ref( my $on_value = delete $args{on_value} ) eq "CODE" 
-      or croak "Expected 'on_value' as a CODE ref";
-
-   my $on_error = delete $args{on_error} || $self->{on_error};
-   ref $on_error eq "CODE" or croak "Expected 'on_error' as a CODE ref";
+   my ( $property, $index_or_key ) = @_;
 
    my $pdef = $self->can_property( $property )
       or croak "Class ".$self->classname." does not have a property $property";
@@ -512,16 +445,16 @@ sub get_property_element
       ->pack_str( $property );
 
    if( $pdef->dimension == DIM_HASH ) {
-      defined $args{key} or croak "Need a key";
-      $request->pack_str( $args{key} );
+      $request->pack_str( $index_or_key );
    }
    elsif( $pdef->dimension == DIM_ARRAY or $pdef->dimension == DIM_QUEUE ) {
-      defined $args{index} or croak "Need an index";
-      $request->pack_int( $args{index} );
+      $request->pack_int( $index_or_key );
    }
    else {
-      croak "Cannot get_property_element of a non hash";
+      croak "Cannot get_property_element of a non hash, array or queue";
    }
+
+   my $f = $conn->new_future;
 
    $conn->request(
       request => $request,
@@ -532,17 +465,19 @@ sub get_property_element
 
          if( $code == MSG_RESULT ) {
             my $value = $pdef->type->unpack_value( $message );
-            $on_value->( $value );
+            $f->done( $value );
          }
          elsif( $code == MSG_ERROR ) {
             my $msg = $message->unpack_str();
-            $on_error->( $msg );
+            $f->fail( $msg, tangence => );
          }
          else {
-            $on_error->( "Unexpected response code $code" );
+            $f->fail( "Unexpected response code $code", tangence => );
          }
       },
    );
+
+   return $f;
 }
 
 =head2 $value = $proxy->prop( $property )
@@ -776,15 +711,13 @@ sub watch_property
 
    if( my $cbs = $self->{props}->{$property}->{cbs} ) {
       if( $want_initial and !$smash ) {
-         $self->get_property(
-            property => $property,
-            on_value => sub {
+         $self->get_property( $property )
+            ->on_done( sub {
                $callbacks->{on_set} and $callbacks->{on_set}->( $_[0] );
                $callbacks->{on_updated} and $callbacks->{on_updated}->( $_[0] );
                push @$cbs, $callbacks;
                $on_watched->() if $on_watched;
-            },
-         );
+            });
       }
       elsif( $want_initial and $smash ) {
          my $cache = $self->{props}->{$property}->{cache};
