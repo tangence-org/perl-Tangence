@@ -499,57 +499,16 @@ sub prop
    croak "$self does not have a cached property '$property'";
 }
 
-=head2 $proxy->set_property( %args )
+=head2 $proxy->set_property( $prop, $value )->get
 
-Sets the value of the property in the server object. Optionally invokes a
-callback function when complete.
-
-Takes the following named arguments
-
-=over 8
-
-=item property => STRING
-
-The name of the property
-
-=item value => SCALAR
-
-New value to set for the property
-
-=item on_done => CODE
-
-Optional. Callback function to invoke once the new value is set.
-
- $on_done->()
-
-=item on_error => CODE
-
-Optional. Callback function to invoke when an error is returned. The client's
-default will apply if not provided.
-
- $on_error->( $error )
-
-=back
+Sets the value of the property in the server object.
 
 =cut
 
 sub set_property
 {
    my $self = shift;
-   my %args = @_;
-
-   my $property = delete $args{property} or croak "Need a property";
-
-   my $on_done = delete $args{on_done};
-   !defined $on_done or ref $on_done eq "CODE"
-      or croak "Expected 'on_done' to be a CODE ref";
-
-   my $on_error = delete $args{on_error} || $self->{on_error};
-   ref $on_error eq "CODE" or croak "Expected 'on_error' as a CODE ref";
-
-   # value can quite legitimately be undef
-   exists $args{value} or croak "Need a value";
-   my $value = delete $args{value};
+   my ( $property, $value ) = @_;
 
    my $pdef = $self->can_property( $property )
       or croak "Class ".$self->classname." does not have a property $property";
@@ -560,6 +519,8 @@ sub set_property
          ->pack_str( $property );
    $pdef->type->pack_value( $request, $value ),
 
+   my $f = $conn->new_future;
+
    $conn->request(
       request => $request,
 
@@ -568,17 +529,19 @@ sub set_property
          my $code = $message->code;
 
          if( $code == MSG_OK ) {
-            $on_done->() if $on_done;
+            $f->done;
          }
          elsif( $code == MSG_ERROR ) {
             my $msg = $message->unpack_str();
-            $on_error->( $msg );
+            $f->fail( $msg, tangence => );
          }
          else {
-            $on_error->( "Unexpected response code $code" );
+            $f->fail( "Unexpected response code $code", tangence => );
          }
       },
    );
+
+   return $f;
 }
 
 =head2 $proxy->watch_property( %args )

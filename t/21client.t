@@ -144,18 +144,13 @@ my $bagproxy;
    ok( $f->is_ready, '$f is ready after MSG_RESULT' );
    is( scalar $f->get, 2, '$f->get after get_property_element array index' );
 
-   my $didset = 0;
-   $objproxy->set_property(
-      property => "scalar",
-      value    => 135,
-      on_done  => sub { $didset = 1 },
-   );
+   $f = $objproxy->set_property( "scalar", 135 );
 
    is_hexstr( $client->recv_message, $C2S{SETPROP}, 'client stream contains MSG_SETPROP' );
 
    $client->send_message( $MSG_OK );
 
-   is( $didset, 1, '$didset after set_property' );
+   ok( $f->is_ready, '$f is ready after set_property' );
 }
 
 # Properties watch

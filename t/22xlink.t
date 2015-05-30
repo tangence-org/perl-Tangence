@@ -106,15 +106,10 @@ my $objproxy = $client->rootobj;
 
    is( scalar $f->get, 2, '$f->get after get_property_element array index' );
 
-   my $didset = 0;
-   $objproxy->set_property(
-      property => "scalar",
-      value    => 135,
-      on_done  => sub { $didset = 1 },
-   );
+   $f = $objproxy->set_property( "scalar", 135 );
 
    is( $obj->get_prop_scalar, 135, '$obj->get_prop_scalar after set_property' );
-   is( $didset, 1, '$didset after set_property' );
+   ok( $f->is_ready, '$f is ready after set_property' );
 }
 
 # Properties watch
