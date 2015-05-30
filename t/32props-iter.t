@@ -60,9 +60,7 @@ my $on_more = sub {
 
    is_deeply( \@value, [ 2, 3, 4, 5 ], '@value after third next_forward' );
 
-   $proxy->unwatch_property(
-      property => "queue",
-   );
+   $proxy->unwatch_property( "queue" );
 }
 
 # Reset
@@ -102,9 +100,7 @@ $obj->set_prop_queue( [ 1, 2, 3 ] );
 
    is_deeply( \@value, [ 2, 3, 4, 5 ], '@value after third next_backward' );
 
-   $proxy->unwatch_property(
-      property => "queue",
-   );
+   $proxy->unwatch_property( "queue" );
 }
 
 done_testing;

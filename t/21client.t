@@ -91,9 +91,7 @@ my $bagproxy;
 
    is( $event_i, 20, '$event_i after subscribed event' );
 
-   $objproxy->unsubscribe_event(
-      event => "event",
-   );
+   $objproxy->unsubscribe_event( "event" );
 
    is_hexstr( $client->recv_message, $C2S{UNSUBSCRIBE}, 'client stream contains MSG_UNSUBSCRIBE' );
 
@@ -194,9 +192,7 @@ my $bagproxy;
 
    is_hexstr( $client->recv_message, $MSG_OK, 'client stream contains MSG_OK' );
 
-   $objproxy->unwatch_property(
-      property => "scalar",
-   );
+   $objproxy->unwatch_property( "scalar" );
 
    is_hexstr( $client->recv_message, $C2S{UNWATCH}, 'client stream contains MSG_UNWATCH' );
 

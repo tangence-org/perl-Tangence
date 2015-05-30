@@ -340,29 +340,17 @@ sub handle_request_EVENT
    }
 }
 
-=head2 $proxy->unsubscribe_event( %args )
+=head2 $proxy->unsubscribe_event( $event )
 
 Removes an event subscription on the given event on the server object that was
 previously installed using C<subscribe_event>.
-
-Takes the following named arguments:
-
-=over 8
-
-=item event => STRING
-
-Name of the event
-
-=back
 
 =cut
 
 sub unsubscribe_event
 {
    my $self = shift;
-   my %args = @_;
-
-   my $event = delete $args{event} or croak "Need a event";
+   my ( $event ) = @_;
 
    $self->can_event( $event )
       or croak "Class ".$self->classname." does not have an event $event";
@@ -931,29 +919,17 @@ sub _update_property_objset
    }
 }
 
-=head2 $proxy->unwatch_property( %args )
+=head2 $proxy->unwatch_property( $property )
 
 Removes a property watches on the given property on the server object that was
 previously installed using C<watch_property>.
-
-Takes the following named arguments:
-
-=over 8
-
-=item property => STRING
-
-Name of the property
-
-=back
 
 =cut
 
 sub unwatch_property
 {
    my $self = shift;
-   my %args = @_;
-
-   my $property = delete $args{property} or croak "Need a property";
+   my ( $property ) = @_;
 
    $self->can_property( $property )
       or croak "Class ".$self->classname." does not have a property $property";
