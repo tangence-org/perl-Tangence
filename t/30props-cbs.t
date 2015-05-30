@@ -80,7 +80,7 @@ my $proxy = $client->rootobj;
       on_set => sub { $queue = shift },
       on_push => sub { @p_values = @_ },
       on_shift => sub { ( $sh_count ) = @_ },
-   );
+   )->get;
 
    $obj->push_prop_queue( 6 );
 

@@ -280,6 +280,10 @@ sub subscribe_event
    my $self = shift;
    my %args = @_;
 
+   # Detect void-context legacy uses
+   defined wantarray or
+      croak "->subscribe_event in void context no longer useful - it now returns a Future";
+
    my $event = delete $args{event} or croak "Need a event";
    ref( my $callback = delete $args{on_fire} ) eq "CODE"
       or croak "Expected 'on_fire' as a CODE ref";
@@ -378,6 +382,10 @@ sub get_property
    my $self = shift;
    my ( $property ) = @_;
 
+   # Detect void-context legacy uses
+   defined wantarray or
+      croak "->get_property in void context no longer useful - it now returns a Future";
+
    my $pdef = $self->can_property( $property )
       or croak "Class ".$self->classname." does not have a property $property";
 
@@ -421,6 +429,10 @@ sub get_property_element
 {
    my $self = shift;
    my ( $property, $index_or_key ) = @_;
+
+   # Detect void-context legacy uses
+   defined wantarray or
+      croak "->get_property_element in void context no longer useful - it now returns a Future";
 
    my $pdef = $self->can_property( $property )
       or croak "Class ".$self->classname." does not have a property $property";
@@ -497,6 +509,10 @@ sub set_property
 {
    my $self = shift;
    my ( $property, $value ) = @_;
+
+   # Detect void-context legacy uses
+   defined wantarray or
+      croak "->set_property in void context no longer useful - it now returns a Future";
 
    my $pdef = $self->can_property( $property )
       or croak "Class ".$self->classname." does not have a property $property";
@@ -593,6 +609,10 @@ sub _watch_property
    my $self = shift;
    my ( $property, $want_initial, %args ) = @_;
 
+   # Detect void-context legacy uses
+   defined wantarray or
+      croak "->watch_property in void context no longer useful - it now returns a Future";
+
    my $pdef = $self->can_property( $property )
       or croak "Class ".$self->classname." does not have a property $property";
 
@@ -686,6 +706,10 @@ sub watch_property_with_iter
 {
    my $self = shift;
    my ( $property, $iter_from, %args ) = @_;
+
+   # Detect void-context legacy uses
+   defined wantarray or
+      croak "->watch_property_with_iter in void context no longer useful - it now returns a Future";
 
    if( $iter_from eq "first" ) {
       $iter_from = ITER_FIRST;
@@ -1014,6 +1038,10 @@ sub _next
 {
    my $self = shift;
    my ( $direction, $count ) = @_;
+
+   # Detect void-context legacy uses
+   defined wantarray or
+      croak "->next_forward/backward in void context no longer useful - it now returns a Future";
 
    my $obj = $self->obj;
    my $id  = $self->id;
