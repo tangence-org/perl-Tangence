@@ -29,17 +29,14 @@ my $on_more = sub {
 
 # Fowards from first
 {
-   $proxy->watch_property(
-      property => "queue",
+   my ( $iter, undef, $last_idx ) = $proxy->watch_property_with_iter(
+      "queue", "first",
       on_set => sub { @value = @_ },
       on_push => sub { push @value, @_ },
       on_shift => sub { shift @value for 1 .. shift },
-      iter_from => "first",
-      on_iter => sub {
-         ( $iter, undef, my $last_idx ) = @_;
-         $#value = $last_idx;
-      },
-   );
+   )->get;
+
+   $#value = $last_idx;
 
    is_deeply( \@value, [ undef, undef, undef ], '@value initially' );
 
@@ -74,17 +71,14 @@ $obj->set_prop_queue( [ 1, 2, 3 ] );
 
 # Backwards from last
 {
-   $proxy->watch_property(
-      property => "queue",
+   my ( $iter, undef, $last_idx ) = $proxy->watch_property_with_iter(
+      "queue", "last",
       on_set => sub { @value = @_ },
       on_push => sub { push @value, @_ },
       on_shift => sub { shift @value for 1 .. shift },
-      iter_from => "last",
-      on_iter => sub {
-         ( $iter, undef, my $last_idx ) = @_;
-         $#value = $last_idx;
-      },
-   );
+   )->get;
+
+   $#value = $last_idx;
 
    is_deeply( \@value, [ undef, undef, undef ], '@value initially' );
 

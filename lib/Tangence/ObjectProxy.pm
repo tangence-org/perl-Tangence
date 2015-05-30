@@ -563,17 +563,6 @@ Optional. If true, requests that the server send the current value of the
 property at the time the watch is installed, in an C<on_set> event. This is
 performed atomically with installing watch.
 
-=item iter_from => INT
-
-Optional. If defined, requests that the server create an iterator for the
-property value (whose dimension must be a queue). Its value indicates which
-end of the queue the iterator should start from; C<ITER_FIRST> to start at
-index 0, or C<ITER_LAST> to start at the highest-numbered index. The iterator
-object will be returned to the C<on_iter> callback. The iterator is
-constructed atomically with installing the watch.
-
-This option is mutually-exclusive with C<want_initial>.
-
 =item on_watched => CODE
 
 Optional. Callback function to invoke once the property watch is
@@ -593,15 +582,6 @@ Optional. Callback function to invoke whenever the property value changes.
 If not provided, then individual handlers for individual change types must be
 provided.
 
-=item on_iter => CODE
-
-Callback function to invoke when the iterator object is returned by the
-server. This must be provided if C<iter_from> is provided. It is passed the
-iterator object, and the first and last indices that the iterator will yield
-(inclusive).
-
- $on_iter->( $iter, $first_idx, $last_idx )
-
 =item on_error => CODE
 
 Optional. Callback function to invoke when an error is returned. The client's
@@ -616,6 +596,28 @@ property. These are documented in the C<watch_property> method of
 L<Tangence::Object>.
 
 =cut
+
+sub _watchcbs_from_args
+{
+   my ( $pdef, %args ) = @_;
+
+   my $callbacks = {};
+   my $on_updated = delete $args{on_updated};
+   if( $on_updated ) {
+      ref $on_updated eq "CODE" or croak "Expected 'on_updated' to be a CODE ref";
+      $callbacks->{on_updated} = $on_updated;
+   }
+
+   foreach my $name ( @{ CHANGETYPES->{$pdef->dimension} } ) {
+      # All of these become optional if 'on_updated' is supplied
+      next if $on_updated and not exists $args{$name};
+
+      ref( $callbacks->{$name} = delete $args{$name} ) eq "CODE"
+         or croak "Expected '$name' as a CODE ref";
+   }
+
+   return $callbacks;
+}
 
 sub watch_property
 {
@@ -633,20 +635,8 @@ sub watch_property
    if( !defined $iter_from ) {
       # ignore
    }
-   elsif( $iter_from eq "first" ) {
-      $iter_from = ITER_FIRST;
-   }
-   elsif( $iter_from eq "last" ) {
-      $iter_from = ITER_LAST;
-   }
    else {
-      croak "Unrecognised 'iter_from' value %s";
-   }
-
-   my $on_iter;
-   if( defined $iter_from ) {
-      $on_iter = delete $args{on_iter};
-      ref $on_iter eq "CODE" or croak "Expected 'on_iter' to be a CODE ref";
+      croak "->watch_property no longer supports iter_from";
    }
 
    my $on_watched = $args{on_watched};
@@ -654,20 +644,7 @@ sub watch_property
    my $pdef = $self->can_property( $property )
       or croak "Class ".$self->classname." does not have a property $property";
 
-   my $callbacks = {};
-   my $on_updated = delete $args{on_updated};
-   if( $on_updated ) {
-      ref $on_updated eq "CODE" or croak "Expected 'on_updated' to be a CODE ref";
-      $callbacks->{on_updated} = $on_updated;
-   }
-
-   foreach my $name ( @{ CHANGETYPES->{$pdef->dimension} } ) {
-      # All of these become optional if 'on_updated' is supplied
-      next if $on_updated and not exists $args{$name};
-
-      ref( $callbacks->{$name} = delete $args{$name} ) eq "CODE"
-         or croak "Expected '$name' as a CODE ref";
-   }
+   my $callbacks = _watchcbs_from_args( $pdef, %args );
 
    # Smashed properties behave differently
    my $smash = $pdef->smashed;
@@ -710,22 +687,10 @@ sub watch_property
    }
 
    my $conn = $self->{conn};
-   my $request;
-   if( $iter_from ) {
-      $conn->_ver_can_iter or croak "Server is too old to support MSG_WATCH_ITER";
-      $pdef->dimension == DIM_QUEUE or croak "Can only iterate on queue-dimension properties";
-
-      $request = Tangence::Message->new( $conn, MSG_WATCH_ITER )
-         ->pack_int( $self->id )
-         ->pack_str( $property )
-         ->pack_int( $iter_from );
-   }
-   else {
-      $request = Tangence::Message->new( $conn, MSG_WATCH )
+   my $request = Tangence::Message->new( $conn, MSG_WATCH )
          ->pack_int( $self->id )
          ->pack_str( $property )
          ->pack_bool( $want_initial );
-   }
 
    $conn->request(
       request => $request,
@@ -737,15 +702,6 @@ sub watch_property
          if( $code == MSG_WATCHING ) {
             $on_watched->() if $on_watched;
          }
-         elsif( $code == MSG_WATCHING_ITER ) {
-            $on_watched->() if $on_watched;
-            my $iter_id = $message->unpack_int();
-            my $first_idx = $message->unpack_int();
-            my $last_idx  = $message->unpack_int();
-
-            my $iter = Tangence::ObjectProxy::_PropertyIterator->new( $self, $iter_id, $pdef->type );
-            $on_iter->( $iter, $first_idx, $last_idx );
-         }
          elsif( $code == MSG_ERROR ) {
             my $msg = $message->unpack_str();
             $on_error->( $msg );
@@ -755,6 +711,89 @@ sub watch_property
          }
       },
    );
+}
+
+=head2 ( $iter, $first_idx, $last_idx ) = $proxy->watch_property_with_iter( $property, $iter_from, %callbacks )->get
+
+A variant of C<watch_property> that installs a watch on the given property of
+the server object, and additionally returns an iterator object that can be
+used to lazily fetch the values stored in it.
+
+The C<$iter_from> value indicates which end of the queue the iterator should
+start from; C<ITER_FIRST> to start at index 0, or C<ITER_LAST> to start at the
+highest-numbered index. The iterator is created atomically with installing the
+watch.
+
+=cut
+
+sub watch_property_with_iter
+{
+   my $self = shift;
+   my ( $property, $iter_from, %args ) = @_;
+
+   if( $iter_from eq "first" ) {
+      $iter_from = ITER_FIRST;
+   }
+   elsif( $iter_from eq "last" ) {
+      $iter_from = ITER_LAST;
+   }
+   else {
+      croak "Unrecognised 'iter_from' value %s";
+   }
+
+   my $pdef = $self->can_property( $property )
+      or croak "Class ".$self->classname." does not have a property $property";
+
+   my $callbacks = _watchcbs_from_args( $pdef, %args );
+
+   # Smashed properties behave differently
+   my $smashed = $pdef->smashed;
+
+   if( my $cbs = $self->{props}->{$property}->{cbs} ) {
+      die "TODO: need to synthesize a second iterator";
+   }
+
+   $self->{props}->{$property}->{cbs} = [ $callbacks ];
+
+   if( $smashed ) {
+      die "TODO: need to synthesize an iterator";
+   }
+
+   my $conn = $self->{conn};
+   $conn->_ver_can_iter or croak "Server is too old to support MSG_WATCH_ITER";
+   $pdef->dimension == DIM_QUEUE or croak "Can only iterate on queue-dimension properties";
+
+   my $f = $conn->new_future;
+
+   $conn->request(
+      request => Tangence::Message->new( $conn, MSG_WATCH_ITER )
+         ->pack_int( $self->id )
+         ->pack_str( $property )
+         ->pack_int( $iter_from ),
+
+      on_response => sub {
+         my ( $message ) = @_;
+         my $code = $message->code;
+
+         if( $code == MSG_WATCHING_ITER ) {
+            my $iter_id = $message->unpack_int();
+            my $first_idx = $message->unpack_int();
+            my $last_idx  = $message->unpack_int();
+
+            my $iter = Tangence::ObjectProxy::_PropertyIterator->new( $self, $iter_id, $pdef->type );
+            $f->done( $iter, $first_idx, $last_idx );
+         }
+         elsif( $code == MSG_ERROR ) {
+            my $msg = $message->unpack_str();
+            $f->fail( $msg, tangence => );
+         }
+         else {
+            $f->fail( "Unexpected response code $code", tangence => );
+         }
+      },
+   );
+
+   return $f;
 }
 
 sub handle_request_UPDATE

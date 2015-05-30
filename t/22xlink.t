@@ -155,20 +155,15 @@ my $objproxy = $client->rootobj;
 # Property iterators
 {
    my @value;
-   my $iter;
-   my ( $first_idx, $last_idx );
-   my $watched;
-   $objproxy->watch_property(
-      property => "queue",
+   my $f = $objproxy->watch_property_with_iter( "queue", "first",
       on_set => sub { @value = @_ },
       on_push => sub { push @value, @_ },
       on_shift => sub { shift @value for 1 .. shift },
-      iter_from => "first",
-      on_iter => sub { ( $iter, $first_idx, $last_idx ) = @_ },
-      on_watched => sub { $watched = 1 },
    );
 
-   ok( defined $iter, '$iter defined after MSG_WATCHING_ITER' );
+   ok( $f->is_ready, '$f is ready after MSG_WATCHING_ITER' );
+
+   my ( $iter, $first_idx, $last_idx ) = $f->get;
 
    is( $first_idx, 0, '$first_idx after MSG_WATCHING_ITER' );
    is( $last_idx,  2, '$last_idx after MSG_WATCHING_ITER' );
@@ -198,8 +193,6 @@ my $objproxy = $client->rootobj;
 
    is( $idx, 2, 'next_backward starts at element 2' );
    is_deeply( \@more, [ 3 ], 'next_forward yielded 1 element' );
-
-   undef $iter;
 }
 
 # Smashed Properties
