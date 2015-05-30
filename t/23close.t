@@ -31,10 +31,9 @@ my ( $conn1, $conn2 ) = map {
       objproxy => $objproxy,
    };
 
-   $objproxy->watch_property(
-      property => "scalar",
+   $objproxy->watch_property( "scalar",
       on_set => sub { $conn->{scalar} = shift; },
-   );
+   )->get;
 
    $conn
 } 1 .. 2;

@@ -26,11 +26,9 @@ my $proxy = $client->rootobj;
 # SCALAR
 {
    my $scalar;
-   $proxy->watch_property(
-      property => "scalar",
+   $proxy->watch_property_with_initial( "scalar",
       on_set => sub { $scalar = shift },
-      want_initial => 1,
-   );
+   )->get;
 
    is( $scalar, "123", 'Initial value from watch_property "scalar"' );
 
@@ -40,11 +38,9 @@ my $proxy = $client->rootobj;
    is( $scalar, "1234", 'set scalar value' );
 
    my $also_scalar;
-   $proxy->watch_property(
-      property => "scalar",
+   $proxy->watch_property_with_initial( "scalar",
       on_updated => sub { $also_scalar = shift },
-      want_initial => 1,
-   );
+   )->get;
 
    is( $also_scalar, "1234", 'Can watch_property a second time' );
 }
@@ -54,13 +50,11 @@ my $proxy = $client->rootobj;
    my $hash;
    my ( $a_key, $a_value );
    my ( $d_key );
-   $proxy->watch_property(
-      property => "hash",
+   $proxy->watch_property_with_initial( "hash",
       on_set => sub { $hash = shift },
       on_add => sub { ( $a_key, $a_value ) = @_ },
       on_del => sub { ( $d_key ) = @_ },
-      want_initial => 1,
-   );
+   )->get;
 
    is_deeply( $hash,
               { one => 1, two => 2, three => 3 },
@@ -82,12 +76,10 @@ my $proxy = $client->rootobj;
    my ( @p_values );
    my ( $sh_count );
    my ( $s_index, $s_count, @s_values );
-   $proxy->watch_property(
-      property => "queue",
+   $proxy->watch_property_with_initial( "queue",
       on_set => sub { $queue = shift },
       on_push => sub { @p_values = @_ },
       on_shift => sub { ( $sh_count ) = @_ },
-      want_initial => 1,
    );
 
    $obj->push_prop_queue( 6 );
@@ -106,15 +98,13 @@ my $proxy = $client->rootobj;
    my ( $sh_count );
    my ( $s_index, $s_count, @s_values );
    my ( $m_index, $m_delta );
-   $proxy->watch_property(
-      property => "array",
+   $proxy->watch_property_with_initial( "array",
       on_set => sub { $array = shift },
       on_push => sub { @p_values = @_ },
       on_shift => sub { ( $sh_count ) = @_ },
       on_splice => sub { ( $s_index, $s_count, @s_values ) = @_ },
       on_move => sub { ( $m_index, $m_delta ) = @_ },
-      want_initial => 1,
-   );
+   )->get;
 
    $obj->push_prop_array( 6 );
 
@@ -142,13 +132,11 @@ my $proxy = $client->rootobj;
    my $objset;
    my $added;
    my $deleted_id;
-   $proxy->watch_property(
-      property => "objset",
+   $proxy->watch_property_with_initial( "objset",
       on_set => sub { $objset = shift },
       on_add => sub { $added = shift },
       on_del => sub { $deleted_id = shift },
-      want_initial => 1,
-   );
+   )->get;
 
    # Shall have to construct some other TestObj objects to use here, as we can't
    # put regular ints in

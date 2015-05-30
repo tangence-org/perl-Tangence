@@ -115,11 +115,8 @@ my $objproxy = $client->rootobj;
 # Properties watch
 {
    my $value;
-   my $watched;
-   $objproxy->watch_property(
-      property => "scalar",
+   my $f = $objproxy->watch_property( "scalar",
       on_set => sub { $value = shift },
-      on_watched => sub { $watched = 1 },
    );
 
    $obj->set_prop_scalar( 147 );
@@ -128,13 +125,11 @@ my $objproxy = $client->rootobj;
 
    my $valuechanged = 0;
    my $secondvalue;
-   $objproxy->watch_property(
-      property => "scalar",
+   $f = $objproxy->watch_property_with_initial( "scalar",
       on_set => sub {
          $secondvalue = shift;
          $valuechanged = 1
       },
-      want_initial => 1,
    );
 
    is( $secondvalue, 147, '$secondvalue after watch_property with want_initial' );
@@ -198,15 +193,11 @@ my $objproxy = $client->rootobj;
 # Smashed Properties
 {
    my $value;
-   my $watched;
-   $objproxy->watch_property(
-      property => "s_scalar",
+   my $f = $objproxy->watch_property_with_initial( "s_scalar",
       on_set => sub { $value = shift },
-      on_watched => sub { $watched = 1 },
-      want_initial => 1,
    );
 
-   is( $watched, 1, 'watch_property on smashed prop is synchronous' );
+   ok( $f->is_ready, 'watch_property on smashed prop is synchronous' );
 
    is( $value, 456, 'watch_property on smashed prop gives initial value' );
 

@@ -29,10 +29,9 @@ no_growth {
 
    my $objproxy = $client->rootobj;
 
-   $objproxy->watch_property(
-      property => "scalar",
+   $objproxy->watch_property( "scalar",
       on_set => sub {},
-   );
+   )->get;
 
    $server->tangence_closed;
    $client->tangence_closed;

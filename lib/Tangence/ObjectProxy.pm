@@ -544,34 +544,19 @@ sub set_property
    return $f;
 }
 
-=head2 $proxy->watch_property( %args )
+=head2 $proxy->watch_property( $property, %callbacks )->get
+
+=head2 $proxy->watch_property_with_initial( $property, %callbacks )->get
 
 Watches the given property on the server object, installing callback functions
-which will be invoked whenever the property value changes.
+which will be invoked whenever the property value changes. The latter form
+additionally ensures that the server will send the current value of the
+property as an initial update to the C<on_set> event, atomically when it
+installs the update watches.
 
 Takes the following named arguments:
 
 =over 8
-
-=item property => STRING
-
-Name of the property
-
-=item want_initial => BOOLEAN
-
-Optional. If true, requests that the server send the current value of the
-property at the time the watch is installed, in an C<on_set> event. This is
-performed atomically with installing watch.
-
-=item on_watched => CODE
-
-Optional. Callback function to invoke once the property watch is
-successfully installed by the server.
-
- $on_watched->()
-
-If this is provided, it is guaranteed to be invoked before any invocation of
-the value change handlers.
 
 =item on_updated => CODE
 
@@ -581,13 +566,6 @@ Optional. Callback function to invoke whenever the property value changes.
 
 If not provided, then individual handlers for individual change types must be
 provided.
-
-=item on_error => CODE
-
-Optional. Callback function to invoke when an error is returned. The client's
-default will apply if not provided.
-
- $on_error->( $error )
 
 =back
 
@@ -619,27 +597,13 @@ sub _watchcbs_from_args
    return $callbacks;
 }
 
-sub watch_property
+sub watch_property              { shift->_watch_property( shift, 0, @_ ) }
+sub watch_property_with_initial { shift->_watch_property( shift, 1, @_ ) }
+
+sub _watch_property
 {
    my $self = shift;
-   my %args = @_;
-
-   my $property = delete $args{property} or croak "Need a property";
-
-   my $on_error = delete $args{on_error} || $self->{on_error};
-   ref $on_error eq "CODE" or croak "Expected 'on_error' as a CODE ref";
-
-   my $want_initial = delete $args{want_initial};
-
-   my $iter_from = delete $args{iter_from};
-   if( !defined $iter_from ) {
-      # ignore
-   }
-   else {
-      croak "->watch_property no longer supports iter_from";
-   }
-
-   my $on_watched = $args{on_watched};
+   my ( $property, $want_initial, %args ) = @_;
 
    my $pdef = $self->can_property( $property )
       or croak "Class ".$self->classname." does not have a property $property";
@@ -649,6 +613,9 @@ sub watch_property
    # Smashed properties behave differently
    my $smash = $pdef->smashed;
 
+   my $conn = $self->{conn};
+   my $f = $conn->new_future;
+
    if( my $cbs = $self->{props}->{$property}->{cbs} ) {
       if( $want_initial and !$smash ) {
          $self->get_property( $property )
@@ -656,7 +623,7 @@ sub watch_property
                $callbacks->{on_set} and $callbacks->{on_set}->( $_[0] );
                $callbacks->{on_updated} and $callbacks->{on_updated}->( $_[0] );
                push @$cbs, $callbacks;
-               $on_watched->() if $on_watched;
+               $f->done;
             });
       }
       elsif( $want_initial and $smash ) {
@@ -664,14 +631,14 @@ sub watch_property
          $callbacks->{on_set} and $callbacks->{on_set}->( $cache );
          $callbacks->{on_updated} and $callbacks->{on_updated}->( $cache );
          push @$cbs, $callbacks;
-         $on_watched->() if $on_watched;
+         $f->done;
       }
       else {
          push @$cbs, $callbacks;
-         $on_watched->() if $on_watched;
+         $f->done;
       }
 
-      return;
+      return $f;
    }
 
    $self->{props}->{$property}->{cbs} = [ $callbacks ];
@@ -682,11 +649,11 @@ sub watch_property
          $callbacks->{on_set} and $callbacks->{on_set}->( $cache );
          $callbacks->{on_updated} and $callbacks->{on_updated}->( $cache );
       }
-      $on_watched->() if $on_watched;
-      return;
+
+      $f->done;
+      return $f;
    }
 
-   my $conn = $self->{conn};
    my $request = Tangence::Message->new( $conn, MSG_WATCH )
          ->pack_int( $self->id )
          ->pack_str( $property )
@@ -700,17 +667,19 @@ sub watch_property
          my $code = $message->code;
 
          if( $code == MSG_WATCHING ) {
-            $on_watched->() if $on_watched;
+            $f->done;
          }
          elsif( $code == MSG_ERROR ) {
             my $msg = $message->unpack_str();
-            $on_error->( $msg );
+            $f->fail( $msg, tangence => );
          }
          else {
-            $on_error->( "Unexpected response code $code" );
+            $f->fail( "Unexpected response code $code", tangence => );
          }
       },
    );
+
+   return $f;
 }
 
 =head2 ( $iter, $first_idx, $last_idx ) = $proxy->watch_property_with_iter( $property, $iter_from, %callbacks )->get

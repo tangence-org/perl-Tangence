@@ -156,16 +156,15 @@ my $bagproxy;
 # Properties watch
 {
    my $value;
-   my $watched;
-   $objproxy->watch_property(
-      property => "scalar",
+   my $f = $objproxy->watch_property( "scalar",
       on_set => sub { $value = shift },
-      on_watched => sub { $watched = 1 },
    );
 
    is_hexstr( $client->recv_message, $C2S{WATCH}, 'client stream contains MSG_WATCH' );
 
    $client->send_message( $S2C{WATCHING} );
+
+   ok( $f->is_ready, '$f is ready after watch_property' );
 
    $client->send_message( $S2C{UPDATE_SCALAR_147} );
 
@@ -175,13 +174,11 @@ my $bagproxy;
 
    my $valuechanged = 0;
    my $secondvalue;
-   $objproxy->watch_property(
-      property => "scalar",
+   $f = $objproxy->watch_property_with_initial( "scalar",
       on_set => sub {
          $secondvalue = shift;
          $valuechanged = 1
       },
-      want_initial => 1,
    );
 
    is_hexstr( $client->recv_message, $C2S{GETPROP}, 'client stream contains MSG_GETPROP' );
@@ -278,15 +275,11 @@ my $bagproxy;
 # Smashed Properties
 {
    my $value;
-   my $watched;
-   $objproxy->watch_property(
-      property => "s_scalar",
+   my $f = $objproxy->watch_property_with_initial( "s_scalar",
       on_set => sub { $value = shift },
-      on_watched => sub { $watched = 1 },
-      want_initial => 1,
    );
 
-   is( $watched, 1, 'watch_property on smashed prop is synchronous' );
+   ok( $f->is_ready, 'watch_property on smashed prop is synchronous' );
 
    is( $value, 456, 'watch_property on smashed prop gives initial value' );
 
