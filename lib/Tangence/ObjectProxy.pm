@@ -601,17 +601,14 @@ sub _watch_property
    # Smashed properties behave differently
    my $smash = $pdef->smashed;
 
-   my $conn = $self->{conn};
-   my $f = $conn->new_future;
-
    if( my $cbs = $self->{props}->{$property}->{cbs} ) {
       if( $want_initial and !$smash ) {
-         $self->get_property( $property )
-            ->on_done( sub {
+         return $self->get_property( $property )
+            ->then( sub {
                $callbacks->{on_set} and $callbacks->{on_set}->( $_[0] );
                $callbacks->{on_updated} and $callbacks->{on_updated}->( $_[0] );
                push @$cbs, $callbacks;
-               $f->done;
+               Future->done;
             });
       }
       elsif( $want_initial and $smash ) {
@@ -619,14 +616,14 @@ sub _watch_property
          $callbacks->{on_set} and $callbacks->{on_set}->( $cache );
          $callbacks->{on_updated} and $callbacks->{on_updated}->( $cache );
          push @$cbs, $callbacks;
-         $f->done;
+         return Future->done;
       }
       else {
          push @$cbs, $callbacks;
-         $f->done;
+         return Future->done;
       }
 
-      return $f;
+      die "UNREACHED";
    }
 
    $self->{props}->{$property}->{cbs} = [ $callbacks ];
@@ -638,9 +635,11 @@ sub _watch_property
          $callbacks->{on_updated} and $callbacks->{on_updated}->( $cache );
       }
 
-      $f->done;
-      return $f;
+      return Future->done;
    }
+
+   my $conn = $self->{conn};
+   my $f = $conn->new_future;
 
    my $request = Tangence::Message->new( $conn, MSG_WATCH )
          ->pack_int( $self->id )
