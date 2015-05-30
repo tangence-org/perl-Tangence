@@ -982,87 +982,73 @@ sub DESTROY
    );
 }
 
-=head2 $iter->next_forward( %args )
+=head2 ( $index, @more ) = $iter->next_forward( $count )->get
 
-=head2 $iter->next_backward( %args )
+=head2 ( $index, @more ) = $iter->next_backward( $count )->get
 
 Requests the next items from the iterator. C<next_forward> moves forwards
 towards higher-numbered indices, and C<next_backward> moves backwards towards
-lower-numbered indices.
+lower-numbered indices. If C<$count> is unspecified, a default of 1 will
+apply.
 
-The following arguments are recognised:
-
-=over 8
-
-=item count => INT
-
-Optional. Gives the number of elements requested. Will default to 1 if not
-provided.
-
-=item on_more => CODE
-
-Callback to invoke when the new elements are returned. This will be invoked
-with the index of the first element returned, and the new elements. Note that
-there may be fewer elements returned than were requested, if the end of the
-queue was reached. Specifically, there will be no new elements if the iterator
-is already at the end.
-
- $on_more->( $index, @items )
-
-=back
+The returned future wil yield the index of the first element returned, and the
+new elements. Note that there may be fewer elements returned than were
+requested, if the end of the queue was reached. Specifically, there will be no
+new elements if the iterator is already at the end.
 
 =cut
 
 sub next_forward
 {
    my $self = shift;
-   $self->_next( direction => ITER_FWD, @_ );
+   $self->_next( ITER_FWD, @_ );
 }
 
 sub next_backward
 {
    my $self = shift;
-   $self->_next( direction => ITER_BACK, @_ );
+   $self->_next( ITER_BACK, @_ );
 }
 
 sub _next
 {
    my $self = shift;
-   my %args = @_;
+   my ( $direction, $count ) = @_;
 
    my $obj = $self->obj;
    my $id  = $self->id;
    my $element_type = $self->[2];
 
-   my $on_more  = $args{on_more} or croak "Expected 'on_more' as a CODE ref";
-   my $on_error = $args{on_error} || $obj->{on_error};
-
    my $conn = $self->conn;
+   my $f = $conn->new_future;
+
    $conn->request(
       request => Tangence::Message->new( $conn, MSG_ITER_NEXT )
          ->pack_int( $id )
-         ->pack_int( $args{direction} )
-         ->pack_int( $args{count} || 1 ),
+         ->pack_int( $direction )
+         ->pack_int( $count || 1 ),
 
       on_response => sub {
          my ( $message ) = @_;
          my $code = $message->code;
 
          if( $code == MSG_ITER_RESULT ) {
-            $on_more->(
+            $f->done(
                $message->unpack_int(),
                $message->unpack_all_sametype( $element_type ),
             );
          }
          elsif( $code == MSG_ERROR ) {
             my $msg = $message->unpack_str();
-            $on_error->( $msg );
+            $f->fail( $msg, tangence => );
          }
          else {
-            $on_error->( "Unexpected response code $code" );
+            $f->fail( "Unexpected response code $code", tangence => );
          }
       }
    );
+
+   return $f;
 }
 
 =head1 AUTHOR

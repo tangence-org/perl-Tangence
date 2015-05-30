@@ -222,40 +222,37 @@ my $bagproxy;
    is( $first_idx, 0, '$first_idx after MSG_WATCHING_ITER' );
    is( $last_idx,  2, '$last_idx after MSG_WATCHING_ITER' );
 
-   my $idx;
-   my @more;
-   $iter->next_forward(
-      on_more => sub { ( $idx, @more ) = @_ }
-   );
+   $f = $iter->next_forward;
 
    is_hexstr( $client->recv_message, $C2S{ITER_NEXT_1}, 'client stream contains MSG_ITER_NEXT' );
 
    $client->send_message( $S2C{ITER_NEXT_1} );
 
+   my ( $idx, @more ) = $f->get;
+
    is( $idx, 0, 'next_forward starts at element 0' );
    is_deeply( \@more, [ 1 ], 'next_forward yielded 1 element' );
 
    undef @more;
-   $iter->next_forward(
-      count => 5,
-      on_more => sub { ( $idx, @more ) = @_ }
-   );
+   $f = $iter->next_forward( 5 );
 
    is_hexstr( $client->recv_message, $C2S{ITER_NEXT_5}, 'client stream contains MSG_ITER_NEXT' );
 
    $client->send_message( $S2C{ITER_NEXT_5} );
 
+   ( $idx, @more ) = $f->get;
+
    is( $idx, 1, 'next_forward starts at element 1' );
    is_deeply( \@more, [ 2, 3 ], 'next_forward yielded 2 elements' );
 
    undef @more;
-   $iter->next_backward(
-      on_more => sub { ( $idx, @more ) = @_ }
-   );
+   $f = $iter->next_backward;
 
    is_hexstr( $client->recv_message, $C2S{ITER_NEXT_BACK}, 'client stream contains MSG_ITER_NEXT' );
 
    $client->send_message( $S2C{ITER_NEXT_BACK} );
+
+   ( $idx, @more ) = $f->get;
 
    is( $idx, 2, 'next_backward starts at element 2' );
    is_deeply( \@more, [ 3 ], 'next_forward yielded 1 element' );

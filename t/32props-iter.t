@@ -20,7 +20,6 @@ my $obj = $registry->construct(
 my ( $server, $client ) = make_serverclient( $registry );
 my $proxy = $client->rootobj;
 
-my $iter;
 my @value;
 my $on_more = sub {
    my $idx = shift;
@@ -40,7 +39,7 @@ my $on_more = sub {
 
    is_deeply( \@value, [ undef, undef, undef ], '@value initially' );
 
-   $iter->next_forward( on_more => $on_more );
+   $on_more->( $iter->next_forward->get );
 
    is_deeply( \@value, [ 1, undef, undef ], '@value after first next_forward' );
 
@@ -48,7 +47,7 @@ my $on_more = sub {
 
    is_deeply( \@value, [ 1, undef, undef, 4, 5 ], '@value after push' );
 
-   $iter->next_forward( on_more => $on_more );
+   $on_more->( $iter->next_forward->get );
 
    is_deeply( \@value, [ 1, 2, undef, 4, 5 ], '@value after second next_forward' );
 
@@ -56,7 +55,7 @@ my $on_more = sub {
 
    is_deeply( \@value, [ 2, undef, 4, 5 ], '@value after shift' );
 
-   $iter->next_forward( on_more => $on_more );
+   $on_more->( $iter->next_forward->get );
 
    is_deeply( \@value, [ 2, 3, 4, 5 ], '@value after third next_forward' );
 
@@ -80,7 +79,7 @@ $obj->set_prop_queue( [ 1, 2, 3 ] );
 
    is_deeply( \@value, [ undef, undef, undef ], '@value initially' );
 
-   $iter->next_backward( on_more => $on_more );
+   $on_more->( $iter->next_backward->get );
 
    is_deeply( \@value, [ undef, undef, 3 ], '@value after first next_backward' );
 
@@ -88,7 +87,7 @@ $obj->set_prop_queue( [ 1, 2, 3 ] );
 
    is_deeply( \@value, [ undef, undef, 3, 4, 5 ], '@value after push' );
 
-   $iter->next_backward( on_more => $on_more );
+   $on_more->( $iter->next_backward->get );
 
    is_deeply( \@value, [ undef, 2, 3, 4, 5 ], '@value after second next_backward' );
 
@@ -96,7 +95,7 @@ $obj->set_prop_queue( [ 1, 2, 3 ] );
 
    is_deeply( \@value, [ 2, 3, 4, 5 ], '@value after shift' );
 
-   $iter->next_backward( on_more => $on_more );
+   $on_more->( $iter->next_backward->get );
 
    is_deeply( \@value, [ 2, 3, 4, 5 ], '@value after third next_backward' );
 

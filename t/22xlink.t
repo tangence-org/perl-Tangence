@@ -159,28 +159,17 @@ my $objproxy = $client->rootobj;
    is( $first_idx, 0, '$first_idx after MSG_WATCHING_ITER' );
    is( $last_idx,  2, '$last_idx after MSG_WATCHING_ITER' );
 
-   my $idx;
-   my @more;
-   $iter->next_forward(
-      on_more => sub { ( $idx, @more ) = @_ }
-   );
+   my ( $idx, @more ) = $iter->next_forward->get;
 
    is( $idx, 0, 'next_forward starts at element 0' );
    is_deeply( \@more, [ 1 ], 'next_forward yielded 1 element' );
 
-   undef @more;
-   $iter->next_forward(
-      count => 5,
-      on_more => sub { ( $idx, @more ) = @_ }
-   );
+   ( $idx, @more ) = $iter->next_forward( 5 )->get;
 
    is( $idx, 1, 'next_forward starts at element 1' );
    is_deeply( \@more, [ 2, 3 ], 'next_forward yielded 2 elements' );
 
-   undef @more;
-   $iter->next_backward(
-      on_more => sub { ( $idx, @more ) = @_ }
-   );
+   ( $idx, @more ) = $iter->next_backward->get;
 
    is( $idx, 2, 'next_backward starts at element 2' );
    is_deeply( \@more, [ 3 ], 'next_forward yielded 1 element' );
