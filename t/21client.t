@@ -72,8 +72,7 @@ my $bagproxy;
 
    my $event_i;
    my $event_s;
-   my $f = $objproxy->subscribe_event(
-      event => "event",
+   my $f = $objproxy->subscribe_event( "event",
       on_fire => sub {
          ( $event_i, $event_s ) = @_;
       },
@@ -97,8 +96,7 @@ my $bagproxy;
 
    $client->send_message( $MSG_OK );
 
-   dies_ok( sub { $objproxy->subscribe_event(
-                    event => "no_such_event",
+   dies_ok( sub { $objproxy->subscribe_event( "no_such_event",
                     on_fire => sub {},
                   ); },
             'Subscribing to no_such_event fails in proxy' );
@@ -287,8 +285,7 @@ my $bagproxy;
 # Test object destruction
 {
    my $proxy_destroyed = 0;
-   $objproxy->subscribe_event(
-      event => "destroy",
+   $objproxy->subscribe_event( "destroy",
       on_fire => sub { $proxy_destroyed = 1 },
    )->get;
 

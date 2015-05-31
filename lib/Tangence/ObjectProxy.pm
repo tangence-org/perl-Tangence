@@ -240,18 +240,14 @@ sub call_method
    });
 }
 
-=head2 $proxy->subscribe_event( %args )->get
+=head2 $proxy->subscribe_event( $event, %callbacks )->get
 
 Subscribes to the given event on the server object, installing a callback
 function which will be invoked whenever the event is fired.
 
-Takes the following named arguments:
+Takes the following named callbacks:
 
 =over 8
-
-=item event => STRING
-
-Name of the event
 
 =item on_fire => CODE
 
@@ -269,13 +265,12 @@ of the C<on_fire> event handler.
 sub subscribe_event
 {
    my $self = shift;
-   my %args = @_;
+   my ( $event, %args ) = @_;
 
    # Detect void-context legacy uses
    defined wantarray or
       croak "->subscribe_event in void context no longer useful - it now returns a Future";
 
-   my $event = delete $args{event} or croak "Need a event";
    ref( my $callback = delete $args{on_fire} ) eq "CODE"
       or croak "Expected 'on_fire' as a CODE ref";
 
