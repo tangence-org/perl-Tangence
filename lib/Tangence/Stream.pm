@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2011-2014 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2011-2015 -- leonerd@leonerd.org.uk
 
 package Tangence::Stream;
 
@@ -234,6 +234,12 @@ received. It will be passed the response message:
 
 =back
 
+=head2 $response = $stream->request( request => $request )->get
+
+When called in non-void context, this method returns a L<Future> that will
+yield the response instead. In this case it should not be given an
+C<on_response> callback.
+
 =cut
 
 sub request
@@ -242,11 +248,24 @@ sub request
    my %args = @_;
 
    my $request = $args{request} or croak "Expected 'request'";
-   my $on_response = $args{on_response} or croak "Expected 'on_response'";
+
+   my $f;
+   my $on_response;
+   if( defined wantarray ) {
+      $args{on_response} and croak "TODO: Can't take 'on_response' and return a Future";
+
+      $f = $self->new_future;
+      $on_response = $f->done_cb;
+   }
+   else {
+      $on_response = $args{on_response} or croak "Expected 'on_response'";
+   }
 
    push @{ $self->{responder_queue} }, $on_response;
 
    $self->tangence_write( $request->bytes );
+
+   return $f;
 }
 
 =head2 $stream->respond( $token, $message )

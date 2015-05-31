@@ -15,6 +15,39 @@ my $stream = Testing::Stream->new();
 ok( defined $stream, 'defined $stream' );
 isa_ok( $stream, "Tangence::Stream", '$stream isa Tangence::Stream' );
 
+# request Future
+{
+   my $message = Tangence::Message->new( $stream, MSG_CALL );
+   $message->pack_int( 1 );
+   $message->pack_str( "method" );
+
+   my $f = $stream->request(
+      request => $message,
+   );
+
+   my $expect = "\1" . "\0\0\0\x09" .
+                "\x02" . "\x01" .
+                "\x26" . "method";
+
+   is_hexstr( $written, $expect, '$written after initial MSG_CALL' );
+   $written = "";
+
+   my $read = "\x82" . "\0\0\0\x09" .
+              "\x28" . "response";
+
+   $stream->tangence_readfrom( $read );
+
+   is( length $read, 0, '$read completely consumed from response' );
+
+   ok( $f->is_ready, '$f is ready after response' );
+
+   my $response = $f->get;
+
+   is( $response->code, MSG_RESULT, '$response->code to initial call' );
+   is( $response->unpack_str, "response", '$response->unpack_str to initial call' );
+}
+
+# request on_response
 {
    my $message = Tangence::Message->new( $stream, MSG_CALL );
    $message->pack_int( 1 );
@@ -73,9 +106,16 @@ package Testing::Stream;
 use strict;
 use base qw( Tangence::Stream );
 
+use Future;
+
 sub new
 {
    return bless {}, shift;
+}
+
+sub new_future
+{
+   return Future->new;
 }
 
 sub tangence_write
