@@ -222,31 +222,26 @@ sub call_method
    my @argtypes = $mdef->argtypes;
    $argtypes[$_]->pack_value( $request, $args[$_] ) for 0..$#argtypes;
 
-   my $f = $client->new_future;
-
    $client->request(
       request => $request,
+   )->then( sub {
+      my ( $message ) = @_;
 
-      on_response => sub {
-         my ( $message ) = @_;
-         my $code = $message->code;
+      my $code = $message->code;
 
-         if( $code == MSG_RESULT ) {
-            my $result = $mdef->ret ? $mdef->ret->unpack_value( $message )
-                                    : undef;
-            $f->done( $result );
-         }
-         elsif( $code == MSG_ERROR ) {
-            my $msg = $message->unpack_str();
-            $f->fail( $msg, tangence => );
-         }
-         else {
-            $f->fail( "Unexpected response code $code", tangence => );
-         }
-      },
-   );
-
-   return $f;
+      if( $code == MSG_RESULT ) {
+         my $result = $mdef->ret ? $mdef->ret->unpack_value( $message )
+                                 : undef;
+         Future->done( $result );
+      }
+      elsif( $code == MSG_ERROR ) {
+         my $msg = $message->unpack_str();
+         Future->fail( $msg, tangence => );
+      }
+      else {
+         Future->fail( "Unexpected response code $code", tangence => );
+      }
+   });
 }
 
 =head2 $proxy->subscribe_event( %args )->get
@@ -302,31 +297,26 @@ sub subscribe_event
    return Future->done if $event eq "destroy"; # This is automatically handled
 
    my $client = $self->{client};
-   my $f = $client->new_future;
 
    $client->request(
       request => Tangence::Message->new( $client, MSG_SUBSCRIBE )
          ->pack_int( $self->id )
          ->pack_str( $event ),
+   )->then( sub {
+      my ( $message ) = @_;
+      my $code = $message->code;
 
-      on_response => sub {
-         my ( $message ) = @_;
-         my $code = $message->code;
-
-         if( $code == MSG_SUBSCRIBED ) {
-            $f->done;
-         }
-         elsif( $code == MSG_ERROR ) {
-            my $msg = $message->unpack_str();
-            $f->fail( $msg, tangence => );
-         }
-         else {
-            $f->fail( "Unexpected response code $code", tangence => );
-         }
-      },
-   );
-
-   return $f;
+      if( $code == MSG_SUBSCRIBED ) {
+         Future->done;
+      }
+      elsif( $code == MSG_ERROR ) {
+         my $msg = $message->unpack_str();
+         Future->fail( $msg, tangence => );
+      }
+      else {
+         Future->fail( "Unexpected response code $code", tangence => );
+      }
+   });
 }
 
 sub handle_request_EVENT
@@ -390,32 +380,26 @@ sub get_property
       or croak "Class ".$self->classname." does not have a property $property";
 
    my $client = $self->{client};
-   my $f = $client->new_future;
-
    $client->request(
       request => Tangence::Message->new( $client, MSG_GETPROP )
          ->pack_int( $self->id )
          ->pack_str( $property ),
+   )->then( sub {
+      my ( $message ) = @_;
+      my $code = $message->code;
 
-      on_response => sub {
-         my ( $message ) = @_;
-         my $code = $message->code;
-
-         if( $code == MSG_RESULT ) {
-            my $value = $pdef->overall_type->unpack_value( $message );
-            $f->done( $value );
-         }
-         elsif( $code == MSG_ERROR ) {
-            my $msg = $message->unpack_str();
-            $f->fail( $msg, tangence => );
-         }
-         else {
-            $f->fail( "Unexpected response code $code", tangence => );
-         }
-      },
-   );
-
-   return $f;
+      if( $code == MSG_RESULT ) {
+         my $value = $pdef->overall_type->unpack_value( $message );
+         Future->done( $value );
+      }
+      elsif( $code == MSG_ERROR ) {
+         my $msg = $message->unpack_str();
+         Future->fail( $msg, tangence => );
+      }
+      else {
+         Future->fail( "Unexpected response code $code", tangence => );
+      }
+   });
 }
 
 =head2 $value = $proxy->get_property_element( $property, $index_or_key )->get
@@ -454,30 +438,24 @@ sub get_property_element
       croak "Cannot get_property_element of a non hash, array or queue";
    }
 
-   my $f = $client->new_future;
-
    $client->request(
       request => $request,
+   )->then( sub {
+      my ( $message ) = @_;
+      my $code = $message->code;
 
-      on_response => sub {
-         my ( $message ) = @_;
-         my $code = $message->code;
-
-         if( $code == MSG_RESULT ) {
-            my $value = $pdef->type->unpack_value( $message );
-            $f->done( $value );
-         }
-         elsif( $code == MSG_ERROR ) {
-            my $msg = $message->unpack_str();
-            $f->fail( $msg, tangence => );
-         }
-         else {
-            $f->fail( "Unexpected response code $code", tangence => );
-         }
-      },
-   );
-
-   return $f;
+      if( $code == MSG_RESULT ) {
+         my $value = $pdef->type->unpack_value( $message );
+         Future->done( $value );
+      }
+      elsif( $code == MSG_ERROR ) {
+         my $msg = $message->unpack_str();
+         Future->fail( $msg, tangence => );
+      }
+      else {
+         Future->fail( "Unexpected response code $code", tangence => );
+      }
+   });
 }
 
 =head2 $value = $proxy->prop( $property )
@@ -523,29 +501,23 @@ sub set_property
          ->pack_str( $property );
    $pdef->type->pack_value( $request, $value ),
 
-   my $f = $client->new_future;
-
    $client->request(
       request => $request,
+   )->then( sub {
+      my ( $message ) = @_;
+      my $code = $message->code;
 
-      on_response => sub {
-         my ( $message ) = @_;
-         my $code = $message->code;
-
-         if( $code == MSG_OK ) {
-            $f->done;
-         }
-         elsif( $code == MSG_ERROR ) {
-            my $msg = $message->unpack_str();
-            $f->fail( $msg, tangence => );
-         }
-         else {
-            $f->fail( "Unexpected response code $code", tangence => );
-         }
-      },
-   );
-
-   return $f;
+      if( $code == MSG_OK ) {
+         Future->done;
+      }
+      elsif( $code == MSG_ERROR ) {
+         my $msg = $message->unpack_str();
+         Future->fail( $msg, tangence => );
+      }
+      else {
+         Future->fail( "Unexpected response code $code", tangence => );
+      }
+   });
 }
 
 =head2 $proxy->watch_property( $property, %callbacks )->get
@@ -659,7 +631,6 @@ sub _watch_property
    }
 
    my $client = $self->{client};
-   my $f = $client->new_future;
 
    my $request = Tangence::Message->new( $client, MSG_WATCH )
          ->pack_int( $self->id )
@@ -668,25 +639,21 @@ sub _watch_property
 
    $client->request(
       request => $request,
+   )->then( sub {
+      my ( $message ) = @_;
+      my $code = $message->code;
 
-      on_response => sub {
-         my ( $message ) = @_;
-         my $code = $message->code;
-
-         if( $code == MSG_WATCHING ) {
-            $f->done;
-         }
-         elsif( $code == MSG_ERROR ) {
-            my $msg = $message->unpack_str();
-            $f->fail( $msg, tangence => );
-         }
-         else {
-            $f->fail( "Unexpected response code $code", tangence => );
-         }
-      },
-   );
-
-   return $f;
+      if( $code == MSG_WATCHING ) {
+         Future->done;
+      }
+      elsif( $code == MSG_ERROR ) {
+         my $msg = $message->unpack_str();
+         Future->fail( $msg, tangence => );
+      }
+      else {
+         Future->fail( "Unexpected response code $code", tangence => );
+      }
+   });
 }
 
 =head2 ( $iter, $first_idx, $last_idx ) = $proxy->watch_property_with_iter( $property, $iter_from, %callbacks )->get
@@ -743,37 +710,31 @@ sub watch_property_with_iter
    $client->_ver_can_iter or croak "Server is too old to support MSG_WATCH_ITER";
    $pdef->dimension == DIM_QUEUE or croak "Can only iterate on queue-dimension properties";
 
-   my $f = $client->new_future;
-
    $client->request(
       request => Tangence::Message->new( $client, MSG_WATCH_ITER )
          ->pack_int( $self->id )
          ->pack_str( $property )
          ->pack_int( $iter_from ),
+   )->then( sub {
+      my ( $message ) = @_;
+      my $code = $message->code;
 
-      on_response => sub {
-         my ( $message ) = @_;
-         my $code = $message->code;
+      if( $code == MSG_WATCHING_ITER ) {
+         my $iter_id = $message->unpack_int();
+         my $first_idx = $message->unpack_int();
+         my $last_idx  = $message->unpack_int();
 
-         if( $code == MSG_WATCHING_ITER ) {
-            my $iter_id = $message->unpack_int();
-            my $first_idx = $message->unpack_int();
-            my $last_idx  = $message->unpack_int();
-
-            my $iter = Tangence::ObjectProxy::_PropertyIterator->new( $self, $iter_id, $pdef->type );
-            $f->done( $iter, $first_idx, $last_idx );
-         }
-         elsif( $code == MSG_ERROR ) {
-            my $msg = $message->unpack_str();
-            $f->fail( $msg, tangence => );
-         }
-         else {
-            $f->fail( "Unexpected response code $code", tangence => );
-         }
-      },
-   );
-
-   return $f;
+         my $iter = Tangence::ObjectProxy::_PropertyIterator->new( $self, $iter_id, $pdef->type );
+         Future->done( $iter, $first_idx, $last_idx );
+      }
+      elsif( $code == MSG_ERROR ) {
+         my $msg = $message->unpack_str();
+         Future->fail( $msg, tangence => );
+      }
+      else {
+         Future->fail( "Unexpected response code $code", tangence => );
+      }
+   });
 }
 
 sub handle_request_UPDATE
@@ -1048,35 +1009,30 @@ sub _next
    my $element_type = $self->[2];
 
    my $client = $self->client;
-   my $f = $client->new_future;
 
    $client->request(
       request => Tangence::Message->new( $client, MSG_ITER_NEXT )
          ->pack_int( $id )
          ->pack_int( $direction )
          ->pack_int( $count || 1 ),
+   )->then( sub {
+      my ( $message ) = @_;
+      my $code = $message->code;
 
-      on_response => sub {
-         my ( $message ) = @_;
-         my $code = $message->code;
-
-         if( $code == MSG_ITER_RESULT ) {
-            $f->done(
-               $message->unpack_int(),
-               $message->unpack_all_sametype( $element_type ),
-            );
-         }
-         elsif( $code == MSG_ERROR ) {
-            my $msg = $message->unpack_str();
-            $f->fail( $msg, tangence => );
-         }
-         else {
-            $f->fail( "Unexpected response code $code", tangence => );
-         }
+      if( $code == MSG_ITER_RESULT ) {
+         Future->done(
+            $message->unpack_int(),
+            $message->unpack_all_sametype( $element_type ),
+         );
       }
-   );
-
-   return $f;
+      elsif( $code == MSG_ERROR ) {
+         my $msg = $message->unpack_str();
+         Future->fail( $msg, tangence => );
+      }
+      else {
+         Future->fail( "Unexpected response code $code", tangence => );
+      }
+   });
 }
 
 =head1 AUTHOR
