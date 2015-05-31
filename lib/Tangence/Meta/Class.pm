@@ -10,7 +10,7 @@ use warnings;
 
 use Carp;
 
-our $VERSION = '0.20';
+our $VERSION = '0.20_001';
 
 =head1 NAME
 

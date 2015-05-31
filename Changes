@@ -1,5 +1,10 @@
 Revision history for Tangence
 
+0.20_001 2015/05/31 23:01:44
+        [BREAKING CHANGES]
+         * Large API-breaking changes in Tangence::ObjectProxy - now works
+           entirely through Futures instead of one-shot continuation callbacks
+
 0.20    2014/08/13 23:23:11
         [CHANGES]
          * Better support for late declaration of Tangence class definitions
