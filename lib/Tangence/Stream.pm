@@ -240,6 +240,10 @@ When called in non-void context, this method returns a L<Future> that will
 yield the response instead. In this case it should not be given an
 C<on_response> callback.
 
+In this form, a C<MSG_ERROR> response will automatically turn into a failed
+Future; the subsequent C<then> or C<on_done> code will not have to handle this
+case.
+
 =cut
 
 sub request
@@ -255,7 +259,15 @@ sub request
       $args{on_response} and croak "TODO: Can't take 'on_response' and return a Future";
 
       $f = $self->new_future;
-      $on_response = $f->done_cb;
+      $on_response = sub {
+         my ( $response ) = @_;
+         if( $response->code == MSG_ERROR ) {
+            $f->fail( $response->unpack_str(), tangence => );
+         }
+         else {
+            $f->done( $response );
+         }
+      };
    }
    else {
       $on_response = $args{on_response} or croak "Expected 'on_response'";

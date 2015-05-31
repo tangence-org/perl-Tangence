@@ -47,6 +47,27 @@ isa_ok( $stream, "Tangence::Stream", '$stream isa Tangence::Stream' );
    is( $response->unpack_str, "response", '$response->unpack_str to initial call' );
 }
 
+# request Future failure
+{
+   my $message = Tangence::Message->new( $stream, MSG_CALL );
+
+   my $f = $stream->request(
+      request => $message,
+   );
+
+   $written = "";
+
+   my $read = "\x81" . "\0\0\0\x08" .
+              "\x27" . "failure";
+
+   $stream->tangence_readfrom( $read );
+
+   is( length $read, 0, '$read completely consumed from response' );
+
+   ok( $f->is_ready, '$f is ready after response' );
+   is( scalar $f->failure, "failure", '$f is a failure' );
+}
+
 # request on_response
 {
    my $message = Tangence::Message->new( $stream, MSG_CALL );

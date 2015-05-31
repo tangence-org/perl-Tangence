@@ -234,10 +234,6 @@ sub call_method
                                  : undef;
          Future->done( $result );
       }
-      elsif( $code == MSG_ERROR ) {
-         my $msg = $message->unpack_str();
-         Future->fail( $msg, tangence => );
-      }
       else {
          Future->fail( "Unexpected response code $code", tangence => );
       }
@@ -308,10 +304,6 @@ sub subscribe_event
 
       if( $code == MSG_SUBSCRIBED ) {
          Future->done;
-      }
-      elsif( $code == MSG_ERROR ) {
-         my $msg = $message->unpack_str();
-         Future->fail( $msg, tangence => );
       }
       else {
          Future->fail( "Unexpected response code $code", tangence => );
@@ -392,10 +384,6 @@ sub get_property
          my $value = $pdef->overall_type->unpack_value( $message );
          Future->done( $value );
       }
-      elsif( $code == MSG_ERROR ) {
-         my $msg = $message->unpack_str();
-         Future->fail( $msg, tangence => );
-      }
       else {
          Future->fail( "Unexpected response code $code", tangence => );
       }
@@ -447,10 +435,6 @@ sub get_property_element
       if( $code == MSG_RESULT ) {
          my $value = $pdef->type->unpack_value( $message );
          Future->done( $value );
-      }
-      elsif( $code == MSG_ERROR ) {
-         my $msg = $message->unpack_str();
-         Future->fail( $msg, tangence => );
       }
       else {
          Future->fail( "Unexpected response code $code", tangence => );
@@ -509,10 +493,6 @@ sub set_property
 
       if( $code == MSG_OK ) {
          Future->done;
-      }
-      elsif( $code == MSG_ERROR ) {
-         my $msg = $message->unpack_str();
-         Future->fail( $msg, tangence => );
       }
       else {
          Future->fail( "Unexpected response code $code", tangence => );
@@ -646,10 +626,6 @@ sub _watch_property
       if( $code == MSG_WATCHING ) {
          Future->done;
       }
-      elsif( $code == MSG_ERROR ) {
-         my $msg = $message->unpack_str();
-         Future->fail( $msg, tangence => );
-      }
       else {
          Future->fail( "Unexpected response code $code", tangence => );
       }
@@ -726,10 +702,6 @@ sub watch_property_with_iter
 
          my $iter = Tangence::ObjectProxy::_PropertyIterator->new( $self, $iter_id, $pdef->type );
          Future->done( $iter, $first_idx, $last_idx );
-      }
-      elsif( $code == MSG_ERROR ) {
-         my $msg = $message->unpack_str();
-         Future->fail( $msg, tangence => );
       }
       else {
          Future->fail( "Unexpected response code $code", tangence => );
@@ -1024,10 +996,6 @@ sub _next
             $message->unpack_int(),
             $message->unpack_all_sametype( $element_type ),
          );
-      }
-      elsif( $code == MSG_ERROR ) {
-         my $msg = $message->unpack_str();
-         Future->fail( $msg, tangence => );
       }
       else {
          Future->fail( "Unexpected response code $code", tangence => );
