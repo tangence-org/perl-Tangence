@@ -86,7 +86,9 @@ sub STRING
    return "Tangence::ObjectProxy[id=$self->{id}]";
 }
 
-=head2 $id = $proxy->id
+=head2 id
+
+   $id = $proxy->id
 
 Returns the object ID for the C<Tangence> object being proxied for.
 
@@ -98,7 +100,9 @@ sub id
    return $self->{id};
 }
 
-=head2 $classname = $proxy->classname
+=head2 classname
+
+   $classname = $proxy->classname
 
 Returns the name of the class of the C<Tangence> object being proxied for.
 
@@ -110,7 +114,9 @@ sub classname
    return $self->{class}->name;
 }
 
-=head2 $class = $proxyobj->class
+=head2 class
+
+   $class = $proxyobj->class
 
 Returns the L<Tangence::Meta::Class> object representing the class of this
 object.
@@ -123,7 +129,9 @@ sub class
    return $self->{class};
 }
 
-=head2 $method = $proxy->can_method( $name )
+=head2 can_method
+
+   $method = $proxy->can_method( $name )
 
 Returns the L<Tangence::Meta::Method> object representing the named method, or
 C<undef> if no such method exists.
@@ -136,7 +144,9 @@ sub can_method
    return $self->class->method( @_ );
 }
 
-=head2 $event = $proxy->can_event( $name )
+=head2 can_event
+
+   $event = $proxy->can_event( $name )
 
 Returns the L<Tangence::Meta::Event> object representing the named event, or
 C<undef> if no such event exists.
@@ -149,7 +159,9 @@ sub can_event
    return $self->class->event( @_ );
 }
 
-=head2 $property = $proxy->can_property( $name )
+=head2 can_property
+
+   $property = $proxy->can_property( $name )
 
 Returns the L<Tangence::Meta::Property> object representing the named
 property, or C<undef> if no such property exists.
@@ -194,7 +206,9 @@ sub grab
    }
 }
 
-=head2 $result = $proxy->call_method( $mname, @args )->get
+=head2 call_method
+
+   $result = $proxy->call_method( $mname, @args )->get
 
 Calls the given method on the server object, passing in the given arguments.
 Returns a L<Future> that will yield the method's result.
@@ -240,7 +254,9 @@ sub call_method
    });
 }
 
-=head2 $proxy->subscribe_event( $event, %callbacks )->get
+=head2 subscribe_event
+
+   $proxy->subscribe_event( $event, %callbacks )->get
 
 Subscribes to the given event on the server object, installing a callback
 function which will be invoked whenever the event is fired.
@@ -321,7 +337,9 @@ sub handle_request_EVENT
    }
 }
 
-=head2 $proxy->unsubscribe_event( $event )
+=head2 unsubscribe_event
+
+   $proxy->unsubscribe_event( $event )
 
 Removes an event subscription on the given event on the server object that was
 previously installed using C<subscribe_event>.
@@ -348,7 +366,9 @@ sub unsubscribe_event
    );
 }
 
-=head2 $value = $proxy->get_property( $prop )->get
+=head2 get_property
+
+   $value = $proxy->get_property( $prop )->get
 
 Requests the current value of the property from the server object.
 
@@ -385,7 +405,9 @@ sub get_property
    });
 }
 
-=head2 $value = $proxy->get_property_element( $property, $index_or_key )->get
+=head2 get_property_element
+
+   $value = $proxy->get_property_element( $property, $index_or_key )->get
 
 Requests the current value of an element of the property from the server
 object.
@@ -437,7 +459,9 @@ sub get_property_element
    });
 }
 
-=head2 $value = $proxy->prop( $property )
+=head2 prop
+
+   $value = $proxy->prop( $property )
 
 Returns the locally-cached value of a smashed property. If the named property
 is not a smashed property, an exception is thrown.
@@ -456,7 +480,9 @@ sub prop
    croak "$self does not have a cached property '$property'";
 }
 
-=head2 $proxy->set_property( $prop, $value )->get
+=head2 set_property
+
+   $proxy->set_property( $prop, $value )->get
 
 Sets the value of the property in the server object.
 
@@ -495,9 +521,13 @@ sub set_property
    });
 }
 
-=head2 $proxy->watch_property( $property, %callbacks )->get
+=head2 watch_property
 
-=head2 $proxy->watch_property_with_initial( $property, %callbacks )->get
+   $proxy->watch_property( $property, %callbacks )->get
+
+=head2 watch_property_with_initial
+
+   $proxy->watch_property_with_initial( $property, %callbacks )->get
 
 Watches the given property on the server object, installing callback functions
 which will be invoked whenever the property value changes. The latter form
@@ -627,7 +657,10 @@ sub _watch_property
    });
 }
 
-=head2 ( $iter, $first_idx, $last_idx ) = $proxy->watch_property_with_iter( $property, $iter_from, %callbacks )->get
+=head2 watch_property_with_iter
+
+   ( $iter, $first_idx, $last_idx ) =
+      $proxy->watch_property_with_iter( $property, $iter_from, %callbacks )->get
 
 A variant of C<watch_property> that installs a watch on the given property of
 the server object, and additionally returns an iterator object that can be
@@ -870,7 +903,9 @@ sub _update_property_objset
    }
 }
 
-=head2 $proxy->unwatch_property( $property )
+=head2 unwatch_property
+
+   $proxy->unwatch_property( $property )
 
 Removes a property watches on the given property on the server object that was
 previously installed using C<watch_property>.
@@ -934,9 +969,13 @@ sub DESTROY
    );
 }
 
-=head2 ( $index, @more ) = $iter->next_forward( $count )->get
+=head2 next_forward
 
-=head2 ( $index, @more ) = $iter->next_backward( $count )->get
+   ( $index, @more ) = $iter->next_forward( $count )->get
+
+=head2 next_backward
+
+   ( $index, @more ) = $iter->next_backward( $count )->get
 
 Requests the next items from the iterator. C<next_forward> moves forwards
 towards higher-numbered indices, and C<next_backward> moves backwards towards
