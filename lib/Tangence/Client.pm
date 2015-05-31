@@ -319,8 +319,8 @@ sub make_proxy
 
    my $obj = $self->objectproxies->{$id} =
       Tangence::ObjectProxy->new(
-         conn => $self,
-         id   => $id,
+         client => $self,
+         id     => $id,
 
          class => $class,
 

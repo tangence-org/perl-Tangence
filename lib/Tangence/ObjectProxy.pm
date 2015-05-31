@@ -43,8 +43,8 @@ sub new
    my %args = @_;
 
    my $self = bless {
-      conn => $args{conn},
-      id   => $args{id},
+      client => $args{client},
+      id     => $args{id},
 
       class => $args{class},
 
@@ -52,7 +52,7 @@ sub new
    }, $class;
 
    # An ObjectProxy is useless after its connection disappears
-   weaken( $self->{conn} );
+   weaken( $self->{client} );
 
    return $self;
 }
@@ -213,18 +213,18 @@ sub call_method
    my $mdef = $self->can_method( $method )
       or croak "Class ".$self->classname." does not have a method $method";
 
-   my $conn = $self->{conn};
+   my $client = $self->{client};
 
-   my $request = Tangence::Message->new( $conn, MSG_CALL )
+   my $request = Tangence::Message->new( $client, MSG_CALL )
          ->pack_int( $self->id )
          ->pack_str( $method );
 
    my @argtypes = $mdef->argtypes;
    $argtypes[$_]->pack_value( $request, $args[$_] ) for 0..$#argtypes;
 
-   my $f = $conn->new_future;
+   my $f = $client->new_future;
 
-   $conn->request(
+   $client->request(
       request => $request,
 
       on_response => sub {
@@ -301,11 +301,11 @@ sub subscribe_event
 
    return Future->done if $event eq "destroy"; # This is automatically handled
 
-   my $conn = $self->{conn};
-   my $f = $conn->new_future;
+   my $client = $self->{client};
+   my $f = $client->new_future;
 
-   $conn->request(
-      request => Tangence::Message->new( $conn, MSG_SUBSCRIBE )
+   $client->request(
+      request => Tangence::Message->new( $client, MSG_SUBSCRIBE )
          ->pack_int( $self->id )
          ->pack_str( $event ),
 
@@ -361,9 +361,9 @@ sub unsubscribe_event
 
    return if $event eq "destroy"; # This is automatically handled
 
-   my $conn = $self->{conn};
-   $conn->request(
-      request => Tangence::Message->new( $conn, MSG_UNSUBSCRIBE )
+   my $client = $self->{client};
+   $client->request(
+      request => Tangence::Message->new( $client, MSG_UNSUBSCRIBE )
          ->pack_int( $self->id )
          ->pack_str( $event ),
 
@@ -389,11 +389,11 @@ sub get_property
    my $pdef = $self->can_property( $property )
       or croak "Class ".$self->classname." does not have a property $property";
 
-   my $conn = $self->{conn};
-   my $f = $conn->new_future;
+   my $client = $self->{client};
+   my $f = $client->new_future;
 
-   $conn->request(
-      request => Tangence::Message->new( $conn, MSG_GETPROP )
+   $client->request(
+      request => Tangence::Message->new( $client, MSG_GETPROP )
          ->pack_int( $self->id )
          ->pack_str( $property ),
 
@@ -437,10 +437,10 @@ sub get_property_element
    my $pdef = $self->can_property( $property )
       or croak "Class ".$self->classname." does not have a property $property";
 
-   my $conn = $self->{conn};
-   $conn->_ver_can_getpropelem or croak "Server is too old to support MSG_GETPROPELEM";
+   my $client = $self->{client};
+   $client->_ver_can_getpropelem or croak "Server is too old to support MSG_GETPROPELEM";
 
-   my $request = Tangence::Message->new( $conn, MSG_GETPROPELEM )
+   my $request = Tangence::Message->new( $client, MSG_GETPROPELEM )
       ->pack_int( $self->id )
       ->pack_str( $property );
 
@@ -454,9 +454,9 @@ sub get_property_element
       croak "Cannot get_property_element of a non hash, array or queue";
    }
 
-   my $f = $conn->new_future;
+   my $f = $client->new_future;
 
-   $conn->request(
+   $client->request(
       request => $request,
 
       on_response => sub {
@@ -517,15 +517,15 @@ sub set_property
    my $pdef = $self->can_property( $property )
       or croak "Class ".$self->classname." does not have a property $property";
 
-   my $conn = $self->{conn};
-   my $request = Tangence::Message->new( $conn, MSG_SETPROP )
+   my $client = $self->{client};
+   my $request = Tangence::Message->new( $client, MSG_SETPROP )
          ->pack_int( $self->id )
          ->pack_str( $property );
    $pdef->type->pack_value( $request, $value ),
 
-   my $f = $conn->new_future;
+   my $f = $client->new_future;
 
-   $conn->request(
+   $client->request(
       request => $request,
 
       on_response => sub {
@@ -658,15 +658,15 @@ sub _watch_property
       return Future->done;
    }
 
-   my $conn = $self->{conn};
-   my $f = $conn->new_future;
+   my $client = $self->{client};
+   my $f = $client->new_future;
 
-   my $request = Tangence::Message->new( $conn, MSG_WATCH )
+   my $request = Tangence::Message->new( $client, MSG_WATCH )
          ->pack_int( $self->id )
          ->pack_str( $property )
          ->pack_bool( $want_initial );
 
-   $conn->request(
+   $client->request(
       request => $request,
 
       on_response => sub {
@@ -739,14 +739,14 @@ sub watch_property_with_iter
       die "TODO: need to synthesize an iterator";
    }
 
-   my $conn = $self->{conn};
-   $conn->_ver_can_iter or croak "Server is too old to support MSG_WATCH_ITER";
+   my $client = $self->{client};
+   $client->_ver_can_iter or croak "Server is too old to support MSG_WATCH_ITER";
    $pdef->dimension == DIM_QUEUE or croak "Can only iterate on queue-dimension properties";
 
-   my $f = $conn->new_future;
+   my $f = $client->new_future;
 
-   $conn->request(
-      request => Tangence::Message->new( $conn, MSG_WATCH_ITER )
+   $client->request(
+      request => Tangence::Message->new( $client, MSG_WATCH_ITER )
          ->pack_int( $self->id )
          ->pack_str( $property )
          ->pack_int( $iter_from ),
@@ -960,9 +960,9 @@ sub unwatch_property
    # TODO: mark iterators as destroyed and invalid
    delete $self->{props}->{$property};
 
-   my $conn = $self->{conn};
-   $conn->request(
-      request => Tangence::Message->new( $conn, MSG_UNWATCH )
+   my $client = $self->{client};
+   $client->request(
+      request => Tangence::Message->new( $client, MSG_UNWATCH )
          ->pack_int( $self->id )
          ->pack_str( $property ),
 
@@ -988,18 +988,18 @@ sub new
    return bless [ @_ ], $class;
 }
 
-sub obj { shift->[0] }
-sub id  { shift->[1] }
-sub conn { shift->obj->{conn} }
+sub obj    { shift->[0] }
+sub id     { shift->[1] }
+sub client { shift->obj->{client} }
 
 sub DESTROY
 {
    my $self = shift;
 
-   return unless $self->obj and my $id = $self->id and my $conn = $self->conn;
+   return unless $self->obj and my $id = $self->id and my $client = $self->client;
 
-   $conn->request(
-      request => Tangence::Message->new( $conn, MSG_ITER_DESTROY )
+   $client->request(
+      request => Tangence::Message->new( $client, MSG_ITER_DESTROY )
          ->pack_int( $id ),
 
       on_response => sub {},
@@ -1047,11 +1047,11 @@ sub _next
    my $id  = $self->id;
    my $element_type = $self->[2];
 
-   my $conn = $self->conn;
-   my $f = $conn->new_future;
+   my $client = $self->client;
+   my $f = $client->new_future;
 
-   $conn->request(
-      request => Tangence::Message->new( $conn, MSG_ITER_NEXT )
+   $client->request(
+      request => Tangence::Message->new( $client, MSG_ITER_NEXT )
          ->pack_int( $id )
          ->pack_int( $direction )
          ->pack_int( $count || 1 ),
