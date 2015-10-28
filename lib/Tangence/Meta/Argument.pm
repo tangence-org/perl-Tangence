@@ -8,7 +8,7 @@ package Tangence::Meta::Argument;
 use strict;
 use warnings;
 
-our $VERSION = '0.20_001';
+our $VERSION = '0.21';
 
 =head1 NAME
 
