@@ -12,7 +12,6 @@ my $build = Module::Build->new(
       'List::Util' => '1.29', # pair*
       'perl' => 5.010, # pack/unpack > specifiers
       'Parser::MGC' => '0.04',
-      'URI::Split' => 0,
    },
    build_requires => {
       'Test::Fatal' => '0.006',
