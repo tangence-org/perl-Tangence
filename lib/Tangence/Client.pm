@@ -91,7 +91,9 @@ The following methods are provided by this mixin.
 # Accessors for Tangence::Message decoupling
 sub objectproxies { shift->{objectproxies} ||= {} }
 
-=head2 $rootobj = $client->rootobj
+=head2 rootobj
+
+   $rootobj = $client->rootobj
 
 Returns a L<Tangence::ObjectProxy> to the server's root object
 
@@ -104,7 +106,9 @@ sub rootobj
    return $self->{rootobj};
 }
 
-=head2 $registry = $client->registry
+=head2 registry
+
+   $registry = $client->registry
 
 Returns a L<Tangence::ObjectProxy> to the server's object registry
 
@@ -124,7 +128,9 @@ sub on_error
    return $self->{on_error};
 }
 
-=head2 $client->tangence_connected( %args )
+=head2 tangence_connected
+
+   $client->tangence_connected( %args )
 
 Once the base connection to the server has been established, this method
 should be called to perform the initial work of requesting the root object and
@@ -338,7 +344,9 @@ These methods are intended for implementation classes to override.
 
 =cut
 
-=head2 $f = $client->new_future
+=head2 new_future
+
+   $f = $client->new_future
 
 Returns a new L<Future> instance for basing asynchronous operations on.
 
