@@ -11,7 +11,7 @@ use warnings;
 # Currently depends on atleast Perl 5.10.0 to provide the > format modifier
 # for pack, to specify big-endian integers. If this code can be modified, this
 # restriction could be listed.
-use 5.010; 
+use 5.010; # pack endian formats
 
 our $VERSION = '0.21';
 
@@ -29,7 +29,7 @@ use Tangence::Types;
 
 use Tangence::Object;
 
-use List::Util qw( pairmap );
+use List::Util 1.29 qw( pairmap );
 use Scalar::Util qw( weaken blessed );
 
 # Normally we don't care about hash key order. But, when writing test scripts

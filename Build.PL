@@ -9,8 +9,8 @@ my $build = Module::Build->new(
       'Encode' => 0,
       'Exporter' => '5.57',
       'Future' => 0,
-      'List::Util' => '1.29', # pair*
-      'perl' => 5.010, # pack/unpack > specifiers
+      'List::Util' => '1.29',
+      'perl' => 5.010,
       'Parser::MGC' => '0.04',
    },
    build_requires => {
