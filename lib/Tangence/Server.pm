@@ -20,6 +20,9 @@ use Tangence::Constants;
 use Tangence::Types;
 use Tangence::Server::Context;
 
+use Struct::Dumb;
+struct IterObject => [qw( iter obj )];
+
 # We will accept any version back to 2
 use constant VERSION_MINOR_MIN => 2;
 
@@ -133,6 +136,12 @@ sub tangence_closed
       }
 
       undef @$watches;
+   }
+
+   if( my $iters = $self->peer_hasiter ) {
+      foreach my $iterobj ( values %$iters ) {
+         $self->drop_iterobj( $iterobj );
+      }
    }
 }
 
@@ -313,7 +322,7 @@ sub _handle_request_WATCHany
       my $m = "iter_prop_$prop";
       my $iter = $object->$m( $iter_from );
       my $id = $self->message_state->{next_iterid}++;
-      $self->peer_hasiter->{$id} = $iter;
+      $self->peer_hasiter->{$id} = IterObject( $iter, $object );
       $ctx->respond( Tangence::Message->new( $self, MSG_WATCHING_ITER )
          ->pack_int( $id )
          ->pack_int( 0 ) # first index
@@ -378,10 +387,10 @@ sub handle_request_ITER_NEXT
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
-   my $iter = $self->peer_hasiter->{$iterid} or
+   my $iterobj = $self->peer_hasiter->{$iterid} or
       return $ctx->responderr( "No such iterator with id $iterid" );
 
-   $iter->handle_request_ITER_NEXT( $ctx, $message );
+   $iterobj->iter->handle_request_ITER_NEXT( $ctx, $message );
 }
 
 sub handle_request_ITER_DESTROY
@@ -393,9 +402,19 @@ sub handle_request_ITER_DESTROY
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
-   delete $self->peer_hasiter->{$iterid};
+   my $iterobj = delete $self->peer_hasiter->{$iterid};
+   $self->drop_iterobj( $iterobj );
 
    $ctx->respond( Tangence::Message->new( $self, MSG_OK ) );
+}
+
+sub drop_iterobj
+{
+   my $self = shift;
+   my ( $iterobj ) = @_;
+
+   my $m = "uniter_prop_" . $iterobj->iter->prop->name;
+   $iterobj->obj->$m( $iterobj->iter );
 }
 
 sub handle_request_INIT

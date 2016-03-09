@@ -143,6 +143,13 @@ sub _accessor_for_queue
       push @$iters, my $iter = Tangence::Property::_Iterator->new( $self->{properties}->{$pname}->value, $prop, $idx );
       return $iter;
    };
+
+   $subs->{"uniter_prop_$pname"} = sub {
+      my $self = shift;
+      my ( $iter ) = @_;
+      my $iters = $self->{properties}->{$pname}->iters or return;
+      @$iters = grep { $_ != $iter } @$iters;
+   };
 }
 
 sub _accessor_for_array

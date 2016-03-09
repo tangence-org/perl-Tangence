@@ -35,6 +35,10 @@ my ( $conn1, $conn2 ) = map {
       on_set => sub { $conn->{scalar} = shift; },
    )->get;
 
+   my ( $iter ) = $objproxy->watch_property_with_iter( "queue", "first",
+      on_updated => sub {},
+   )->get;
+
    $conn
 } 1 .. 2;
 
