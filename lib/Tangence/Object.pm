@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2010-2014 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2010-2016 -- leonerd@leonerd.org.uk
 
 package Tangence::Object;
 
@@ -64,42 +64,11 @@ sub new
 
    my $properties = $self->class->properties;
    foreach my $prop ( keys %$properties ) {
-      $self->_new_property( $prop, $properties->{$prop} );
+      my $meth = "new_prop_$prop";
+      $self->$meth();
    }
 
    return $self;
-}
-
-sub _new_property
-{
-   my $self = shift;
-   my ( $prop, $pdef ) = @_;
-
-   my $dim = $pdef->dimension;
-
-   my $initial;
-
-   if( my $code = $self->can( "init_prop_$prop" ) ) {
-      $initial = $code->( $self );
-   }
-
-   elsif( $dim == DIM_SCALAR ) {
-      $initial = $pdef->type->default_value;
-   }
-   elsif( $dim == DIM_HASH ) {
-      $initial = {};
-   }
-   elsif( $dim == DIM_QUEUE or $dim == DIM_ARRAY ) {
-      $initial = [];
-   }
-   elsif( $dim == DIM_OBJSET ) {
-      $initial = {}; # these have hashes internally
-   }
-   else {
-      croak "Unrecognised dimension $dim for property $prop";
-   }
-
-   $self->{properties}->{$prop} = [ $initial, [] ];
 }
 
 =head1 METHODS

@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2013 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2013-2016 -- leonerd@leonerd.org.uk
 
 package Tangence::Property;
 
@@ -23,6 +23,34 @@ sub build_accessor
    my ( $subs ) = @_;
 
    my $pname = $prop->name;
+   my $dim   = $prop->dimension;
+
+   $subs->{"new_prop_$pname"} = sub {
+      my $self = shift;
+
+      my $initial;
+
+      if( my $code = $self->can( "init_prop_$pname" ) ) {
+         $initial = $code->( $self );
+      }
+      elsif( $dim == DIM_SCALAR ) {
+         $initial = $prop->type->default_value;
+      }
+      elsif( $dim == DIM_HASH ) {
+         $initial = {};
+      }
+      elsif( $dim == DIM_QUEUE or $dim == DIM_ARRAY ) {
+         $initial = [];
+      }
+      elsif( $dim == DIM_OBJSET ) {
+         $initial = {}; # these have hashes internally
+      }
+      else {
+         croak "Unrecognised dimension $dim for property $pname";
+      }
+
+      $self->{properties}->{$pname} = [ $initial, [] ];
+   };
 
    $subs->{"get_prop_$pname"} = sub {
       my $self = shift;
@@ -37,8 +65,6 @@ sub build_accessor
       $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->[0] ) 
                        : $_->{on_set}->( $self, $newval ) for @$cbs;
    };
-
-   my $dim = $prop->dimension;
 
    my $dimname = DIMNAMES->[$dim];
    if( my $code = __PACKAGE__->can( "_accessor_for_$dimname" ) ) {
