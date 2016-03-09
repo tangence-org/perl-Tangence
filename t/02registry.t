@@ -13,6 +13,8 @@ use Tangence::Constants;
 use Tangence::Registry;
 use t::TestObj;
 
+use Struct::Dumb 0.09;  # _forbid_arrayification
+
 $Tangence::Message::SORT_HASH_KEYS = 1;
 
 my $registry = Tangence::Registry->new(
@@ -124,8 +126,13 @@ is( $obj->describe, 't::TestObj[scalar=12]', '$obj->describe' );
 
 is_oneref( $obj, '$obj has refcount 1 just before unref' );
 
-memory_cycle_ok( $obj, '$obj has no memory cycles' );
+{
+   no warnings 'redefine';
+   local *Tangence::Property::Instance::_forbid_arrayification = sub {};
 
-memory_cycle_ok( $registry, '$registry has no memory cycles' );
+   memory_cycle_ok( $obj, '$obj has no memory cycles' );
+
+   memory_cycle_ok( $registry, '$registry has no memory cycles' );
+}
 
 done_testing;

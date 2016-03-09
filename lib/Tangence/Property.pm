@@ -15,6 +15,9 @@ use Tangence::Constants;
 
 require Tangence::Type;
 
+use Struct::Dumb;
+struct Instance => [qw( value callbacks iters )];
+
 our $VERSION = '0.21';
 
 sub build_accessor
@@ -49,20 +52,20 @@ sub build_accessor
          croak "Unrecognised dimension $dim for property $pname";
       }
 
-      $self->{properties}->{$pname} = [ $initial, [] ];
+      $self->{properties}->{$pname} = Instance( $initial, [], [] );
    };
 
    $subs->{"get_prop_$pname"} = sub {
       my $self = shift;
-      return $self->{properties}->{$pname}->[0]
+      return $self->{properties}->{$pname}->value;
    };
 
    $subs->{"set_prop_$pname"} = sub {
       my $self = shift;
       my ( $newval ) = @_;
-      $self->{properties}->{$pname}->[0] = $newval;
-      my $cbs = $self->{properties}->{$pname}->[1];
-      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->[0] ) 
+      $self->{properties}->{$pname}->value = $newval;
+      my $cbs = $self->{properties}->{$pname}->callbacks;
+      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->value ) 
                        : $_->{on_set}->( $self, $newval ) for @$cbs;
    };
 
@@ -88,18 +91,18 @@ sub _accessor_for_hash
    $subs->{"add_prop_$pname"} = sub {
       my $self = shift;
       my ( $key, $value ) = @_;
-      $self->{properties}->{$pname}->[0]->{$key} = $value;
-      my $cbs = $self->{properties}->{$pname}->[1];
-      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->[0] ) 
+      $self->{properties}->{$pname}->value->{$key} = $value;
+      my $cbs = $self->{properties}->{$pname}->callbacks;
+      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->value )
                        : $_->{on_add}->( $self, $key, $value ) for @$cbs;
    };
 
    $subs->{"del_prop_$pname"} = sub {
       my $self = shift;
       my ( $key ) = @_;
-      delete $self->{properties}->{$pname}->[0]->{$key};
-      my $cbs = $self->{properties}->{$pname}->[1];
-      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->[0] ) 
+      delete $self->{properties}->{$pname}->value->{$key};
+      my $cbs = $self->{properties}->{$pname}->callbacks;
+      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->value ) 
                        : $_->{on_del}->( $self, $key ) for @$cbs;
    };
 }
@@ -112,9 +115,9 @@ sub _accessor_for_queue
    $subs->{"push_prop_$pname"} = sub {
       my $self = shift;
       my @values = @_;
-      push @{ $self->{properties}->{$pname}->[0] }, @values;
-      my $cbs = $self->{properties}->{$pname}->[1];
-      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->[0] ) 
+      push @{ $self->{properties}->{$pname}->value }, @values;
+      my $cbs = $self->{properties}->{$pname}->callbacks;
+      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->value ) 
                        : $_->{on_push}->( $self, @values ) for @$cbs;
    };
 
@@ -122,11 +125,11 @@ sub _accessor_for_queue
       my $self = shift;
       my ( $count ) = @_;
       $count = 1 unless @_;
-      splice @{ $self->{properties}->{$pname}->[0] }, 0, $count, ();
-      my $cbs = $self->{properties}->{$pname}->[1];
-      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->[0] ) 
+      splice @{ $self->{properties}->{$pname}->value }, 0, $count, ();
+      my $cbs = $self->{properties}->{$pname}->callbacks;
+      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->value ) 
                        : $_->{on_shift}->( $self, $count ) for @$cbs;
-      my $iters = $self->{properties}->{$pname}->[2];
+      my $iters = $self->{properties}->{$pname}->iters;
       $_->idx -= $count for @$iters;
    };
 
@@ -134,10 +137,10 @@ sub _accessor_for_queue
       my $self = shift;
       my ( $iter_from ) = @_;
       my $idx = $iter_from == ITER_FIRST ? 0 :
-                $iter_from == ITER_LAST  ? scalar @{ $self->{properties}->{$pname}->[0] } :
+                $iter_from == ITER_LAST  ? scalar @{ $self->{properties}->{$pname}->value } :
                                            die "Unrecognised iter_from";
-      my $iters = $self->{properties}->{$pname}->[2] ||= [];
-      push @$iters, my $iter = Tangence::Property::_Iterator->new( $self->{properties}->{$pname}->[0], $prop, $idx );
+      my $iters = $self->{properties}->{$pname}->iters ||= [];
+      push @$iters, my $iter = Tangence::Property::_Iterator->new( $self->{properties}->{$pname}->value, $prop, $idx );
       return $iter;
    };
 }
@@ -150,9 +153,9 @@ sub _accessor_for_array
    $subs->{"push_prop_$pname"} = sub {
       my $self = shift;
       my @values = @_;
-      push @{ $self->{properties}->{$pname}->[0] }, @values;
-      my $cbs = $self->{properties}->{$pname}->[1];
-      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->[0] ) 
+      push @{ $self->{properties}->{$pname}->value }, @values;
+      my $cbs = $self->{properties}->{$pname}->callbacks;
+      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->value ) 
                        : $_->{on_push}->( $self, @values ) for @$cbs;
    };
 
@@ -160,18 +163,18 @@ sub _accessor_for_array
       my $self = shift;
       my ( $count ) = @_;
       $count = 1 unless @_;
-      splice @{ $self->{properties}->{$pname}->[0] }, 0, $count, ();
-      my $cbs = $self->{properties}->{$pname}->[1];
-      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->[0] ) 
+      splice @{ $self->{properties}->{$pname}->value }, 0, $count, ();
+      my $cbs = $self->{properties}->{$pname}->callbacks;
+      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->value ) 
                        : $_->{on_shift}->( $self, $count ) for @$cbs;
    };
 
    $subs->{"splice_prop_$pname"} = sub {
       my $self = shift;
       my ( $index, $count, @values ) = @_;
-      splice @{ $self->{properties}->{$pname}->[0] }, $index, $count, @values;
-      my $cbs = $self->{properties}->{$pname}->[1];
-      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->[0] ) 
+      splice @{ $self->{properties}->{$pname}->value }, $index, $count, @values;
+      my $cbs = $self->{properties}->{$pname}->callbacks;
+      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->value ) 
                        : $_->{on_splice}->( $self, $index, $count, @values ) for @$cbs;
    };
 
@@ -182,7 +185,7 @@ sub _accessor_for_array
       # it turns out that exchanging neighbours is quicker by list assignment,
       # but other times it's generally best to use splice() to extract then
       # insert
-      my $cache = $self->{properties}->{$pname}->[0];
+      my $cache = $self->{properties}->{$pname}->value;
       if( abs($delta) == 1 ) {
          @{$cache}[$index,$index+$delta] = @{$cache}[$index+$delta,$index];
       }
@@ -190,8 +193,8 @@ sub _accessor_for_array
          my $elem = splice @$cache, $index, 1, ();
          splice @$cache, $index + $delta, 0, ( $elem );
       }
-      my $cbs = $self->{properties}->{$pname}->[1];
-      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->[0] ) 
+      my $cbs = $self->{properties}->{$pname}->callbacks;
+      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->value ) 
                        : $_->{on_move}->( $self, $index, $delta ) for @$cbs;
    };
 }
@@ -204,24 +207,24 @@ sub _accessor_for_objset
    # Different get and set methods
    $subs->{"get_prop_$pname"} = sub {
       my $self = shift;
-      return [ values %{ $self->{properties}->{$pname}->[0] } ];
+      return [ values %{ $self->{properties}->{$pname}->value } ];
    };
 
    $subs->{"set_prop_$pname"} = sub {
       my $self = shift;
       my ( $newval ) = @_;
-      $self->{properties}->{$pname}->[0] = $newval;
-      my $cbs = $self->{properties}->{$pname}->[1];
-      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->[0] ) 
+      $self->{properties}->{$pname}->value = $newval;
+      my $cbs = $self->{properties}->{$pname}->callbacks;
+      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->value ) 
                        : $_->{on_set}->( $self, [ values %$newval ] ) for @$cbs;
    };
 
    $subs->{"add_prop_$pname"} = sub {
       my $self = shift;
       my ( $obj ) = @_;
-      $self->{properties}->{$pname}->[0]->{$obj->id} = $obj;
-      my $cbs = $self->{properties}->{$pname}->[1];
-      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->[0] ) 
+      $self->{properties}->{$pname}->value->{$obj->id} = $obj;
+      my $cbs = $self->{properties}->{$pname}->callbacks;
+      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->value ) 
                        : $_->{on_add}->( $self, $obj ) for @$cbs;
    };
 
@@ -229,9 +232,9 @@ sub _accessor_for_objset
       my $self = shift;
       my ( $obj_or_id ) = @_;
       my $id = ref $obj_or_id ? $obj_or_id->id : $obj_or_id;
-      delete $self->{properties}->{$pname}->[0]->{$id};
-      my $cbs = $self->{properties}->{$pname}->[1];
-      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->[0] ) 
+      delete $self->{properties}->{$pname}->value->{$id};
+      my $cbs = $self->{properties}->{$pname}->callbacks;
+      $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->value ) 
                        : $_->{on_del}->( $self, $id ) for @$cbs;
    };
 }

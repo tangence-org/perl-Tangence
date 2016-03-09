@@ -12,6 +12,8 @@ use Tangence::Registry;
 use t::TestObj;
 use t::TestServerClient;
 
+use Struct::Dumb 0.09;  # _forbid_arrayification
+
 ### TODO
 # This test file relies a lot on weird logic in TestObj. Should probably instead just use 
 # the object's property manip. methods directly
@@ -129,8 +131,13 @@ is_deeply( $proxy->prop( "array" ),
            [ 0 .. 9 ],
            'array property cacahe after move(-2)' );
 
-memory_cycle_ok( $registry, '$registry has no memory cycles' );
-memory_cycle_ok( $obj, '$obj has no memory cycles' );
-memory_cycle_ok( $proxy, '$proxy has no memory cycles' );
+{
+   no warnings 'redefine';
+   local *Tangence::Property::Instance::_forbid_arrayification = sub {};
+
+   memory_cycle_ok( $registry, '$registry has no memory cycles' );
+   memory_cycle_ok( $obj, '$obj has no memory cycles' );
+   memory_cycle_ok( $proxy, '$proxy has no memory cycles' );
+}
 
 done_testing;

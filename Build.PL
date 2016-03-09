@@ -12,8 +12,10 @@ my $build = Module::Build->new(
       'List::Util' => '1.29',
       'perl' => 5.010,
       'Parser::MGC' => '0.04',
+      'Struct::Dumb' => 0,
    },
    test_requires => {
+      'Struct::Dumb' => '0.09',
       'Test::Fatal' => '0.006',
       'Test::HexString' => 0,
       'Test::Identity' => 0,

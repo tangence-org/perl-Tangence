@@ -59,7 +59,7 @@ sub new
 
       event_subs => {},   # {$event} => [ @cbs ]
 
-      properties => {}, # {$prop} => [ $value, \@callbacks ]
+      properties => {}, # {$prop} => T:P::Instance struct
    }, $class;
 
    my $properties = $self->class->properties;
@@ -378,11 +378,11 @@ sub watch_property
       }
    }
 
-   my $watchlist = $self->{properties}->{$prop}->[1];
+   my $watchlist = $self->{properties}->{$prop}->callbacks;
 
    push @$watchlist, $callbacks;
 
-   $on_updated->( $self, $self->{properties}->{$prop}->[0] ) if $on_updated;
+   $on_updated->( $self, $self->{properties}->{$prop}->value ) if $on_updated;
 
    my $ref = \@{$watchlist}[$#$watchlist];  # reference to last element
    return $ref + 0; # force numeric context
@@ -400,7 +400,7 @@ sub unwatch_property
    my $self = shift;
    my ( $prop, $id ) = @_;
 
-   my $watchlist = $self->{properties}->{$prop}->[1] or return;
+   my $watchlist = $self->{properties}->{$prop}->callbacks or return;
 
    my $index;
    for( $index = 0; $index < @$watchlist; $index++ ) {

@@ -12,6 +12,8 @@ use Tangence::Registry;
 use t::TestObj;
 use t::TestServerClient;
 
+use Struct::Dumb 0.09;  # _forbid_arrayification
+
 my $registry = Tangence::Registry->new(
    tanfile => "t/TestObj.tan",
 );
@@ -159,8 +161,13 @@ my $proxy = $client->rootobj;
    is( ref $added, "Tangence::ObjectProxy", 'add objset added' );
 }
 
-memory_cycle_ok( $registry, '$registry has no memory cycles' );
-memory_cycle_ok( $obj, '$obj has no memory cycles' );
-memory_cycle_ok( $proxy, '$proxy has no memory cycles' );
+{
+   no warnings 'redefine';
+   local *Tangence::Property::Instance::_forbid_arrayification = sub {};
+
+   memory_cycle_ok( $registry, '$registry has no memory cycles' );
+   memory_cycle_ok( $obj, '$obj has no memory cycles' );
+   memory_cycle_ok( $proxy, '$proxy has no memory cycles' );
+}
 
 done_testing;
