@@ -13,7 +13,7 @@ my $build = Module::Build->new(
       'perl' => 5.010,
       'Parser::MGC' => '0.04',
    },
-   build_requires => {
+   test_requires => {
       'Test::Fatal' => '0.006',
       'Test::HexString' => 0,
       'Test::Identity' => 0,
@@ -21,7 +21,9 @@ my $build = Module::Build->new(
       'Test::More' => '0.88', # done_testing
       'Test::Refcount' => 0,
    },
-   auto_configure_requires => 0, # Don't add M::B to configure_requires
+   configure_requires => {
+      'Module::Build' => '0.4004', # test_requires
+   },
    license => 'perl',
    create_makefile_pl => 'traditional',
    create_license => 1,
