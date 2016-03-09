@@ -689,7 +689,7 @@ sub watch_property_with_iter
       $iter_from = ITER_LAST;
    }
    else {
-      croak "Unrecognised 'iter_from' value %s";
+      croak "Unrecognised 'iter_from' value $iter_from";
    }
 
    my $pdef = $self->can_property( $property )
