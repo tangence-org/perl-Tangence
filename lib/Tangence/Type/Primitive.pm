@@ -1,14 +1,12 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2013-2014 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2013-2016 -- leonerd@leonerd.org.uk
 
 package Tangence::Type::Primitive;
 
 use strict;
 use warnings;
-use feature qw( switch );
-no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 
 use base qw( Tangence::Type );
 
