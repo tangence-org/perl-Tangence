@@ -10,6 +10,8 @@ use Test::HexString;
 use Tangence::Message;
 $Tangence::Message::SORT_HASH_KEYS = 1;
 
+use t::Colourable;
+
 use Tangence::Type;
 sub _make_type { Tangence::Type->new_from_sig( shift ) }
 
