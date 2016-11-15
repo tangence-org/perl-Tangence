@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Test::More;
-use Test::Fatal qw( dies_ok );
+use Test::Fatal;
 use Test::Refcount;
 
 use Tangence::Constants;
@@ -45,8 +45,9 @@ my $objproxy = $client->rootobj;
    ok( $f->is_ready, '$f ready after MSG_RESULT' );
    is( scalar $f->get, "10/hello", 'result of call_method()' );
 
-   dies_ok( sub { $objproxy->call_method( no_such_method => 123 ) },
-            'Calling no_such_method fails in proxy' );
+   ok( exception { $objproxy->call_method( no_such_method => 123 ) },
+      'Calling no_such_method fails in proxy'
+   );
 }
 
 # Events
@@ -73,10 +74,11 @@ my $objproxy = $client->rootobj;
 
    $objproxy->unsubscribe_event( "event" );
 
-   dies_ok( sub { $objproxy->subscribe_event( "no_such_event",
+   ok( exception { $objproxy->subscribe_event( "no_such_event",
                     on_fire => sub {},
                   ); },
-            'Subscribing to no_such_event fails in proxy' );
+      'Subscribing to no_such_event fails in proxy'
+   );
 }
 
 # Properties get/set
@@ -137,8 +139,9 @@ my $objproxy = $client->rootobj;
 
    $objproxy->unwatch_property( "scalar" );
 
-   dies_ok( sub { $objproxy->get_property( "no_such_property" ) },
-            'Getting no_such_property fails in proxy' );
+   ok( exception { $objproxy->get_property( "no_such_property" ) },
+      'Getting no_such_property fails in proxy'
+   );
 }
 
 # Property iterators

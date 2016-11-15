@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Test::More;
-use Test::Fatal qw( dies_ok );
+use Test::Fatal;
 use Test::HexString;
 
 use Tangence::Message;
@@ -61,14 +61,14 @@ sub test_specific_dies
    my $name = shift;
    my %args = @_;
 
-   dies_ok( sub {
+   ok( exception {
       my $m = Tangence::Message->new( TestStream->new );
       my $pack_method = "pack_$args{type}";
 
       $m->$pack_method( $args{data} );
    }, "pack $name dies" ) if exists $args{data};
 
-   dies_ok( sub {
+   ok( exception {
       my $m = Tangence::Message->new( TestStream->new, undef, $args{stream} );
       my $unpack_method = "unpack_$args{type}";
 
@@ -215,13 +215,13 @@ sub test_typed_dies
    my $sig = $args{sig};
    my $type = _make_type $sig;
 
-   dies_ok( sub {
+   ok( exception {
       my $m = Tangence::Message->new( TestStream->new );
 
       $type->pack_value( $m, $args{data} );
    }, "\$type->pack_value for ($sig) $name dies" ) if exists $args{data};
 
-   dies_ok( sub {
+   ok( exception {
       my $m = Tangence::Message->new( TestStream->new, undef, $args{stream} );
 
       $type->unpack_value( $m )

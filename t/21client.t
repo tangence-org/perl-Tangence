@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Test::More;
-use Test::Fatal qw( dies_ok );
+use Test::Fatal;
 use Test::HexString;
 use Test::Refcount;
 
@@ -58,8 +58,9 @@ my $bagproxy;
 
    $client->send_message( $S2C{CALL_NORETURN} );
 
-   dies_ok( sub { $objproxy->call_method( no_such_method => 123 ) },
-            'Calling no_such_method fails in proxy' );
+   ok( exception { $objproxy->call_method( no_such_method => 123 ) },
+      'Calling no_such_method fails in proxy'
+   );
 }
 
 # Events
@@ -96,10 +97,11 @@ my $bagproxy;
 
    $client->send_message( $MSG_OK );
 
-   dies_ok( sub { $objproxy->subscribe_event( "no_such_event",
-                    on_fire => sub {},
-                  ); },
-            'Subscribing to no_such_event fails in proxy' );
+   ok( exception { $objproxy->subscribe_event( "no_such_event",
+                      on_fire => sub {},
+                   ); },
+      'Subscribing to no_such_event fails in proxy'
+   );
 }
 
 # Properties get/set
@@ -196,8 +198,9 @@ my $bagproxy;
 
    $client->send_message( $MSG_OK );
 
-   dies_ok( sub { $objproxy->get_property( "no_such_property" ) },
-            'Getting no_such_property fails in proxy' );
+   ok( exception { $objproxy->get_property( "no_such_property" ) },
+      'Getting no_such_property fails in proxy'
+   );
 }
 
 # Property iterators
