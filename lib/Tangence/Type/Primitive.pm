@@ -85,6 +85,8 @@ sub default_value { 0 }
 
       defined $value or croak "cannot pack_int(undef)";
       ref $value and croak "$value is not a number";
+      $value == $value or croak "cannot pack_int(NaN)";
+      $value == "+Inf" || $value == "-Inf" and croak "cannot pack_int(Inf)";
 
       my $subtype = $self->SUBTYPE || _best_int_type_for( $value );
       $message->_pack_leader( DATA_NUMBER, $subtype );

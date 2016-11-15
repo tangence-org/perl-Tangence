@@ -145,6 +145,14 @@ test_specific_dies "int from undef",
    data   => undef,
    stream => "\x80";
 
+test_specific_dies "int from NaN",
+   type   => "int",
+   data   => "NaN";
+
+test_specific_dies "int from +Inf",
+   type   => "int",
+   data   => "+Inf";
+
 test_specific "string",
    type   => "str",
    data   => "hello",
@@ -290,6 +298,14 @@ test_typed_dies "int from ARRAY",
    sig    => "int",
    data   => [],
    stream => "\x40";
+
+test_typed_dies "int from NaN",
+   sig    => "int",
+   data   => "NaN";
+
+test_typed_dies "int from +Inf",
+   sig    => "int",
+   data   => "+Inf";
 
 test_typed "float16 zero",
    sig    => "float16",
