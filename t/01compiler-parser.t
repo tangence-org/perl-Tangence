@@ -10,6 +10,8 @@ use Tangence::Compiler::Parser;
 
 use Tangence::Constants;
 
+use lib ".";
+
 my $parser = Tangence::Compiler::Parser->new;
 
 {

@@ -10,10 +10,11 @@ use Test::HexString;
 use Tangence::Message;
 $Tangence::Message::SORT_HASH_KEYS = 1;
 
-use t::Colourable;
-
 use Tangence::Type;
 sub _make_type { Tangence::Type->new_from_sig( shift ) }
+
+use lib ".";
+use t::Colourable;
 
 my $VERSION_MINOR = Tangence::Constants->VERSION_MINOR;
 

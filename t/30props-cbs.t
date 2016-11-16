@@ -9,10 +9,11 @@ use Test::Memory::Cycle;
 use Tangence::Constants;
 use Tangence::Registry;
 
+use Struct::Dumb 0.09;  # _forbid_arrayification
+
+use lib ".";
 use t::TestObj;
 use t::TestServerClient;
-
-use Struct::Dumb 0.09;  # _forbid_arrayification
 
 my $registry = Tangence::Registry->new(
    tanfile => "t/TestObj.tan",

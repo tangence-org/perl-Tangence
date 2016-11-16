@@ -12,6 +12,7 @@ use Test::MemoryGrowth;
 use Tangence::Constants;
 use Tangence::Registry;
 
+use lib ".";
 use t::TestObj;
 use t::TestServerClient;
 

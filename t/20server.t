@@ -11,11 +11,11 @@ use Test::Refcount;
 use Tangence::Constants;
 use Tangence::Registry;
 
-use t::Conversation;
-
 use Tangence::Server;
 $Tangence::Message::SORT_HASH_KEYS = 1;
 
+use lib ".";
+use t::Conversation;
 use t::TestObj;
 
 my $registry = Tangence::Registry->new(

@@ -8,6 +8,7 @@ use Test::More;
 use Tangence::Constants;
 use Tangence::Registry;
 
+use lib ".";
 use t::TestObj;
 use t::TestServerClient;
 

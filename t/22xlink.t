@@ -13,10 +13,11 @@ use Tangence::Registry;
 use Tangence::Server;
 use Tangence::Client;
 
+use Tangence::Types;
+
+use lib ".";
 use t::TestObj;
 use t::TestServerClient;
-
-use Tangence::Types;
 
 my $registry = Tangence::Registry->new(
    tanfile => "t/TestObj.tan",

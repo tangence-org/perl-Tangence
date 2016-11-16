@@ -8,6 +8,8 @@ use Test::Identity;
 
 use Tangence::Constants;
 use Tangence::Registry;
+
+use lib ".";
 use t::TestObj;
 
 my $registry = Tangence::Registry->new(

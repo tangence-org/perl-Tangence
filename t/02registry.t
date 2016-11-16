@@ -11,9 +11,11 @@ use Test::Refcount;
 use Tangence::Constants;
 
 use Tangence::Registry;
-use t::TestObj;
 
 use Struct::Dumb 0.09;  # _forbid_arrayification
+
+use lib ".";
+use t::TestObj;
 
 $Tangence::Message::SORT_HASH_KEYS = 1;
 

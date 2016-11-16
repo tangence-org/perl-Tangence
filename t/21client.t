@@ -10,9 +10,10 @@ use Test::Refcount;
 
 use Tangence::Constants;
 
-use t::Conversation;
-
 use Tangence::Types;
+
+use lib ".";
+use t::Conversation;
 
 $Tangence::Message::SORT_HASH_KEYS = 1;
 
