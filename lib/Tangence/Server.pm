@@ -21,7 +21,7 @@ use Tangence::Types;
 use Tangence::Server::Context;
 
 use Struct::Dumb;
-struct IterObject => [qw( iter obj )];
+struct CursorObject => [qw( iter obj )];
 
 # We will accept any version back to 2
 use constant VERSION_MINOR_MIN => 2;
@@ -322,7 +322,7 @@ sub _handle_request_WATCHany
       my $m = "iter_prop_$prop";
       my $iter = $object->$m( $iter_from );
       my $id = $self->message_state->{next_iterid}++;
-      $self->peer_hasiter->{$id} = IterObject( $iter, $object );
+      $self->peer_hasiter->{$id} = CursorObject( $iter, $object );
       $ctx->respond( Tangence::Message->new( $self, MSG_WATCHING_CUSR )
          ->pack_int( $id )
          ->pack_int( 0 ) # first index

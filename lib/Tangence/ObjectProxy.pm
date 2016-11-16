@@ -728,7 +728,7 @@ sub watch_property_with_iter
          my $first_idx = $message->unpack_int();
          my $last_idx  = $message->unpack_int();
 
-         my $iter = Tangence::ObjectProxy::_PropertyIterator->new( $self, $iter_id, $pdef->type );
+         my $iter = Tangence::ObjectProxy::_Cursor->new( $self, $iter_id, $pdef->type );
          Future->done( $iter, $first_idx, $last_idx );
       }
       else {
@@ -934,7 +934,7 @@ sub unwatch_property
 }
 
 package # hide from index
-   Tangence::ObjectProxy::_PropertyIterator;
+   Tangence::ObjectProxy::_Cursor;
 use Carp;
 use Tangence::Constants;
 

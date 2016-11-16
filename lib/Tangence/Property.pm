@@ -140,7 +140,7 @@ sub _accessor_for_queue
                 $iter_from == CUSR_LAST  ? scalar @{ $self->{properties}->{$pname}->value } :
                                            die "Unrecognised iter_from";
       my $iters = $self->{properties}->{$pname}->iters ||= [];
-      push @$iters, my $iter = Tangence::Property::_Iterator->new( $self->{properties}->{$pname}->value, $prop, $idx );
+      push @$iters, my $iter = Tangence::Property::_Cursor->new( $self->{properties}->{$pname}->value, $prop, $idx );
       return $iter;
    };
 
@@ -253,7 +253,7 @@ sub make_type
 }
 
 package # hide from CPAN
-   Tangence::Property::_Iterator;
+   Tangence::Property::_Cursor;
 
 use Carp;
 
