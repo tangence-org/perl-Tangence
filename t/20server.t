@@ -122,7 +122,7 @@ is_oneref( $server, '$server has refcount 1 initially' );
    is_hexstr( $server->recv_message, $MSG_OK, 'received MSG_OK to MSG_UNWATCH' );
 }
 
-# Property iterators
+# Cursors
 {
    $server->send_message( $C2S{WATCH_ITER} );
 

@@ -145,7 +145,7 @@ my $objproxy = $client->rootobj;
    );
 }
 
-# Property iterators
+# Cursors
 {
    my @value;
    my $f = $objproxy->watch_property_with_iter( "queue", "first",

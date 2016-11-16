@@ -388,7 +388,7 @@ sub handle_request_CUSR_NEXT
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
    my $iterobj = $self->peer_hasiter->{$iterid} or
-      return $ctx->responderr( "No such iterator with id $iterid" );
+      return $ctx->responderr( "No such cursor with id $iterid" );
 
    $iterobj->iter->handle_request_CUSR_NEXT( $ctx, $message );
 }

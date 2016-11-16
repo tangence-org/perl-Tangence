@@ -664,27 +664,27 @@ MSG_WATCH_CUSR (C->S) (0x0c)
 
   Similar to MSG_WATCH, requests to be informed of changes to the
   property value, which must be a queue property. Creates a new
-  iterator for the property, beginning at the first index
-  (if from == 1) or the last (if from == 2).
+  cursor for the property, beginning at the first index (if
+  from == 1) or the last (if from == 2).
 
 MSG_CUSR_NEXT (C->S) (0x0d)
-  INT           iterator ID
+  INT           cursor ID
   INT           direction
   INT           count
 
   Responses: MSG_CUSR_RESULT
 
-  Requests the next few items from a property iterator. It will yield a
+  Requests the next few items from a property cursor. It will yield a
   MSG_RESULT message containing up to the given number of items, by
   moving forwards (if direction == 1) or backwards (if direction == 2).
-  If the iterator is already at the edge of the queue then the MSG_RESULT
+  If the cursor is already at the edge of the queue then the MSG_RESULT
   will contain no extra items.
 
 MSG_CUSR_DESTROY (C->S) (0x0e)
-  INT           iterator ID
+  INT           cursor ID
 
-  Informs the server that the client has finished using the iterator, and
-  it can release any resources attached to it.
+  Informs the server that the client has finished using the cursor, and it
+  can release any resources attached to it.
 
 MSG_GETROOT (C->S) (0x40)
   data          identity
@@ -748,13 +748,13 @@ MSG_WATCHING (0x84)
   Informs the client that a MSG_WATCH was successful.
 
 MSG_WATCHING_CUSR (0x85)
-  INT            iterator ID
+  INT            cursor ID
   INT            first index (inclusive)
   INT            last index (inclusive)
 
   Informs the client that a MSG_WATCH_CUSR was successful, and returns
-  the new iterator ID and the first and last indices inclusive of the
-  queue it will iterate over.
+  the new cursor ID and the first and last indices inclusive of the queue
+  it will iterate over.
   
   ((The reason for using first and last indices inclusively, rather
   than yielding the total size of the queue, is that this makes it

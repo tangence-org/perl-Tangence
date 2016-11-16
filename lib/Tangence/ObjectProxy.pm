@@ -663,12 +663,12 @@ sub _watch_property
       $proxy->watch_property_with_iter( $property, $iter_from, %callbacks )->get
 
 A variant of C<watch_property> that installs a watch on the given property of
-the server object, and additionally returns an iterator object that can be
-used to lazily fetch the values stored in it.
+the server object, and additionally returns an cursor object that can be used
+to lazily fetch the values stored in it.
 
-The C<$iter_from> value indicates which end of the queue the iterator should
+The C<$iter_from> value indicates which end of the queue the cursor should
 start from; C<CUSR_FIRST> to start at index 0, or C<CUSR_LAST> to start at the
-highest-numbered index. The iterator is created atomically with installing the
+highest-numbered index. The cursor is created atomically with installing the
 watch.
 
 =cut
@@ -701,13 +701,13 @@ sub watch_property_with_iter
    my $smashed = $pdef->smashed;
 
    if( my $cbs = $self->{props}->{$property}->{cbs} ) {
-      die "TODO: need to synthesize a second iterator";
+      die "TODO: need to synthesize a second cursor";
    }
 
    $self->{props}->{$property}->{cbs} = [ $callbacks ];
 
    if( $smashed ) {
-      die "TODO: need to synthesize an iterator";
+      die "TODO: need to synthesize an cursor";
    }
 
    my $client = $self->{client};
@@ -920,7 +920,7 @@ sub unwatch_property
    $self->can_property( $property )
       or croak "Class ".$self->classname." does not have a property $property";
 
-   # TODO: mark iterators as destroyed and invalid
+   # TODO: mark cursors as destroyed and invalid
    delete $self->{props}->{$property};
 
    my $client = $self->{client};
@@ -938,10 +938,10 @@ package # hide from index
 use Carp;
 use Tangence::Constants;
 
-=head1 ITERATOR METHODS
+=head1 CURSOR METHODS
 
-The following methods are availilable on the property iterator objects given
-to the C<on_iter> callback of a C<watch_property> method.
+The following methods are availilable on the property cursor objects given to
+the C<on_iter> callback of a C<watch_property> method.
 
 =cut
 
@@ -977,7 +977,7 @@ sub DESTROY
 
    ( $index, @more ) = $iter->next_backward( $count )->get
 
-Requests the next items from the iterator. C<next_forward> moves forwards
+Requests the next items from the cursor. C<next_forward> moves forwards
 towards higher-numbered indices, and C<next_backward> moves backwards towards
 lower-numbered indices. If C<$count> is unspecified, a default of 1 will
 apply.
@@ -985,7 +985,7 @@ apply.
 The returned future wil yield the index of the first element returned, and the
 new elements. Note that there may be fewer elements returned than were
 requested, if the end of the queue was reached. Specifically, there will be no
-new elements if the iterator is already at the end.
+new elements if the cursor is already at the end.
 
 =cut
 

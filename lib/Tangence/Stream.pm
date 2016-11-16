@@ -332,7 +332,7 @@ sub minor_version
 # wire protocol supports MSG_GETPROPELEM
 sub _ver_can_getpropelem { shift->minor_version >= 3 }
 
-# wire protocol supports MSG_WATCH_CUSR and iterators
+# wire protocol supports MSG_WATCH_CUSR and cursors
 sub _ver_can_iter { shift->minor_version >= 3 }
 
 # wire protocol uses typed smash data

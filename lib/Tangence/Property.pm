@@ -292,7 +292,7 @@ sub handle_request_CUSR_NEXT
       $self->idx -= $count;
    }
    else {
-      return $ctx->responderr( "Unrecognised iterator direction $direction" );
+      return $ctx->responderr( "Unrecognised cursor direction $direction" );
    }
 
    my @result = @{$queue}[$idx .. $idx + $count - 1];

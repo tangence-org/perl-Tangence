@@ -159,7 +159,7 @@ use constant CHANGETYPES => {
    DIM_OBJSET() => [qw( on_set on_add on_del )],
 };
 
-# Iterator messages
+# Cursor messages
 use constant CUSR_FIRST => 1;
 use constant CUSR_LAST => 2;
 use constant CUSR_FWD => 1;
