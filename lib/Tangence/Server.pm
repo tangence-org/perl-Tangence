@@ -138,9 +138,9 @@ sub tangence_closed
       undef @$watches;
    }
 
-   if( my $iters = $self->peer_hasiter ) {
-      foreach my $iterobj ( values %$iters ) {
-         $self->drop_iterobj( $iterobj );
+   if( my $cursors = $self->peer_hasiter ) {
+      foreach my $cursorobj ( values %$cursors ) {
+         $self->drop_cursorobj( $cursorobj );
       }
    }
 }
@@ -320,9 +320,9 @@ sub _handle_request_WATCHany
    }
    elsif( $message->code == MSG_WATCH_CUSR ) {
       my $m = "iter_prop_$prop";
-      my $iter = $object->$m( $iter_from );
-      my $id = $self->message_state->{next_iterid}++;
-      $self->peer_hasiter->{$id} = CursorObject( $iter, $object );
+      my $cursor = $object->$m( $iter_from );
+      my $id = $self->message_state->{next_cursorid}++;
+      $self->peer_hasiter->{$id} = CursorObject( $cursor, $object );
       $ctx->respond( Tangence::Message->new( $self, MSG_WATCHING_CUSR )
          ->pack_int( $id )
          ->pack_int( 0 ) # first index
@@ -383,14 +383,14 @@ sub handle_request_CUSR_NEXT
    my $self = shift;
    my ( $token, $message ) = @_;
 
-   my $iterid = $message->unpack_int();
+   my $cursor_id = $message->unpack_int();
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
-   my $iterobj = $self->peer_hasiter->{$iterid} or
-      return $ctx->responderr( "No such cursor with id $iterid" );
+   my $cursorobj = $self->peer_hasiter->{$cursor_id} or
+      return $ctx->responderr( "No such cursor with id $cursor_id" );
 
-   $iterobj->iter->handle_request_CUSR_NEXT( $ctx, $message );
+   $cursorobj->iter->handle_request_CUSR_NEXT( $ctx, $message );
 }
 
 sub handle_request_CUSR_DESTROY
@@ -398,23 +398,23 @@ sub handle_request_CUSR_DESTROY
    my $self = shift;
    my ( $token, $message ) = @_;
 
-   my $iterid = $message->unpack_int();
+   my $cursor_id = $message->unpack_int();
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
-   my $iterobj = delete $self->peer_hasiter->{$iterid};
-   $self->drop_iterobj( $iterobj );
+   my $cursorobj = delete $self->peer_hasiter->{$cursor_id};
+   $self->drop_cursorobj( $cursorobj );
 
    $ctx->respond( Tangence::Message->new( $self, MSG_OK ) );
 }
 
-sub drop_iterobj
+sub drop_cursorobj
 {
    my $self = shift;
-   my ( $iterobj ) = @_;
+   my ( $cursorobj ) = @_;
 
-   my $m = "uniter_prop_" . $iterobj->iter->prop->name;
-   $iterobj->obj->$m( $iterobj->iter );
+   my $m = "uniter_prop_" . $cursorobj->iter->prop->name;
+   $cursorobj->obj->$m( $cursorobj->iter );
 }
 
 sub handle_request_INIT

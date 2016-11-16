@@ -29,7 +29,7 @@ my $on_more = sub {
 
 # Fowards from first
 {
-   my ( $iter, undef, $last_idx ) = $proxy->watch_property_with_iter(
+   my ( $cursor, undef, $last_idx ) = $proxy->watch_property_with_iter(
       "queue", "first",
       on_set => sub { @value = @_ },
       on_push => sub { push @value, @_ },
@@ -40,7 +40,7 @@ my $on_more = sub {
 
    is_deeply( \@value, [ undef, undef, undef ], '@value initially' );
 
-   $on_more->( $iter->next_forward->get );
+   $on_more->( $cursor->next_forward->get );
 
    is_deeply( \@value, [ 1, undef, undef ], '@value after first next_forward' );
 
@@ -48,7 +48,7 @@ my $on_more = sub {
 
    is_deeply( \@value, [ 1, undef, undef, 4, 5 ], '@value after push' );
 
-   $on_more->( $iter->next_forward->get );
+   $on_more->( $cursor->next_forward->get );
 
    is_deeply( \@value, [ 1, 2, undef, 4, 5 ], '@value after second next_forward' );
 
@@ -56,7 +56,7 @@ my $on_more = sub {
 
    is_deeply( \@value, [ 2, undef, 4, 5 ], '@value after shift' );
 
-   $on_more->( $iter->next_forward->get );
+   $on_more->( $cursor->next_forward->get );
 
    is_deeply( \@value, [ 2, 3, 4, 5 ], '@value after third next_forward' );
 
@@ -69,7 +69,7 @@ $obj->set_prop_queue( [ 1, 2, 3 ] );
 
 # Backwards from last
 {
-   my ( $iter, undef, $last_idx ) = $proxy->watch_property_with_iter(
+   my ( $cursor, undef, $last_idx ) = $proxy->watch_property_with_iter(
       "queue", "last",
       on_set => sub { @value = @_ },
       on_push => sub { push @value, @_ },
@@ -80,7 +80,7 @@ $obj->set_prop_queue( [ 1, 2, 3 ] );
 
    is_deeply( \@value, [ undef, undef, undef ], '@value initially' );
 
-   $on_more->( $iter->next_backward->get );
+   $on_more->( $cursor->next_backward->get );
 
    is_deeply( \@value, [ undef, undef, 3 ], '@value after first next_backward' );
 
@@ -88,7 +88,7 @@ $obj->set_prop_queue( [ 1, 2, 3 ] );
 
    is_deeply( \@value, [ undef, undef, 3, 4, 5 ], '@value after push' );
 
-   $on_more->( $iter->next_backward->get );
+   $on_more->( $cursor->next_backward->get );
 
    is_deeply( \@value, [ undef, 2, 3, 4, 5 ], '@value after second next_backward' );
 
@@ -96,7 +96,7 @@ $obj->set_prop_queue( [ 1, 2, 3 ] );
 
    is_deeply( \@value, [ 2, 3, 4, 5 ], '@value after shift' );
 
-   $on_more->( $iter->next_backward->get );
+   $on_more->( $cursor->next_backward->get );
 
    is_deeply( \@value, [ 2, 3, 4, 5 ], '@value after third next_backward' );
 

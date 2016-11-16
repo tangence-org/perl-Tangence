@@ -156,22 +156,22 @@ my $objproxy = $client->rootobj;
 
    ok( $f->is_ready, '$f is ready after MSG_WATCHING_ITER' );
 
-   my ( $iter, $first_idx, $last_idx ) = $f->get;
+   my ( $cursor, $first_idx, $last_idx ) = $f->get;
 
    is( $first_idx, 0, '$first_idx after MSG_WATCHING_ITER' );
    is( $last_idx,  2, '$last_idx after MSG_WATCHING_ITER' );
 
-   my ( $idx, @more ) = $iter->next_forward->get;
+   my ( $idx, @more ) = $cursor->next_forward->get;
 
    is( $idx, 0, 'next_forward starts at element 0' );
    is_deeply( \@more, [ 1 ], 'next_forward yielded 1 element' );
 
-   ( $idx, @more ) = $iter->next_forward( 5 )->get;
+   ( $idx, @more ) = $cursor->next_forward( 5 )->get;
 
    is( $idx, 1, 'next_forward starts at element 1' );
    is_deeply( \@more, [ 2, 3 ], 'next_forward yielded 2 elements' );
 
-   ( $idx, @more ) = $iter->next_backward->get;
+   ( $idx, @more ) = $cursor->next_backward->get;
 
    is( $idx, 2, 'next_backward starts at element 2' );
    is_deeply( \@more, [ 3 ], 'next_forward yielded 1 element' );

@@ -219,12 +219,12 @@ my $bagproxy;
 
    ok( $f->is_ready, '$f is ready after MSG_WATCHING_ITER' );
 
-   my ( $iter, $first_idx, $last_idx ) = $f->get;
+   my ( $cursor, $first_idx, $last_idx ) = $f->get;
 
    is( $first_idx, 0, '$first_idx after MSG_WATCHING_ITER' );
    is( $last_idx,  2, '$last_idx after MSG_WATCHING_ITER' );
 
-   $f = $iter->next_forward;
+   $f = $cursor->next_forward;
 
    is_hexstr( $client->recv_message, $C2S{ITER_NEXT_1}, 'client stream contains MSG_ITER_NEXT' );
 
@@ -236,7 +236,7 @@ my $bagproxy;
    is_deeply( \@more, [ 1 ], 'next_forward yielded 1 element' );
 
    undef @more;
-   $f = $iter->next_forward( 5 );
+   $f = $cursor->next_forward( 5 );
 
    is_hexstr( $client->recv_message, $C2S{ITER_NEXT_5}, 'client stream contains MSG_ITER_NEXT' );
 
@@ -248,7 +248,7 @@ my $bagproxy;
    is_deeply( \@more, [ 2, 3 ], 'next_forward yielded 2 elements' );
 
    undef @more;
-   $f = $iter->next_backward;
+   $f = $cursor->next_backward;
 
    is_hexstr( $client->recv_message, $C2S{ITER_NEXT_BACK}, 'client stream contains MSG_ITER_NEXT' );
 
@@ -260,7 +260,7 @@ my $bagproxy;
    is_deeply( \@more, [ 3 ], 'next_forward yielded 1 element' );
 
    undef $f;
-   undef $iter;
+   undef $cursor;
 
    is_hexstr( $client->recv_message, $C2S{ITER_DESTROY}, 'client stream contains MSG_ITER_DESTROY' );
 

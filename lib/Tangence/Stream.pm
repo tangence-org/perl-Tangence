@@ -101,7 +101,7 @@ sub message_state
    shift->{message_state} ||= {
       id2struct     => { %BUILTIN_ID2STRUCT },
       next_structid => $BUILTIN_STRUCTIDS,
-      next_iterid   => 1,
+      next_cursorid => 1,
    }
 }
 

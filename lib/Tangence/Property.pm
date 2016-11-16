@@ -16,7 +16,7 @@ use Tangence::Constants;
 require Tangence::Type;
 
 use Struct::Dumb;
-struct Instance => [qw( value callbacks iters )];
+struct Instance => [qw( value callbacks cursors )];
 
 our $VERSION = '0.21';
 
@@ -129,8 +129,8 @@ sub _accessor_for_queue
       my $cbs = $self->{properties}->{$pname}->callbacks;
       $_->{on_updated} ? $_->{on_updated}->( $self, $self->{properties}->{$pname}->value ) 
                        : $_->{on_shift}->( $self, $count ) for @$cbs;
-      my $iters = $self->{properties}->{$pname}->iters;
-      $_->idx -= $count for @$iters;
+      my $cursors = $self->{properties}->{$pname}->cursors;
+      $_->idx -= $count for @$cursors;
    };
 
    $subs->{"iter_prop_$pname"} = sub {
@@ -139,16 +139,16 @@ sub _accessor_for_queue
       my $idx = $iter_from == CUSR_FIRST ? 0 :
                 $iter_from == CUSR_LAST  ? scalar @{ $self->{properties}->{$pname}->value } :
                                            die "Unrecognised iter_from";
-      my $iters = $self->{properties}->{$pname}->iters ||= [];
-      push @$iters, my $iter = Tangence::Property::_Cursor->new( $self->{properties}->{$pname}->value, $prop, $idx );
-      return $iter;
+      my $cursors = $self->{properties}->{$pname}->cursors ||= [];
+      push @$cursors, my $cursor = Tangence::Property::_Cursor->new( $self->{properties}->{$pname}->value, $prop, $idx );
+      return $cursor;
    };
 
    $subs->{"uniter_prop_$pname"} = sub {
       my $self = shift;
-      my ( $iter ) = @_;
-      my $iters = $self->{properties}->{$pname}->iters or return;
-      @$iters = grep { $_ != $iter } @$iters;
+      my ( $cursor ) = @_;
+      my $cursors = $self->{properties}->{$pname}->cursors or return;
+      @$cursors = grep { $_ != $cursor } @$cursors;
    };
 }
 

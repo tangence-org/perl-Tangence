@@ -659,7 +659,7 @@ sub _watch_property
 
 =head2 watch_property_with_iter
 
-   ( $iter, $first_idx, $last_idx ) =
+   ( $cursor, $first_idx, $last_idx ) =
       $proxy->watch_property_with_iter( $property, $iter_from, %callbacks )->get
 
 A variant of C<watch_property> that installs a watch on the given property of
@@ -724,12 +724,12 @@ sub watch_property_with_iter
       my $code = $message->code;
 
       if( $code == MSG_WATCHING_CUSR ) {
-         my $iter_id = $message->unpack_int();
+         my $cursor_id = $message->unpack_int();
          my $first_idx = $message->unpack_int();
          my $last_idx  = $message->unpack_int();
 
-         my $iter = Tangence::ObjectProxy::_Cursor->new( $self, $iter_id, $pdef->type );
-         Future->done( $iter, $first_idx, $last_idx );
+         my $cursor = Tangence::ObjectProxy::_Cursor->new( $self, $cursor_id, $pdef->type );
+         Future->done( $cursor, $first_idx, $last_idx );
       }
       else {
          Future->fail( "Unexpected response code $code", tangence => );
@@ -971,11 +971,11 @@ sub DESTROY
 
 =head2 next_forward
 
-   ( $index, @more ) = $iter->next_forward( $count )->get
+   ( $index, @more ) = $cursor->next_forward( $count )->get
 
 =head2 next_backward
 
-   ( $index, @more ) = $iter->next_backward( $count )->get
+   ( $index, @more ) = $cursor->next_backward( $count )->get
 
 Requests the next items from the cursor. C<next_forward> moves forwards
 towards higher-numbered indices, and C<next_backward> moves backwards towards
