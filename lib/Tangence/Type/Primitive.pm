@@ -480,10 +480,15 @@ sub pack_value
    }
    elsif( !ref $value ) {
       no warnings 'numeric';
-      if( int($value) eq $value ) {
+
+      # use  X^X  operator to distinguish actual numbers from strings
+      my $is_numeric = ( $value ^ $value ) eq "0";
+
+      # test for integers, but exclude NaN
+      if( int($value) eq $value and $value == $value ) {
          TYPE_INT->pack_value( $message, $value );
       }
-      elsif( $message->stream->_ver_can_num_float and $value+0 eq $value ) {
+      elsif( $message->stream->_ver_can_num_float and $is_numeric ) {
          TYPE_FLOAT->pack_value( $message, $value );
       }
       else {

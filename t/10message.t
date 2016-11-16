@@ -502,6 +502,11 @@ test_typed "any (float)",
    data   => 123.45,
    stream => "\x12\x40\x5e\xdc\xcc\xcc\xcc\xcc\xcd";
 
+test_typed "any (NaN)",
+   sig    => "any",
+   data   => "NaN"+0,
+   stream => "\x10\x7e\x00";
+
 test_typed "any (string)",
    sig    => "any",
    data   => "hello",
