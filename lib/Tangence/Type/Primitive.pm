@@ -190,6 +190,9 @@ sub default_value { 0.0 }
       # De-bias
       $exp64 -= 1023;
 
+      # Special values might as well be float16
+      return DATANUM_FLOAT16 if $exp64 == 1024;
+
       # Smaller types are OK if the exponent will fit and there's no loss of
       # mantissa precision
 

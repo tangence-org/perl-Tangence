@@ -404,6 +404,11 @@ test_typed "float +1E20",
    data   => 1E20,
    stream => "\x12\x44\x15\xaf\x1d\x78\xb5\x8c\x40";
 
+test_typed "float Inf",
+   sig    => "float",
+   data   => "+Inf",
+   stream => "\x10\x7c\x00";
+
 test_typed "string",
    sig    => "str",
    data   => "hello",
