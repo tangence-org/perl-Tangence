@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2011-2015 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2011-2016 -- leonerd@leonerd.org.uk
 
 package Tangence::Stream;
 
@@ -31,9 +31,9 @@ my %REQ_METHOD = (
    MSG_UNWATCH,      'handle_request_UNWATCH',
    MSG_UPDATE,       'handle_request_UPDATE',
    MSG_DESTROY,      'handle_request_DESTROY',
-   MSG_WATCH_ITER,   'handle_request_WATCH_ITER',
-   MSG_ITER_NEXT,    'handle_request_ITER_NEXT',
-   MSG_ITER_DESTROY, 'handle_request_ITER_DESTROY',
+   MSG_WATCH_CUSR,   'handle_request_WATCH_CUSR',
+   MSG_CUSR_NEXT,    'handle_request_CUSR_NEXT',
+   MSG_CUSR_DESTROY, 'handle_request_CUSR_DESTROY',
 
    MSG_GETROOT,      'handle_request_GETROOT',
    MSG_GETREGISTRY,  'handle_request_GETREGISTRY',
@@ -332,7 +332,7 @@ sub minor_version
 # wire protocol supports MSG_GETPROPELEM
 sub _ver_can_getpropelem { shift->minor_version >= 3 }
 
-# wire protocol supports MSG_WATCH_ITER and iterators
+# wire protocol supports MSG_WATCH_CUSR and iterators
 sub _ver_can_iter { shift->minor_version >= 3 }
 
 # wire protocol uses typed smash data

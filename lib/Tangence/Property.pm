@@ -136,8 +136,8 @@ sub _accessor_for_queue
    $subs->{"iter_prop_$pname"} = sub {
       my $self = shift;
       my ( $iter_from ) = @_;
-      my $idx = $iter_from == ITER_FIRST ? 0 :
-                $iter_from == ITER_LAST  ? scalar @{ $self->{properties}->{$pname}->value } :
+      my $idx = $iter_from == CUSR_FIRST ? 0 :
+                $iter_from == CUSR_LAST  ? scalar @{ $self->{properties}->{$pname}->value } :
                                            die "Unrecognised iter_from";
       my $iters = $self->{properties}->{$pname}->iters ||= [];
       push @$iters, my $iter = Tangence::Property::_Iterator->new( $self->{properties}->{$pname}->value, $prop, $idx );
@@ -269,7 +269,7 @@ sub queue { shift->[0] }
 sub prop  { shift->[1] }
 sub idx :lvalue { shift->[2] }
 
-sub handle_request_ITER_NEXT
+sub handle_request_CUSR_NEXT
 {
    my $self = shift;
    my ( $ctx, $message ) = @_;
@@ -280,12 +280,12 @@ sub handle_request_ITER_NEXT
    my $queue = $self->queue;
    my $idx   = $self->idx;
 
-   if( $direction == ITER_FWD ) {
+   if( $direction == CUSR_FWD ) {
       $count = scalar @$queue - $idx if $count > scalar @$queue - $idx;
 
       $self->idx += $count;
    }
-   elsif( $direction == ITER_BACK ) {
+   elsif( $direction == CUSR_BACK ) {
       $count = $idx if $count > $idx;
       $idx -= $count;
 
@@ -297,7 +297,7 @@ sub handle_request_ITER_NEXT
 
    my @result = @{$queue}[$idx .. $idx + $count - 1];
 
-   $ctx->respond( Tangence::Message->new( $ctx->stream, MSG_ITER_RESULT )
+   $ctx->respond( Tangence::Message->new( $ctx->stream, MSG_CUSR_RESULT )
       ->pack_int( $idx )
       ->pack_all_sametype( $self->prop->type, @result )
    );

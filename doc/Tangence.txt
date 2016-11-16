@@ -655,24 +655,24 @@ MSG_GETPROPELEM (C->S) (0x0b)
   (by element index), or hash (by key name). Cannot be applied to
   scalar or objset properties.
 
-MSG_WATCH_ITER (C->S) (0x0c)
+MSG_WATCH_CUSR (C->S) (0x0c)
   INT           object ID
   STRING        property name
   INT           from
 
-  Responses: MSG_WATCHING_ITER
+  Responses: MSG_WATCHING_CUSR
 
   Similar to MSG_WATCH, requests to be informed of changes to the
   property value, which must be a queue property. Creates a new
   iterator for the property, beginning at the first index
   (if from == 1) or the last (if from == 2).
 
-MSG_ITER_NEXT (C->S) (0x0d)
+MSG_CUSR_NEXT (C->S) (0x0d)
   INT           iterator ID
   INT           direction
   INT           count
 
-  Responses: MSG_ITER_RESULT
+  Responses: MSG_CUSR_RESULT
 
   Requests the next few items from a property iterator. It will yield a
   MSG_RESULT message containing up to the given number of items, by
@@ -680,7 +680,7 @@ MSG_ITER_NEXT (C->S) (0x0d)
   If the iterator is already at the edge of the queue then the MSG_RESULT
   will contain no extra items.
 
-MSG_ITER_DESTROY (C->S) (0x0e)
+MSG_CUSR_DESTROY (C->S) (0x0e)
   INT           iterator ID
 
   Informs the server that the client has finished using the iterator, and
@@ -747,12 +747,12 @@ MSG_WATCHING (0x84)
 
   Informs the client that a MSG_WATCH was successful.
 
-MSG_WATCHING_ITER (0x85)
+MSG_WATCHING_CUSR (0x85)
   INT            iterator ID
   INT            first index (inclusive)
   INT            last index (inclusive)
 
-  Informs the client that a MSG_WATCH_ITER was successful, and returns
+  Informs the client that a MSG_WATCH_CUSR was successful, and returns
   the new iterator ID and the first and last indices inclusive of the
   queue it will iterate over.
   
@@ -760,11 +760,11 @@ MSG_WATCHING_ITER (0x85)
   than yielding the total size of the queue, is that this makes it
   easier to support iterating over hashes in a future version))
 
-MSG_ITER_RESULT (0x86)
+MSG_CUSR_RESULT (0x86)
   INT            first item index
   data...        values
 
-  Contains the return value from a MSG_ITER_NEXT call. Gives the index
+  Contains the return value from a MSG_CUSR_NEXT call. Gives the index
   of the first item in the returned result, and the requested items.
   There may fewer items than requested, if the edge of the property
   value was reached.

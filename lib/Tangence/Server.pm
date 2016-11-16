@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2011-2014 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2011-2016 -- leonerd@leonerd.org.uk
 
 package Tangence::Server;
 
@@ -287,7 +287,7 @@ sub handle_request_SETPROP
 }
 
 *handle_request_WATCH      = \&_handle_request_WATCHany;
-*handle_request_WATCH_ITER = \&_handle_request_WATCHany;
+*handle_request_WATCH_CUSR = \&_handle_request_WATCHany;
 sub _handle_request_WATCHany
 {
    my $self = shift;
@@ -300,7 +300,7 @@ sub _handle_request_WATCHany
    if( $message->code == MSG_WATCH ) {
       $want_initial = $message->unpack_bool();
    }
-   elsif( $message->code == MSG_WATCH_ITER ) {
+   elsif( $message->code == MSG_WATCH_CUSR ) {
       $iter_from = $message->unpack_int();
    }
 
@@ -318,12 +318,12 @@ sub _handle_request_WATCHany
       $ctx->respond( Tangence::Message->new( $self, MSG_WATCHING ) );
       $self->_send_initial( $object, $prop ) if $want_initial;
    }
-   elsif( $message->code == MSG_WATCH_ITER ) {
+   elsif( $message->code == MSG_WATCH_CUSR ) {
       my $m = "iter_prop_$prop";
       my $iter = $object->$m( $iter_from );
       my $id = $self->message_state->{next_iterid}++;
       $self->peer_hasiter->{$id} = IterObject( $iter, $object );
-      $ctx->respond( Tangence::Message->new( $self, MSG_WATCHING_ITER )
+      $ctx->respond( Tangence::Message->new( $self, MSG_WATCHING_CUSR )
          ->pack_int( $id )
          ->pack_int( 0 ) # first index
          ->pack_int( $#{ $object->${\"get_prop_$prop"} } ) # last index
@@ -378,7 +378,7 @@ sub handle_request_UNWATCH
    $ctx->respond( Tangence::Message->new( $self, MSG_OK ) );
 }
 
-sub handle_request_ITER_NEXT
+sub handle_request_CUSR_NEXT
 {
    my $self = shift;
    my ( $token, $message ) = @_;
@@ -390,10 +390,10 @@ sub handle_request_ITER_NEXT
    my $iterobj = $self->peer_hasiter->{$iterid} or
       return $ctx->responderr( "No such iterator with id $iterid" );
 
-   $iterobj->iter->handle_request_ITER_NEXT( $ctx, $message );
+   $iterobj->iter->handle_request_CUSR_NEXT( $ctx, $message );
 }
 
-sub handle_request_ITER_DESTROY
+sub handle_request_CUSR_DESTROY
 {
    my $self = shift;
    my ( $token, $message ) = @_;

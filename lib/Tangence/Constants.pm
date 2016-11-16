@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2010-2014 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2010-2016 -- leonerd@leonerd.org.uk
 
 package Tangence::Constants;
 
@@ -23,9 +23,9 @@ our @EXPORT = qw(
    MSG_UPDATE
    MSG_DESTROY
    MSG_GETPROPELEM
-   MSG_WATCH_ITER
-   MSG_ITER_NEXT
-   MSG_ITER_DESTROY
+   MSG_WATCH_CUSR
+   MSG_CUSR_NEXT
+   MSG_CUSR_DESTROY
    MSG_GETROOT
    MSG_GETREGISTRY
    MSG_INIT
@@ -35,8 +35,8 @@ our @EXPORT = qw(
    MSG_RESULT
    MSG_SUBSCRIBED
    MSG_WATCHING
-   MSG_WATCHING_ITER
-   MSG_ITER_RESULT
+   MSG_WATCHING_CUSR
+   MSG_CUSR_RESULT
    MSG_INITED
 
    DIM_SCALAR
@@ -57,10 +57,10 @@ our @EXPORT = qw(
 
    CHANGETYPES
 
-   ITER_FIRST
-   ITER_LAST
-   ITER_FWD
-   ITER_BACK
+   CUSR_FIRST
+   CUSR_LAST
+   CUSR_FWD
+   CUSR_BACK
 
    DATA_NUMBER
    DATA_STRING
@@ -106,9 +106,9 @@ use constant MSG_UNWATCH => 0x08;
 use constant MSG_UPDATE => 0x09;
 use constant MSG_DESTROY => 0x0a;
 use constant MSG_GETPROPELEM => 0x0b;
-use constant MSG_WATCH_ITER => 0x0c;
-use constant MSG_ITER_NEXT => 0x0d;
-use constant MSG_ITER_DESTROY => 0x0e;
+use constant MSG_WATCH_CUSR => 0x0c;
+use constant MSG_CUSR_NEXT => 0x0d;
+use constant MSG_CUSR_DESTROY => 0x0e;
 
 use constant MSG_GETROOT => 0x40;
 use constant MSG_GETREGISTRY => 0x41;
@@ -120,8 +120,8 @@ use constant MSG_ERROR => 0x81;
 use constant MSG_RESULT => 0x82;
 use constant MSG_SUBSCRIBED => 0x83;
 use constant MSG_WATCHING => 0x84;
-use constant MSG_WATCHING_ITER => 0x85;
-use constant MSG_ITER_RESULT => 0x86;
+use constant MSG_WATCHING_CUSR => 0x85;
+use constant MSG_CUSR_RESULT => 0x86;
 
 use constant MSG_INITED => 0xff;
 
@@ -160,10 +160,10 @@ use constant CHANGETYPES => {
 };
 
 # Iterator messages
-use constant ITER_FIRST => 1;
-use constant ITER_LAST => 2;
-use constant ITER_FWD => 1;
-use constant ITER_BACK => 2;
+use constant CUSR_FIRST => 1;
+use constant CUSR_LAST => 2;
+use constant CUSR_FWD => 1;
+use constant CUSR_BACK => 2;
 
 # Stream data types
 use constant DATA_NUMBER => 0;

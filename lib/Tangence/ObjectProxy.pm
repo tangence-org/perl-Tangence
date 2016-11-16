@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2010-2015 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2010-2016 -- leonerd@leonerd.org.uk
 
 package Tangence::ObjectProxy;
 
@@ -667,7 +667,7 @@ the server object, and additionally returns an iterator object that can be
 used to lazily fetch the values stored in it.
 
 The C<$iter_from> value indicates which end of the queue the iterator should
-start from; C<ITER_FIRST> to start at index 0, or C<ITER_LAST> to start at the
+start from; C<CUSR_FIRST> to start at index 0, or C<CUSR_LAST> to start at the
 highest-numbered index. The iterator is created atomically with installing the
 watch.
 
@@ -683,10 +683,10 @@ sub watch_property_with_iter
       croak "->watch_property_with_iter in void context no longer useful - it now returns a Future";
 
    if( $iter_from eq "first" ) {
-      $iter_from = ITER_FIRST;
+      $iter_from = CUSR_FIRST;
    }
    elsif( $iter_from eq "last" ) {
-      $iter_from = ITER_LAST;
+      $iter_from = CUSR_LAST;
    }
    else {
       croak "Unrecognised 'iter_from' value $iter_from";
@@ -711,11 +711,11 @@ sub watch_property_with_iter
    }
 
    my $client = $self->{client};
-   $client->_ver_can_iter or croak "Server is too old to support MSG_WATCH_ITER";
+   $client->_ver_can_iter or croak "Server is too old to support MSG_WATCH_CUSR";
    $pdef->dimension == DIM_QUEUE or croak "Can only iterate on queue-dimension properties";
 
    $client->request(
-      request => Tangence::Message->new( $client, MSG_WATCH_ITER )
+      request => Tangence::Message->new( $client, MSG_WATCH_CUSR )
          ->pack_int( $self->id )
          ->pack_str( $property )
          ->pack_int( $iter_from ),
@@ -723,7 +723,7 @@ sub watch_property_with_iter
       my ( $message ) = @_;
       my $code = $message->code;
 
-      if( $code == MSG_WATCHING_ITER ) {
+      if( $code == MSG_WATCHING_CUSR ) {
          my $iter_id = $message->unpack_int();
          my $first_idx = $message->unpack_int();
          my $last_idx  = $message->unpack_int();
@@ -962,7 +962,7 @@ sub DESTROY
    return unless $self->obj and my $id = $self->id and my $client = $self->client;
 
    $client->request(
-      request => Tangence::Message->new( $client, MSG_ITER_DESTROY )
+      request => Tangence::Message->new( $client, MSG_CUSR_DESTROY )
          ->pack_int( $id ),
 
       on_response => sub {},
@@ -992,13 +992,13 @@ new elements if the iterator is already at the end.
 sub next_forward
 {
    my $self = shift;
-   $self->_next( ITER_FWD, @_ );
+   $self->_next( CUSR_FWD, @_ );
 }
 
 sub next_backward
 {
    my $self = shift;
-   $self->_next( ITER_BACK, @_ );
+   $self->_next( CUSR_BACK, @_ );
 }
 
 sub _next
@@ -1017,7 +1017,7 @@ sub _next
    my $client = $self->client;
 
    $client->request(
-      request => Tangence::Message->new( $client, MSG_ITER_NEXT )
+      request => Tangence::Message->new( $client, MSG_CUSR_NEXT )
          ->pack_int( $id )
          ->pack_int( $direction )
          ->pack_int( $count || 1 ),
@@ -1025,7 +1025,7 @@ sub _next
       my ( $message ) = @_;
       my $code = $message->code;
 
-      if( $code == MSG_ITER_RESULT ) {
+      if( $code == MSG_CUSR_RESULT ) {
          Future->done(
             $message->unpack_int(),
             $message->unpack_all_sametype( $element_type ),
