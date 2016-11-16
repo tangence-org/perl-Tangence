@@ -207,7 +207,7 @@ my $bagproxy;
 # Cursors
 {
    my @value;
-   my $f = $objproxy->watch_property_with_iter( "queue", "first",
+   my $f = $objproxy->watch_property_with_cursor( "queue", "first",
       on_set => sub { @value = @_ },
       on_push => sub { push @value, @_ },
       on_shift => sub { shift @value for 1 .. shift },

@@ -657,10 +657,10 @@ sub _watch_property
    });
 }
 
-=head2 watch_property_with_iter
+=head2 watch_property_with_cursor
 
    ( $cursor, $first_idx, $last_idx ) =
-      $proxy->watch_property_with_iter( $property, $from, %callbacks )->get
+      $proxy->watch_property_with_cursor( $property, $from, %callbacks )->get
 
 A variant of C<watch_property> that installs a watch on the given property of
 the server object, and additionally returns an cursor object that can be used
@@ -676,11 +676,18 @@ watch.
 sub watch_property_with_iter
 {
    my $self = shift;
-   my ( $property, $from, %args ) = @_;
 
    # Detect void-context legacy uses
    defined wantarray or
       croak "->watch_property_with_iter in void context no longer useful - it now returns a Future";
+
+   return $self->watch_property_with_cursor( @_ );
+}
+
+sub watch_property_with_cursor
+{
+   my $self = shift;
+   my ( $property, $from, %args ) = @_;
 
    if( $from eq "first" ) {
       $from = CUSR_FIRST;
@@ -940,8 +947,8 @@ use Tangence::Constants;
 
 =head1 CURSOR METHODS
 
-The following methods are availilable on the property cursor objects given to
-the C<on_iter> callback of a C<watch_property> method.
+The following methods are availilable on the property cursor objects returned
+by the C<watch_property_with_cursor> method.
 
 =cut
 

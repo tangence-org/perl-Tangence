@@ -29,7 +29,7 @@ my $on_more = sub {
 
 # Fowards from first
 {
-   my ( $cursor, undef, $last_idx ) = $proxy->watch_property_with_iter(
+   my ( $cursor, undef, $last_idx ) = $proxy->watch_property_with_cursor(
       "queue", "first",
       on_set => sub { @value = @_ },
       on_push => sub { push @value, @_ },
@@ -69,7 +69,7 @@ $obj->set_prop_queue( [ 1, 2, 3 ] );
 
 # Backwards from last
 {
-   my ( $cursor, undef, $last_idx ) = $proxy->watch_property_with_iter(
+   my ( $cursor, undef, $last_idx ) = $proxy->watch_property_with_cursor(
       "queue", "last",
       on_set => sub { @value = @_ },
       on_push => sub { push @value, @_ },
