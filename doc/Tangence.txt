@@ -346,6 +346,23 @@ and bias.
  DATANUM_FLOAT32       8 bits     +127    23 bits
  DATANUM_FLOAT64       11 bits    +1023   52 bits
 
+Infinities and Not-a-Number values are represented by the exponent having its
+maximum allowed value. If the mantissa is zero this represents an infinity of
+the given sign, and if the mantissa is non-zero, it is a not-a-number value.
+For canonical identity, the non-zero mantissa should have only its top bit
+set.
+
+ Subtype              Exponent   Mantissa
+
+ DATANUM_FLOAT16      31         0           Inf
+ DATANUM_FLOAT16      31         1 << 9      NaN
+
+ DATANUM_FLOAT32      255        0           Inf
+ DATANUM_FLOAT32      255        1 << 22     NaN
+
+ DATANUM_FLOAT64      1023       0           Inf
+ DATANUM_FLOAT64      1023       1 << 51     NaN
+
 For string, list, dict and object types, the lower five bits give a
 number, 0 to 31, which helps encode the size. For items of size 30 or
 below, this size is encoded directly. Where the size is 31 or more, the

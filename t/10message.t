@@ -210,6 +210,11 @@ sub test_typed
       # Approximate comparison for floats
       $_ = sprintf "%.5f", $_ for $expect, $value;
    }
+   elsif( defined $expect and $expect =~ m/^[+-]inf$/i ) {
+      # Canonicalise infinities
+      $value  = 0+$value;
+      $expect = 0+$expect;
+   }
 
    is_deeply( $value, $expect, "\$type->unpack_value $name" );
    is( length $m->{record}, 0, "eats all stream for $name" );
@@ -317,6 +322,16 @@ test_typed "float16",
    data   => 1.25,
    stream => "\x10\x3d\x00";
 
+test_typed "float16 NaN",
+   sig    => "float16",
+   data   => "NaN",
+   stream => "\x10\x7e\x00";
+
+test_typed "float16 +Inf",
+   sig    => "float16",
+   data   => "+Inf",
+   stream => "\x10\x7c\x00";
+
 test_typed "float32 zero",
    sig    => "float32",
    data   => 0,
@@ -327,6 +342,16 @@ test_typed "float32",
    data   => 1.25,
    stream => "\x11\x3f\xa0\x00\x00";
 
+test_typed "float32 NaN",
+   sig    => "float32",
+   data   => "NaN",
+   stream => "\x11\x7f\xc0\x00\x00";
+
+test_typed "float32 +Inf",
+   sig    => "float32",
+   data   => "+Inf",
+   stream => "\x11\x7f\x80\x00\x00";
+
 test_typed "float64 zero",
    sig    => "float64",
    data   => 0,
@@ -336,6 +361,16 @@ test_typed "float64",
    sig    => "float64",
    data   => 1588.625,
    stream => "\x12\x40\x98\xd2\x80\x00\x00\x00\x00";
+
+test_typed "float64 NaN",
+   sig    => "float64",
+   data   => "NaN",
+   stream => "\x12\x7f\xf8\x00\x00\x00\x00\x00\x00";
+
+test_typed "float64 +Inf",
+   sig    => "float64",
+   data   => "+Inf",
+   stream => "\x12\x7f\xf0\x00\x00\x00\x00\x00\x00";
 
 test_typed "float one",
    sig    => "float",

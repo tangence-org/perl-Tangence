@@ -269,9 +269,18 @@ sub pack_value
    my $mant32 = ( $float32 & 0x007fffff );
 
    # float16 == 1 / 5 / 10
-   # TODO: if $exp > 7: become (-)Inf
-   my $exp16 = $exp32 ? $exp32 - 127 + 15 : 0; # Preserve zero
-   my $mant16 = $mant32 >> 13;
+   my ( $exp16, $mant16 );
+
+   if( $exp32 == 255 ) {
+      # special value - Inf or NaN
+      $exp16 = 31;
+      $mant16 = $mant32 ? (1 << 9) : 0;
+   }
+   else {
+      # TODO: if $exp > 7: become (-)Inf
+      $exp16 = $exp32 ? $exp32 - 127 + 15 : 0; # Preserve zero
+      $mant16 = $mant32 >> 13;
+   }
 
    my $float16 = $sign   << 15 |
                  $exp16  << 10 |
@@ -299,8 +308,17 @@ sub unpack_value
    my $mant16 = ( $float16 & 0x03ff );
 
    # float32 == 1 / 8 / 23
-   my $exp32 = $exp16 ? $exp16 - 15 + 127 : 0; # Preserve zero
-   my $mant32 = $mant16 << 13;
+   my ( $exp32, $mant32 );
+
+   if( $exp16 == 31 ) {
+      # special value - Inf or NaN
+      $exp32 = 255;
+      $mant32 = $mant16 ? (1 << 22) : 0;
+   }
+   else {
+      $exp32 = $exp16 ? $exp16 - 15 + 127 : 0; # Preserve zero
+      $mant32 = $mant16 << 13;
+   }
 
    my $float32 = $sign   << 31 |
                  $exp32  << 23 |
