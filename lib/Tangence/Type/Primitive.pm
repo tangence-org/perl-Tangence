@@ -182,7 +182,7 @@ sub default_value { 0.0 }
       my $float64BIN = pack "d>", $value;
 
       # float64 == 1 / 11 / 52
-      my $exp64 = ( unpack "Q>", $float64BIN & "\x7f\xf0\x00\x00\x00\x00\x00\x00" ) >> 52;
+      my $exp64 = ( unpack "L>", $float64BIN & "\x7f\xf0\x00\x00" ) >> (52-32);
 
       # Zero is smallest
       return DATANUM_FLOAT16 if $exp64 == 0;
