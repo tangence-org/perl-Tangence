@@ -296,12 +296,12 @@ sub _handle_request_WATCHany
    my $objid = $message->unpack_int();
    my $prop  = $message->unpack_str();
    my $want_initial;
-   my $iter_from;
+   my $from;
    if( $message->code == MSG_WATCH ) {
       $want_initial = $message->unpack_bool();
    }
    elsif( $message->code == MSG_WATCH_CUSR ) {
-      $iter_from = $message->unpack_int();
+      $from = $message->unpack_int();
    }
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
@@ -320,7 +320,7 @@ sub _handle_request_WATCHany
    }
    elsif( $message->code == MSG_WATCH_CUSR ) {
       my $m = "iter_prop_$prop";
-      my $cursor = $object->$m( $iter_from );
+      my $cursor = $object->$m( $from );
       my $id = $self->message_state->{next_cursorid}++;
       $self->peer_hasiter->{$id} = CursorObject( $cursor, $object );
       $ctx->respond( Tangence::Message->new( $self, MSG_WATCHING_CUSR )

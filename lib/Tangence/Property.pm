@@ -135,10 +135,10 @@ sub _accessor_for_queue
 
    $subs->{"iter_prop_$pname"} = sub {
       my $self = shift;
-      my ( $iter_from ) = @_;
-      my $idx = $iter_from == CUSR_FIRST ? 0 :
-                $iter_from == CUSR_LAST  ? scalar @{ $self->{properties}->{$pname}->value } :
-                                           die "Unrecognised iter_from";
+      my ( $from ) = @_;
+      my $idx = $from == CUSR_FIRST ? 0 :
+                $from == CUSR_LAST  ? scalar @{ $self->{properties}->{$pname}->value } :
+                                      die "Unrecognised from";
       my $cursors = $self->{properties}->{$pname}->cursors ||= [];
       push @$cursors, my $cursor = Tangence::Property::_Cursor->new( $self->{properties}->{$pname}->value, $prop, $idx );
       return $cursor;

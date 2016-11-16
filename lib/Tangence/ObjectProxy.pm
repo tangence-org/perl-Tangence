@@ -660,14 +660,14 @@ sub _watch_property
 =head2 watch_property_with_iter
 
    ( $cursor, $first_idx, $last_idx ) =
-      $proxy->watch_property_with_iter( $property, $iter_from, %callbacks )->get
+      $proxy->watch_property_with_iter( $property, $from, %callbacks )->get
 
 A variant of C<watch_property> that installs a watch on the given property of
 the server object, and additionally returns an cursor object that can be used
 to lazily fetch the values stored in it.
 
-The C<$iter_from> value indicates which end of the queue the cursor should
-start from; C<CUSR_FIRST> to start at index 0, or C<CUSR_LAST> to start at the
+The C<$from> value indicates which end of the queue the cursor should start
+from; C<CUSR_FIRST> to start at index 0, or C<CUSR_LAST> to start at the
 highest-numbered index. The cursor is created atomically with installing the
 watch.
 
@@ -676,20 +676,20 @@ watch.
 sub watch_property_with_iter
 {
    my $self = shift;
-   my ( $property, $iter_from, %args ) = @_;
+   my ( $property, $from, %args ) = @_;
 
    # Detect void-context legacy uses
    defined wantarray or
       croak "->watch_property_with_iter in void context no longer useful - it now returns a Future";
 
-   if( $iter_from eq "first" ) {
-      $iter_from = CUSR_FIRST;
+   if( $from eq "first" ) {
+      $from = CUSR_FIRST;
    }
-   elsif( $iter_from eq "last" ) {
-      $iter_from = CUSR_LAST;
+   elsif( $from eq "last" ) {
+      $from = CUSR_LAST;
    }
    else {
-      croak "Unrecognised 'iter_from' value $iter_from";
+      croak "Unrecognised 'from' value $from";
    }
 
    my $pdef = $self->can_property( $property )
@@ -718,7 +718,7 @@ sub watch_property_with_iter
       request => Tangence::Message->new( $client, MSG_WATCH_CUSR )
          ->pack_int( $self->id )
          ->pack_str( $property )
-         ->pack_int( $iter_from ),
+         ->pack_int( $from ),
    )->then( sub {
       my ( $message ) = @_;
       my $code = $message->code;
