@@ -332,6 +332,12 @@ test_typed "float16 +Inf",
    data   => "+Inf",
    stream => "\x10\x7c\x00";
 
+test_typed "float16 1E-12",
+   sig    => "float16",
+   data   => 1E-12,
+   stream => "\x10\x00\x00",
+   retdata => 0;
+
 test_typed "float32 zero",
    sig    => "float32",
    data   => 0,

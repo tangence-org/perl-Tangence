@@ -264,27 +264,31 @@ sub pack_value
    my $float32 = unpack( "N", pack "f>", $value );
 
    # float32 == 1 / 8 / 23
-   my $sign   = ( $float32 & 0x80000000 ) >> 31;
-   my $exp32  = ( $float32 & 0x7f800000 ) >> 23;
-   my $mant32 = ( $float32 & 0x007fffff );
+   my $sign   =   ( $float32 & 0x80000000 ) >> 31;
+   my $exp    = ( ( $float32 & 0x7f800000 ) >> 23 ) - 127;
+   my $mant32 =   ( $float32 & 0x007fffff );
 
    # float16 == 1 / 5 / 10
-   my ( $exp16, $mant16 );
+   my $mant16;
 
-   if( $exp32 == 255 ) {
+   if( $exp == 128 ) {
       # special value - Inf or NaN
-      $exp16 = 31;
+      $exp = 16;
       $mant16 = $mant32 ? (1 << 9) : 0;
    }
-   else {
-      # TODO: if $exp > 7: become (-)Inf
-      $exp16 = $exp32 ? $exp32 - 127 + 15 : 0; # Preserve zero
+   # TODO: if $exp > 15 become Inf
+   elsif( $exp > -15 ) {
       $mant16 = $mant32 >> 13;
    }
+   else {
+      # zero or subnormal - become zero
+      $exp = -15;
+      $mant16 = 0;
+   }
 
-   my $float16 = $sign   << 15 |
-                 $exp16  << 10 |
-                 $mant16;
+   my $float16 =   $sign       << 15 |
+                 ( $exp + 15 ) << 10 |
+                   $mant16;
 
    $message->_pack_leader( DATA_NUMBER, DATANUM_FLOAT16 );
    $message->_pack( pack "n", $float16 );
@@ -303,26 +307,30 @@ sub unpack_value
    my $float16 = unpack "n", $message->_unpack( 2 );
 
    # float16 == 1 / 5 / 10
-   my $sign   = ( $float16 & 0x8000 ) >> 15;
-   my $exp16  = ( $float16 & 0x7c00 ) >> 10;
-   my $mant16 = ( $float16 & 0x03ff );
+   my $sign   =   ( $float16 & 0x8000 ) >> 15;
+   my $exp    = ( ( $float16 & 0x7c00 ) >> 10 ) - 15;
+   my $mant16 =   ( $float16 & 0x03ff );
 
    # float32 == 1 / 8 / 23
-   my ( $exp32, $mant32 );
+   my $mant32;
 
-   if( $exp16 == 31 ) {
+   if( $exp == 16 ) {
       # special value - Inf or NaN
-      $exp32 = 255;
+      $exp = 128;
       $mant32 = $mant16 ? (1 << 22) : 0;
    }
-   else {
-      $exp32 = $exp16 ? $exp16 - 15 + 127 : 0; # Preserve zero
+   elsif( $exp > -15 ) {
       $mant32 = $mant16 << 13;
    }
+   else {
+      # zero
+      $exp = -127;
+      $mant32 = 0;
+   }
 
-   my $float32 = $sign   << 31 |
-                 $exp32  << 23 |
-                 $mant32;
+   my $float32 =   $sign        << 31 |
+                 ( $exp + 127 ) << 23 |
+                   $mant32;
 
    return unpack( "f>", pack "N", $float32 );
 }
