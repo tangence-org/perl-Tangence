@@ -276,7 +276,11 @@ sub pack_value
       $exp = 16;
       $mant16 = $mant32 ? (1 << 9) : 0;
    }
-   # TODO: if $exp > 15 become Inf
+   elsif( $exp > 15 ) {
+      # Too large - become Inf
+      $exp = 16;
+      $mant16 = 0;
+   }
    elsif( $exp > -15 ) {
       $mant16 = $mant32 >> 13;
    }
