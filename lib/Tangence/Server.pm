@@ -21,7 +21,7 @@ use Tangence::Types;
 use Tangence::Server::Context;
 
 use Struct::Dumb;
-struct CursorObject => [qw( iter obj )];
+struct CursorObject => [qw( cursor obj )];
 
 # We will accept any version back to 2
 use constant VERSION_MINOR_MIN => 2;
@@ -138,7 +138,7 @@ sub tangence_closed
       undef @$watches;
    }
 
-   if( my $cursors = $self->peer_hasiter ) {
+   if( my $cursors = $self->peer_hascursor ) {
       foreach my $cursorobj ( values %$cursors ) {
          $self->drop_cursorobj( $cursorobj );
       }
@@ -319,10 +319,10 @@ sub _handle_request_WATCHany
       $self->_send_initial( $object, $prop ) if $want_initial;
    }
    elsif( $message->code == MSG_WATCH_CUSR ) {
-      my $m = "iter_prop_$prop";
+      my $m = "cursor_prop_$prop";
       my $cursor = $object->$m( $from );
       my $id = $self->message_state->{next_cursorid}++;
-      $self->peer_hasiter->{$id} = CursorObject( $cursor, $object );
+      $self->peer_hascursor->{$id} = CursorObject( $cursor, $object );
       $ctx->respond( Tangence::Message->new( $self, MSG_WATCHING_CUSR )
          ->pack_int( $id )
          ->pack_int( 0 ) # first index
@@ -387,10 +387,10 @@ sub handle_request_CUSR_NEXT
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
-   my $cursorobj = $self->peer_hasiter->{$cursor_id} or
+   my $cursorobj = $self->peer_hascursor->{$cursor_id} or
       return $ctx->responderr( "No such cursor with id $cursor_id" );
 
-   $cursorobj->iter->handle_request_CUSR_NEXT( $ctx, $message );
+   $cursorobj->cursor->handle_request_CUSR_NEXT( $ctx, $message );
 }
 
 sub handle_request_CUSR_DESTROY
@@ -402,7 +402,7 @@ sub handle_request_CUSR_DESTROY
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
-   my $cursorobj = delete $self->peer_hasiter->{$cursor_id};
+   my $cursorobj = delete $self->peer_hascursor->{$cursor_id};
    $self->drop_cursorobj( $cursorobj );
 
    $ctx->respond( Tangence::Message->new( $self, MSG_OK ) );
@@ -413,8 +413,8 @@ sub drop_cursorobj
    my $self = shift;
    my ( $cursorobj ) = @_;
 
-   my $m = "uniter_prop_" . $cursorobj->iter->prop->name;
-   $cursorobj->obj->$m( $cursorobj->iter );
+   my $m = "uncursor_prop_" . $cursorobj->cursor->prop->name;
+   $cursorobj->obj->$m( $cursorobj->cursor );
 }
 
 sub handle_request_INIT

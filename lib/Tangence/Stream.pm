@@ -108,7 +108,7 @@ sub message_state
 sub peer_hasobj    { shift->{peer_hasobj}    ||= {} }
 sub peer_hasclass  { shift->{peer_hasclass}  ||= {} }
 sub peer_hasstruct { shift->{peer_hasstruct} ||= { %ALWAYS_PEER_HASSTRUCT } }
-sub peer_hasiter   { shift->{peer_hasiter}   ||= {} }
+sub peer_hascursor { shift->{peer_hascursor} ||= {} }
 
 sub identity
 {
@@ -333,7 +333,7 @@ sub minor_version
 sub _ver_can_getpropelem { shift->minor_version >= 3 }
 
 # wire protocol supports MSG_WATCH_CUSR and cursors
-sub _ver_can_iter { shift->minor_version >= 3 }
+sub _ver_can_cursor { shift->minor_version >= 3 }
 
 # wire protocol uses typed smash data
 sub _ver_can_typed_smash { shift->minor_version >= 4 }

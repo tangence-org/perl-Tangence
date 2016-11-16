@@ -133,7 +133,7 @@ sub _accessor_for_queue
       $_->idx -= $count for @$cursors;
    };
 
-   $subs->{"iter_prop_$pname"} = sub {
+   $subs->{"cursor_prop_$pname"} = sub {
       my $self = shift;
       my ( $from ) = @_;
       my $idx = $from == CUSR_FIRST ? 0 :
@@ -144,7 +144,7 @@ sub _accessor_for_queue
       return $cursor;
    };
 
-   $subs->{"uniter_prop_$pname"} = sub {
+   $subs->{"uncursor_prop_$pname"} = sub {
       my $self = shift;
       my ( $cursor ) = @_;
       my $cursors = $self->{properties}->{$pname}->cursors or return;

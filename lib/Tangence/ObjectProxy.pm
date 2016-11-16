@@ -711,7 +711,7 @@ sub watch_property_with_iter
    }
 
    my $client = $self->{client};
-   $client->_ver_can_iter or croak "Server is too old to support MSG_WATCH_CUSR";
+   $client->_ver_can_cursor or croak "Server is too old to support MSG_WATCH_CUSR";
    $pdef->dimension == DIM_QUEUE or croak "Can only iterate on queue-dimension properties";
 
    $client->request(
