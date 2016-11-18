@@ -350,7 +350,7 @@ Infinities and Not-a-Number values are represented by the exponent having its
 maximum allowed value. If the mantissa is zero this represents an infinity of
 the given sign, and if the mantissa is non-zero, it is a not-a-number value.
 For canonical identity, the non-zero mantissa should have only its top bit
-set.
+set, and the sign bit should be clear.
 
  Subtype              Exponent   Mantissa
 

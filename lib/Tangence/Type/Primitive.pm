@@ -170,8 +170,9 @@ sub default_value { 0.0 }
 
 {
    my %format = (
-      DATANUM_FLOAT32, [ "f>", 4 ],
-      DATANUM_FLOAT64, [ "d>", 8 ],
+                     #   pack, bytes, NaN
+      DATANUM_FLOAT32, [ "f>", 4,     "\x7f\xc0\x00\x00" ],
+      DATANUM_FLOAT64, [ "d>", 8,     "\x7f\xf8\x00\x00\x00\x00\x00\x00" ],
    );
 
    sub _best_type_for
@@ -218,7 +219,9 @@ sub default_value { 0.0 }
       return Tangence::Type::Primitive::float16->pack_value( $message, $value ) if $subtype == DATANUM_FLOAT16;
 
       $message->_pack_leader( DATA_NUMBER, $subtype );
-      $message->_pack( pack( $format{$subtype}[0], $value ) );
+      $message->_pack( $value == $value ?
+         pack( $format{$subtype}[0], $value ) : $format{$subtype}[2]
+      );
    }
 
    sub unpack_value
@@ -278,6 +281,7 @@ sub pack_value
       # special value - Inf or NaN
       $exp = 16;
       $mant16 = $mant32 ? (1 << 9) : 0;
+      $sign = 0 if $mant16;
    }
    elsif( $exp > 15 ) {
       # Too large - become Inf
