@@ -211,7 +211,7 @@ sub test_typed
       # Approximate comparison for floats
       $_ = sprintf "%.5f", $_ for $expect, $value;
    }
-   elsif( defined $expect and $expect =~ m/^[+-]inf$/i ) {
+   elsif( defined $expect and $expect =~ m/^(?:[+-]inf|nan)$/i ) {
       # Canonicalise infinities
       $value  = 0+$value;
       $expect = 0+$expect;
@@ -343,7 +343,7 @@ test_typed "float16 oversize",
    sig    => "float16",
    data   => 1E12,
    stream => "\x10\x7c\x00",
-   retdata => "Inf";
+   retdata => "+Inf";
 
 test_typed "float32 zero",
    sig    => "float32",
