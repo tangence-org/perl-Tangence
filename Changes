@@ -1,5 +1,10 @@
 Revision history for Tangence
 
+0.23    2017/01/09 13:40:23
+        [BUGFIXES]
+         * Fix handling of Inf and NaN float values to work on perl versions
+           other than 5.22 (RT118806)
+
 0.22    2016/11/16 23:38:38
         [CHANGES]
          * Rename 'iterators' to 'cursors'
