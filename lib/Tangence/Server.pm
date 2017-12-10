@@ -100,9 +100,11 @@ The following methods are provided by this mixin.
 sub subscriptions { shift->{subscriptions} ||= [] }
 sub watches       { shift->{watches} ||= [] }
 
-=head2 $server->registry( $registry )
+=head2 registry
 
-=head2 $registry = $server->registry
+   $server->registry( $registry )
+
+   $registry = $server->registry
 
 Accessor to set or obtain the L<Tangence::Registry> object for the server.
 
@@ -157,7 +159,7 @@ sub handle_request_CALL
 {
    my $self = shift;
    my ( $token, $message ) = @_;
-   
+
    my $objid = $message->unpack_int();
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
@@ -175,7 +177,7 @@ sub handle_request_SUBSCRIBE
 {
    my $self = shift;
    my ( $token, $message ) = @_;
-   
+
    my $objid = $message->unpack_int();
    my $event = $message->unpack_str();
 
@@ -208,7 +210,7 @@ sub handle_request_UNSUBSCRIBE
 {
    my $self = shift;
    my ( $token, $message ) = @_;
-   
+
    my $objid = $message->unpack_int();
    my $event = $message->unpack_str();
 
@@ -236,7 +238,7 @@ sub handle_request_GETPROP
 {
    my $self = shift;
    my ( $token, $message ) = @_;
-   
+
    my $objid = $message->unpack_int();
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
@@ -272,7 +274,7 @@ sub handle_request_SETPROP
 {
    my $self = shift;
    my ( $token, $message ) = @_;
-   
+
    my $objid = $message->unpack_int();
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
@@ -292,7 +294,7 @@ sub _handle_request_WATCHany
 {
    my $self = shift;
    my ( $token, $message ) = @_;
-   
+
    my $objid = $message->unpack_int();
    my $prop  = $message->unpack_str();
    my $want_initial;
@@ -354,7 +356,7 @@ sub handle_request_UNWATCH
 {
    my $self = shift;
    my ( $token, $message ) = @_;
-   
+
    my $objid = $message->unpack_int();
    my $prop  = $message->unpack_str();
 
