@@ -708,7 +708,7 @@ sub watch_property_with_cursor
    my $smashed = $pdef->smashed;
 
    if( my $cbs = $self->{props}->{$property}->{cbs} ) {
-      die "TODO: need to synthesize a second cursor";
+      die "TODO: need to synthesize a second cursor for $self";
    }
 
    $self->{props}->{$property}->{cbs} = [ $callbacks ];
