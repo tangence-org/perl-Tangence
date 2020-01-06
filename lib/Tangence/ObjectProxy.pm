@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2010-2016 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2010-2020 -- leonerd@leonerd.org.uk
 
 package Tangence::ObjectProxy;
 
@@ -427,7 +427,6 @@ sub get_property_element
       or croak "Class ".$self->classname." does not have a property $property";
 
    my $client = $self->{client};
-   $client->_ver_can_getpropelem or croak "Server is too old to support MSG_GETPROPELEM";
 
    my $request = Tangence::Message->new( $client, MSG_GETPROPELEM )
       ->pack_int( $self->id )
@@ -718,7 +717,6 @@ sub watch_property_with_cursor
    }
 
    my $client = $self->{client};
-   $client->_ver_can_cursor or croak "Server is too old to support MSG_WATCH_CUSR";
    $pdef->dimension == DIM_QUEUE or croak "Can only iterate on queue-dimension properties";
 
    $client->request(

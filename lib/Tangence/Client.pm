@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2010-2015 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2010-2020 -- leonerd@leonerd.org.uk
 
 package Tangence::Client;
 
@@ -22,7 +22,7 @@ use Future;
 
 use List::Util qw( max );
 
-use constant VERSION_MINOR_MIN => 2;
+use constant VERSION_MINOR_MIN => 3;
 
 =head1 NAME
 

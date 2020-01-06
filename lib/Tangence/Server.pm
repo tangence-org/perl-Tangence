@@ -24,8 +24,8 @@ use Tangence::Server::Context;
 use Struct::Dumb;
 struct CursorObject => [qw( cursor obj )];
 
-# We will accept any version back to 2
-use constant VERSION_MINOR_MIN => 2;
+# We will accept any version back to 3
+use constant VERSION_MINOR_MIN => 3;
 
 =head1 NAME
 

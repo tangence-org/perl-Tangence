@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2011-2017 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2011-2020 -- leonerd@leonerd.org.uk
 
 package Tangence::Stream;
 
@@ -344,12 +344,6 @@ sub minor_version
 }
 
 # Some (internal) methods that control new protocol features
-
-# wire protocol supports MSG_GETPROPELEM
-sub _ver_can_getpropelem { shift->minor_version >= 3 }
-
-# wire protocol supports MSG_WATCH_CUSR and cursors
-sub _ver_can_cursor { shift->minor_version >= 3 }
 
 # wire protocol uses typed smash data
 sub _ver_can_typed_smash { shift->minor_version >= 4 }
