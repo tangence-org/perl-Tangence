@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2011-2016 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2011-2020 -- leonerd@leonerd.org.uk
 
 package Tangence::Server;
 
@@ -15,6 +15,7 @@ our $VERSION = '0.24';
 use Carp;
 
 use Scalar::Util qw( weaken );
+use Sub::Util 1.40 qw( set_subname );
 
 use Tangence::Constants;
 use Tangence::Types;
@@ -25,16 +26,6 @@ struct CursorObject => [qw( cursor obj )];
 
 # We will accept any version back to 2
 use constant VERSION_MINOR_MIN => 2;
-
-BEGIN {
-   if( eval { require Sub::Name } ) {
-      Sub::Name->import(qw( subname ));
-   }
-   else {
-      # Emulate it by just returning the CODEref and ignoring setting the name
-      *subname = sub { $_[1] };
-   }
-}
 
 =head1 NAME
 
@@ -189,7 +180,7 @@ sub handle_request_SUBSCRIBE
    weaken( my $weakself = $self );
 
    my $id = $object->subscribe_event( $event,
-      subname "__SUBSCRIBE($event)__" => sub {
+      set_subname "__SUBSCRIBE($event)__" => sub {
          $weakself or return;
          my $object = shift;
 
@@ -509,7 +500,7 @@ sub _install_watch
    my %callbacks;
    foreach my $name ( @{ CHANGETYPES->{$dim} } ) {
       my $how = $change_values{$name};
-      $callbacks{$name} = subname "__WATCH($prop:$name)__" => sub {
+      $callbacks{$name} = set_subname "__WATCH($prop:$name)__" => sub {
          $weakself or return;
          my $object = shift;
 
