@@ -471,6 +471,9 @@ sub handle_request_GETREGISTRY
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
+   $self->permit_registry or
+      return $ctx->responderr( "This client is not permitted access to the registry" );
+
    my $response = Tangence::Message->new( $self, MSG_RESULT );
    TYPE_OBJ->pack_value( $response, $self->registry );
 
@@ -554,6 +557,28 @@ sub object_destroyed
 
    $self->SUPER::object_destroyed( @_ );
 }
+
+=head1 OVERRIDEABLE METHODS
+
+The following methods are provided but intended to be overridden if the
+implementing class wishes to provide different behaviour from the default.
+
+=cut
+
+=head2 permit_registry
+
+   $allow = $server->permit_registry
+
+Invoked when a C<GETREGISTRY> message is received from the client, this method
+should return a boolean to indicate whether the client is allowed to access
+the object registry.
+
+The default implementation always permits this, but an overridden method may
+decide to disallow it in some situations.
+
+=cut
+
+sub permit_registry { 1; }
 
 =head1 AUTHOR
 
