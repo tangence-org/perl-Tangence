@@ -56,6 +56,8 @@ sub responderr
    my $self = shift;
    my ( $msg ) = @_;
 
+   chomp $msg; # In case of simple  ->responderr( $@ );
+
    $self->respond( Tangence::Message->new( $self->stream, MSG_ERROR )
       ->pack_str( $msg )
    );
