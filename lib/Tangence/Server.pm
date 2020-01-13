@@ -454,9 +454,9 @@ sub handle_request_GETROOT
 
    my $ctx = Tangence::Server::Context->new( $self, $token );
 
-   my $root = $self->registry->get_by_id( 1 );
-
    $self->identity( $identity );
+
+   my $root = $self->rootobj( $identity );
 
    my $response = Tangence::Message->new( $self, MSG_RESULT );
    TYPE_OBJ->pack_value( $response, $root );
@@ -564,6 +564,25 @@ The following methods are provided but intended to be overridden if the
 implementing class wishes to provide different behaviour from the default.
 
 =cut
+
+=head2 rootobj
+
+   $rootobj = $server->rootobj( $identity )
+
+Invoked when a C<GETROOT> message is received from the client, this method
+should return a L<Tangence::Object> as root object for the connection.
+
+The default implementation will return the object with ID 1; i.e. the first
+object created in the registry.
+
+=cut
+
+sub rootobj
+{
+   my $self = shift;
+
+   return $self->registry->get_by_id( 1 );
+}
 
 =head2 permit_registry
 
