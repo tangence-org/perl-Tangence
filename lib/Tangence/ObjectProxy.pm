@@ -503,7 +503,7 @@ sub set_property
    my $request = Tangence::Message->new( $client, MSG_SETPROP )
          ->pack_int( $self->id )
          ->pack_str( $property );
-   $pdef->type->pack_value( $request, $value ),
+   $pdef->overall_type->pack_value( $request, $value );
 
    $client->request(
       request => $request,

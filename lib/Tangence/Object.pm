@@ -538,7 +538,7 @@ sub handle_request_SETPROP
 
    my $pdef = $self->can_property( $prop ) or die "Object does not have property $prop\n";
 
-   my $value = $pdef->type->unpack_value( $message );
+   my $value = $pdef->overall_type->unpack_value( $message );
 
    my $m = "set_prop_$prop";
    $self->can( $m ) or die "Object cannot set property $prop\n";
