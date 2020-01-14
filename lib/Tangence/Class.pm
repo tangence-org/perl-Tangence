@@ -21,7 +21,7 @@ use Carp;
 
 use Sub::Util 1.40 qw( set_subname );
 
-our $VERSION = '0.24';
+our $VERSION = '0.25';
 
 our %metas; # cache one per class, keyed by _Tangence_ class name
 
