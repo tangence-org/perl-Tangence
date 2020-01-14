@@ -620,7 +620,10 @@ should return a boolean to indicate whether the client is allowed to access
 the object registry.
 
 The default implementation always permits this, but an overridden method may
-decide to disallow it in some situations.
+decide to disallow it in some situations. When disabled, a client will not be
+able to gain access to any serverside objects other than the root object, and
+(recursively) any other objects returned by methods, events or properties on
+objects already known. This can be used as a security mechanism.
 
 =cut
 
