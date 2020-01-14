@@ -143,6 +143,11 @@ sub get_by_id
    my $self = shift;
    my ( $id ) = @_;
 
+   # Only permit the client to interact with objects they've already been
+   # sent, so they cannot gain access by inventing object IDs
+   $self->peer_hasobj->{$id} or
+      die "Access not allowed to object with id $id\n";
+
    my $obj = $self->registry->get_by_id( $id ) or
       die "No such object with id $id\n";
 
